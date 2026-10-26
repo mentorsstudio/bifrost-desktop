@@ -216,6 +216,11 @@ pub async fn send(
     if let Some(server) = local_chat::server(settings, provider) {
         return local_chat::send(app, chat, &server, &model, query, context).await;
     }
+    if provider == crate::mcp::chat::PROVIDER {
+        use tauri::Manager;
+        let manager = app.state::<crate::mcp::Manager>();
+        return crate::mcp::chat::send(&manager, chat, settings, query, context).await;
+    }
     Err(format!("Unknown chat provider: {provider}"))
 }
 
@@ -247,6 +252,14 @@ pub async fn send_for_phone(
 /// address): nothing is sent anywhere before that.
 pub async fn models(settings: &Settings, provider: &str) -> Result<Vec<ModelInfo>, String> {
     let no_key = || crate::i18n::t("No API key — add it in Settings.");
+    if provider == crate::mcp::chat::PROVIDER {
+        // One "model" per configured server: the agent picks its own model.
+        return Ok(settings
+            .mcp_servers
+            .keys()
+            .map(|name| ModelInfo { id: name.clone(), label: format!("MCP · {name}") })
+            .collect());
+    }
     if provider == ANTHROPIC {
         let key = secrets::get(claude::KEY).ok_or_else(no_key)?;
         return claude::models(&key).await;

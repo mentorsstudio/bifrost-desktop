@@ -101,6 +101,14 @@ pub struct Settings {
     pub phone_relay_url: String,
     /// The date and time in the middle of the compact island. Off by default.
     pub show_clock: bool,
+    /// Paulo build — MCP servers the chat may talk to (mcp/config.rs), by name.
+    /// Owned by the Rust side: only the mcp_* commands change them.
+    pub mcp_servers: BTreeMap<String, crate::mcp::McpServer>,
+    /// Which server and tool the "mcp" chat provider uses.
+    pub mcp_chat: crate::mcp::McpChat,
+    /// Coucou's own MCP server on 127.0.0.1 (mcp/server.rs).
+    pub mcp_server_enabled: bool,
+    pub mcp_server_port: u16,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -146,7 +154,7 @@ impl Default for Settings {
             show_plan_in_notch: false,
             plan_relay_installed: false,
             show_codex_plan_in_notch: false,
-            chat_provider: crate::chat::ANTHROPIC.into(),
+            chat_provider: crate::mcp::chat::PROVIDER.into(),
             chat_models: BTreeMap::new(),
             ollama_url: String::new(),
             lmstudio_url: String::new(),
@@ -168,6 +176,10 @@ impl Default for Settings {
             phone_relay: false,
             phone_relay_url: String::new(),
             show_clock: false,
+            mcp_servers: BTreeMap::new(),
+            mcp_chat: crate::mcp::McpChat::default(),
+            mcp_server_enabled: true,
+            mcp_server_port: crate::mcp::server::DEFAULT_PORT,
         }
     }
 }
@@ -456,7 +468,11 @@ mod tests {
   "phoneServices": ["integration_stripe"],
   "phoneRelay": true,
   "phoneRelayUrl": "wss://relay.example.workers.dev",
-  "showClock": true
+  "showClock": true,
+  "mcpServers": { "hermes": { "command": "hermes.exe", "args": ["mcp-serve", "--tools"] }, "vps": { "url": "https://mcp.example.com/mcp" } },
+  "mcpChat": { "server": "vps", "mode": "tool", "tool": "chat", "argument": "message", "extraArgs": { "a": 1 }, "statusTool": "s", "idArgument": "id", "timeoutSecs": 60, "includeHistory": false },
+  "mcpServerEnabled": false,
+  "mcpServerPort": 50000
 }"##;
 
     fn custom() -> Value {
@@ -975,6 +991,10 @@ mod tests {
                 "phoneRelay",
                 "phoneRelayUrl",
                 "showClock",
+                "mcpServers",
+                "mcpChat",
+                "mcpServerEnabled",
+                "mcpServerPort",
             ]
         );
         let _ = std::fs::remove_dir_all(&dir);

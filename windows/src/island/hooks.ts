@@ -69,6 +69,8 @@ interface HookPayload {
   term_editor?: string;
   /** StatusLine (the plan usage relay): Claude Code's 5-hour and weekly limits. */
   rate_limits?: unknown;
+  /** Set by Coucou's own MCP server (mcp/server.rs): an ask_approval from an MCP client. */
+  coucou_mcp?: boolean;
 }
 
 const PROJECT_ALIASES: Record<string, string> = {
@@ -478,7 +480,7 @@ function handleHook(island: Island, payload: HookPayload) {
       // Only Claude Code and the agents the relay can answer for (Codex, Copilot
       // CLI, Muse Code — same as the Mac) get a card. Anyone else's request is
       // declined at once, so the agent asks in its own terminal.
-      if (isExternalAgent && !APPROVAL_AGENTS.has(validAgent!)) {
+      if (isExternalAgent && !APPROVAL_AGENTS.has(validAgent!) && !payload.coucou_mcp) {
         if (payload.request_id) void Bridge.approvalDecline(payload.request_id);
         break;
       }

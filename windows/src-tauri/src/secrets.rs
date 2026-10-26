@@ -111,6 +111,45 @@ pub fn set_internal(key: &str, value: &str) -> Result<(), String> {
     entry.set_password(value).map_err(|e| e.to_string())
 }
 
+// ── MCP tokens ───────────────────────────────────────────────────────────────
+//
+// One bearer token per configured MCP server (mcp/config.rs), under
+// `mcp-token:<name>`, and the token of Coucou's own MCP server. The island can
+// set or clear a server's token and ask whether it is there, never read it.
+
+/// The embedded MCP server's bearer token (mcp/server.rs). Rust only.
+pub const MCP_SERVER_TOKEN: &str = "mcp-server-token";
+
+fn mcp_entry(server: &str) -> Result<Entry, String> {
+    if !crate::mcp::config::valid_name(server) {
+        return Err(format!("invalid MCP server name {server:?}"));
+    }
+    Entry::new(SERVICE, &format!("mcp-token:{server}")).map_err(|e| e.to_string())
+}
+
+pub fn get_mcp_token(server: &str) -> Option<String> {
+    mcp_entry(server).ok()?.get_password().ok().filter(|v| !v.is_empty())
+}
+
+pub fn set_mcp_token(server: &str, token: &str) -> Result<(), String> {
+    let entry = mcp_entry(server)?;
+    if token.is_empty() {
+        return match entry.delete_credential() {
+            Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
+            Err(e) => Err(e.to_string()),
+        };
+    }
+    entry.set_password(token).map_err(|e| e.to_string())
+}
+
+pub fn get_server_token() -> Option<String> {
+    Entry::new(SERVICE, MCP_SERVER_TOKEN).ok()?.get_password().ok().filter(|v| !v.is_empty())
+}
+
+pub fn set_server_token(token: &str) -> Result<(), String> {
+    Entry::new(SERVICE, MCP_SERVER_TOKEN).and_then(|e| e.set_password(token)).map_err(|e| e.to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

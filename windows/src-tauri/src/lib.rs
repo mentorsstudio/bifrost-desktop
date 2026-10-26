@@ -17,6 +17,7 @@ mod integrations;
 mod island;
 mod local_chat;
 mod log;
+mod mcp;
 mod net;
 mod notes;
 mod openai_compat;
@@ -111,6 +112,11 @@ fn save_settings(app: AppHandle, shared: State<Shared>, settings: Settings) {
         settings.phone_relay = current.phone_relay;
         settings.phone_relay_url = current.phone_relay_url.clone();
         settings.phone_chat_models = current.phone_chat_models.clone();
+        // And MCP: its own commands (mcp_*) own these.
+        settings.mcp_servers = current.mcp_servers.clone();
+        settings.mcp_chat = current.mcp_chat.clone();
+        settings.mcp_server_enabled = current.mcp_server_enabled;
+        settings.mcp_server_port = current.mcp_server_port;
         *current = settings;
         (screen_changed, autostart_changed, shortcuts_changed)
     };
@@ -532,10 +538,14 @@ async fn chat_send(
     app: AppHandle,
     shared: State<'_, Shared>,
     chat: State<'_, Chat>,
+    manager: State<'_, mcp::Manager>,
     query: String,
     context: Option<ChatContext>,
 ) -> Result<ChatReply, String> {
     let settings = shared.settings.lock().unwrap().clone();
+    if settings.chat_provider == mcp::chat::PROVIDER {
+        return mcp::chat::send(&manager, &chat, &settings, query, context).await;
+    }
     chat::send(&app, &chat, &settings, query, context).await
 }
 
@@ -558,6 +568,164 @@ async fn local_connect(provider: String, url: String) -> Result<local_chat::Conn
 #[tauri::command]
 fn local_set_key(url: String, key: String) -> Result<(), String> {
     local_chat::set_custom_key(&url, &key)
+}
+
+// ── MCP (Paulo build) ─────────────────────────────────────────────────────────
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct McpServerView {
+    name: String,
+    config: mcp::McpServer,
+    has_token: bool,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct McpStatus {
+    servers: Vec<McpServerView>,
+    chat: mcp::McpChat,
+    server_enabled: bool,
+    server_port: u16,
+    server_url: String,
+}
+
+fn mcp_status_of(s: &Settings) -> McpStatus {
+    McpStatus {
+        servers: s
+            .mcp_servers
+            .iter()
+            .map(|(name, config)| McpServerView {
+                name: name.clone(),
+                config: config.clone(),
+                has_token: secrets::get_mcp_token(name).is_some(),
+            })
+            .collect(),
+        chat: s.mcp_chat.clone(),
+        server_enabled: s.mcp_server_enabled,
+        server_port: s.mcp_server_port,
+        server_url: format!("http://127.0.0.1:{}/mcp", s.mcp_server_port),
+    }
+}
+
+fn mcp_update(shared: &Shared, f: impl FnOnce(&mut Settings) -> Result<(), String>) -> Result<McpStatus, String> {
+    let mut current = shared.settings.lock().unwrap();
+    let mut next = current.clone();
+    f(&mut next)?;
+    settings::save(&next).map_err(|e| e.to_string())?;
+    *current = next;
+    Ok(mcp_status_of(&current))
+}
+
+#[tauri::command]
+fn mcp_status(shared: State<Shared>) -> McpStatus {
+    mcp_status_of(&shared.settings.lock().unwrap())
+}
+
+/// Adds or replaces one server. `previous` is its old name when renamed.
+#[tauri::command]
+async fn mcp_save_server(
+    shared: State<'_, Shared>,
+    manager: State<'_, mcp::Manager>,
+    name: String,
+    config: mcp::McpServer,
+    previous: Option<String>,
+) -> Result<McpStatus, String> {
+    if !mcp::config::valid_name(&name) {
+        return Err("Nome inválido (use letras, números, - _ .)".into());
+    }
+    config.validate()?;
+    manager.drop_conn(&name).await;
+    if let Some(old) = previous.as_deref().filter(|o| *o != name) {
+        manager.drop_conn(old).await;
+    }
+    mcp_update(&shared, |s| {
+        if let Some(old) = previous.as_deref().filter(|o| *o != name) {
+            s.mcp_servers.remove(old);
+        }
+        s.mcp_servers.insert(name, config);
+        Ok(())
+    })
+}
+
+#[tauri::command]
+async fn mcp_remove_server(
+    shared: State<'_, Shared>,
+    manager: State<'_, mcp::Manager>,
+    name: String,
+) -> Result<McpStatus, String> {
+    manager.drop_conn(&name).await;
+    let _ = secrets::set_mcp_token(&name, "");
+    mcp_update(&shared, |s| {
+        s.mcp_servers.remove(&name);
+        Ok(())
+    })
+}
+
+/// Pastes a `{"mcpServers": {...}}` JSON: its entries are added (same names replaced).
+#[tauri::command]
+fn mcp_import(shared: State<Shared>, json: String) -> Result<McpStatus, String> {
+    let parsed = mcp::config::parse_servers(&json)?;
+    mcp_update(&shared, |s| {
+        s.mcp_servers.extend(parsed);
+        Ok(())
+    })
+}
+
+/// A server's bearer token, into the credential store (empty clears it).
+#[tauri::command]
+fn mcp_set_token(name: String, token: String) -> Result<(), String> {
+    secrets::set_mcp_token(&name, token.trim())
+}
+
+/// "Testar conexão": a fresh connection and its tools/list.
+#[tauri::command]
+async fn mcp_test(name: String, config: mcp::McpServer) -> Result<Vec<mcp::client::ToolInfo>, String> {
+    let token = if mcp::config::valid_name(&name) { secrets::get_mcp_token(&name) } else { None };
+    mcp::client::test(&config, token.as_deref()).await
+}
+
+#[tauri::command]
+async fn mcp_list_tools(
+    shared: State<'_, Shared>,
+    manager: State<'_, mcp::Manager>,
+    name: String,
+) -> Result<Vec<mcp::client::ToolInfo>, String> {
+    let config = shared.settings.lock().unwrap().mcp_servers.get(&name).cloned();
+    let config = config.ok_or_else(|| format!("Servidor {name} não existe"))?;
+    manager.list_tools(&name, &config).await
+}
+
+#[tauri::command]
+fn mcp_set_chat(shared: State<Shared>, chat: mcp::McpChat) -> Result<McpStatus, String> {
+    mcp_update(&shared, |s| {
+        s.mcp_chat = chat;
+        Ok(())
+    })
+}
+
+/// The embedded server's switch and port; takes effect at the next launch.
+#[tauri::command]
+fn mcp_set_server(shared: State<Shared>, enabled: bool, port: u16) -> Result<McpStatus, String> {
+    if port < 1024 {
+        return Err("Use uma porta entre 1024 e 65535".into());
+    }
+    mcp_update(&shared, |s| {
+        s.mcp_server_enabled = enabled;
+        s.mcp_server_port = port;
+        Ok(())
+    })
+}
+
+/// The embedded server's token, for the user to paste into a client (Grok Bot, Hermes…).
+#[tauri::command]
+fn mcp_server_token() -> Result<String, String> {
+    if let Some(t) = secrets::get_server_token() {
+        return Ok(t);
+    }
+    let t = mcp::server::new_token();
+    secrets::set_server_token(&t)?;
+    Ok(t)
 }
 
 #[tauri::command]
@@ -804,6 +972,7 @@ pub fn run() {
         })
         .manage(Pending::default())
         .manage(Chat::default())
+        .manage(mcp::Manager::default())
         .manage(shortcuts::Registry::default())
         .manage(recap::load())
         .invoke_handler(tauri::generate_handler![
@@ -846,6 +1015,16 @@ pub fn run() {
             local_connect,
             local_set_key,
             chat_reset,
+            mcp_status,
+            mcp_save_server,
+            mcp_remove_server,
+            mcp_import,
+            mcp_set_token,
+            mcp_test,
+            mcp_list_tools,
+            mcp_set_chat,
+            mcp_set_server,
+            mcp_server_token,
             ingest_file,
             secret_present,
             secret_set,
@@ -1005,6 +1184,9 @@ pub fn run() {
             log::line(format!("--- Coucou {} started ---", env!("CARGO_PKG_VERSION")));
             hooks::ensure_hook_exe(&handle);
             pipe::start(handle.clone());
+            if loaded.mcp_server_enabled {
+                mcp::server::start(handle.clone(), loaded.mcp_server_port);
+            }
             phone_link::start_if_enabled(&handle);
             integrations::start(handle.clone());
             spotify::sync(&handle, &loaded.active_integrations);

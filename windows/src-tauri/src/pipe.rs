@@ -201,7 +201,7 @@ async fn handle(app: AppHandle, mut pipe: impl Relay) {
         Some(i) => &buf[..i],
         None => &buf[..],
     };
-    let Ok(mut payload) = serde_json::from_slice::<Value>(line) else { return };
+    let Ok(payload) = serde_json::from_slice::<Value>(line) else { return };
     if !payload.is_object() {
         return;
     }
@@ -226,19 +226,7 @@ async fn handle(app: AppHandle, mut pipe: impl Relay) {
         return;
     }
 
-    let id = format!("{}-{}", std::process::id(), COUNTER.fetch_add(1, Ordering::Relaxed));
-    let (tx, mut rx) = mpsc::channel::<Reply>(4);
-    {
-        let pending = app.state::<Pending>();
-        pending.0.lock().unwrap().insert(id.clone(), tx);
-    }
-    crate::recap::note_request(&app, &id, &payload);
-    payload["request_id"] = json!(id);
-    log::line(format!("hook PermissionRequest id={id}"));
-    let _ = app.emit_to(WINDOW_LABEL, "hook", payload);
-
-    let decision = wait_for_decision(&id, &mut rx).await;
-    app.state::<Pending>().0.lock().unwrap().remove(&id);
+    let decision = request_decision(&app, payload).await;
 
     // No decision: say nothing at all. coucou-hook then writes nothing to stdout
     // and Claude Code asks in the terminal, exactly as if Coucou were closed.
@@ -247,6 +235,27 @@ async fn handle(app: AppHandle, mut pipe: impl Relay) {
         let _ = pipe.flush().await;
     }
     pipe.finish();
+}
+
+/// Shows a permission card on the island and waits for a human: `allow`,
+/// `deny` (or a question's answers), or `None` when nobody could answer.
+/// Shared by the hook relay and the MCP server's `ask_approval`.
+pub async fn request_decision(app: &AppHandle, mut payload: Value) -> Option<String> {
+    let id = format!("{}-{}", std::process::id(), COUNTER.fetch_add(1, Ordering::Relaxed));
+    let (tx, mut rx) = mpsc::channel::<Reply>(4);
+    {
+        let pending = app.state::<Pending>();
+        pending.0.lock().unwrap().insert(id.clone(), tx);
+    }
+    crate::recap::note_request(app, &id, &payload);
+    payload["request_id"] = json!(id);
+    log::line(format!("hook PermissionRequest id={id}"));
+    let _ = app.emit_to(WINDOW_LABEL, "hook", payload);
+
+    let decision = wait_for_decision(&id, &mut rx).await;
+    app.state::<Pending>().0.lock().unwrap().remove(&id);
+
+    decision
 }
 
 /// Finds, once per session, the window it runs in — see session_window.rs.
