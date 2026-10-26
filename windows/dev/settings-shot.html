@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Bifrost — configurações (captura)</title>
+    <script>
+      window.__FIXTURES__ = {
+        boot: { settings: { language: "pt-BR" }, version: "0.5.3" },
+        mcp_status: {
+          servers: [
+            { name: "alethe", config: { command: "C:\\Users\\paulo\\AppData\\Local\\Alethe\\alethe-orchestrator-mcp.exe" }, hasToken: false },
+            { name: "freya", config: { command: "C:\\Users\\paulo\\Freya\\ponte-grokbot\\CONFIRME-O-COMANDO.exe", disabled: true }, hasToken: false },
+            { name: "hermes", config: { command: "C:\\Users\\paulo\\AppData\\Local\\hermes\\bin\\hermes.exe", args: ["mcp-serve", "--tools"] }, hasToken: false },
+            { name: "hermes-vps", config: { url: "https://mcp.srv2096709.hstgr.cloud/mcp", disabled: true }, hasToken: true },
+            { name: "hermes-vps-tarefas", config: { url: "https://mcp.srv2096709.hstgr.cloud/task/mcp", disabled: true }, hasToken: true },
+            { name: "orca", config: { command: "C:\\Users\\paulo\\AppData\\Local\\orca\\bin\\orca.exe", args: ["mcp"], disabled: true }, hasToken: false },
+          ],
+          chat: { server: "hermes", mode: "task", tool: "hermes_task_start", argument: "prompt", statusTool: "hermes_task_status", idArgument: "job_id", timeoutSecs: 600, includeHistory: true, extraArgs: {} },
+          serverEnabled: true, serverPort: 47821, serverUrl: "http://127.0.0.1:47821/mcp",
+        },
+      };
+    </script>
+    <script src="./tauri-stub.js"></script>
+  </head>
+  <body class="settings-window hub-window" style="background: #0a0f1f; color: #eef2ff">
+    <div id="hub"></div>
+    <script type="module" src="/src/settings/main.ts"></script>
+  </body>
+</html>

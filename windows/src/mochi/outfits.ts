@@ -123,7 +123,7 @@ function auroraHalo(ctx: Ctx, H: Head, front: boolean) {
 }
 
 function runeBand(ctx: Ctx, H: Head) {
-  const y = -H.ry * 0.62;
+  const y = -H.ry * 0.5;
   const w = H.rx * 0.82;
   const h = H.R * 0.17;
   ctx.save();

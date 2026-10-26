@@ -41,23 +41,37 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis", "msi"],
+    "targets": [
+      "nsis",
+      "msi"
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.ico"
     ],
-    "resources": { "../target/release/bifrost-hook.exe": "bifrost-hook.exe" },
+    "resources": {
+      "../target/release/bifrost-hook.exe": "bifrost-hook.exe"
+    },
     "copyright": "Bifrost © Paulo — baseado no Coucou © Louis Raille (MIT)",
     "category": "DeveloperTool",
-    "shortDescription": "Huginn lives at the top of your screen",
-    "longDescription": "Bifrost puts Huginn at the top of your screen: it shows your Claude Code sessions and a few integrations, and lets you approve, answer, chat and drop files without leaving what you are doing.",
+    "shortDescription": "Huginn, o corvo mensageiro, no topo da sua tela",
+    "longDescription": "Bifrost coloca o Huginn no topo da sua tela: mostra suas sessões do Claude Code e integrações, e deixa você aprovar, responder, conversar e soltar arquivos sem sair do que está fazendo.",
     "windows": {
       "nsis": {
         "installMode": "currentUser",
-        "languages": ["English", "French"],
-        "installerHooks": "nsis/hooks.nsh"
+        "languages": [
+          "PortugueseBR",
+          "English"
+        ],
+        "installerHooks": "nsis/hooks.nsh",
+        "headerImage": "installer/nsis-header.bmp",
+        "sidebarImage": "installer/nsis-sidebar.bmp"
+      },
+      "wix": {
+        "bannerPath": "installer/wix-banner.bmp",
+        "dialogImagePath": "installer/wix-dialog.bmp"
       }
     }
   }

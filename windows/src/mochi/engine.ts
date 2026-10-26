@@ -72,7 +72,7 @@ const INK = "rgb(220,244,255)"; // olhos: brilho frio
 const EYE_GLOW = "rgba(79,227,193,0.85)"; // #4FE3C1
 const BEAK_TOP = "#FFD27A";
 const BEAK_BOTTOM = "#E39A2E";
-const MINI_INK = "rgb(16,19,26)"; // #10131A
+const MINI_INK = "rgb(230,246,255)"; // olhos claros também nos mini-Huginns
 
 const C = {
   idle: [0.933, 0.949, 1] as RGB, // #EEF2FF
@@ -826,6 +826,7 @@ export class BotEngine {
 
     const body = this.bodyPath(rx, ry, R);
     this.drawBody(x, body, R, rx, ry);
+    if (!this.isMini && this.morph < 0.5) this.drawChest(x, body, R, rx, ry);
 
     const blushVal = Math.max(this.blush, this.tint * 0.5) * (1 - this.morph);
     if (blushVal > 0.01) {
@@ -894,8 +895,11 @@ export class BotEngine {
   private drawBody(x: CanvasRenderingContext2D, body: Path2D, R: number, rx: number, ry: number) {
     const pumpkin = this.pumpkinAlpha;
     if (this.bodyColor) {
-      // Mini bots: flat solid fill — no gradient, no reflection, no highlight
-      x.fillStyle = rgba(this.bodyColor, 1);
+      // Mini Huginns: night feathers washed with the pill's colour.
+      const mg = x.createLinearGradient(0, -ry, 0, ry);
+      mg.addColorStop(0, rgba(mix3(this.bodyColor, [0.243, 0.29, 0.478], 0.45)));
+      mg.addColorStop(1, rgba(mix3(this.bodyColor, [0.059, 0.075, 0.153], 0.7)));
+      x.fillStyle = mg;
       x.fill(body);
       if (pumpkin <= 0.001) return;
     } else {
@@ -934,10 +938,35 @@ export class BotEngine {
     x.fill(body);
 
     const hl = x.createRadialGradient(rx * 0.34, -ry * 0.46, 0, rx * 0.34, -ry * 0.46, R * 0.42);
-    hl.addColorStop(0, "rgba(255,255,255,0.55)");
+    hl.addColorStop(0, "rgba(190,210,255,0.22)");
     hl.addColorStop(1, "rgba(255,255,255,0)");
     x.fillStyle = hl;
     x.fill(body);
+    x.restore();
+  }
+
+  /** Peito: penas em escamas, mais claras, e um fio de aurora na borda. */
+  private drawChest(x: CanvasRenderingContext2D, body: Path2D, R: number, rx: number, ry: number) {
+    x.save();
+    x.clip(body);
+    x.globalAlpha *= 1 - this.morph * 2;
+    const cx = Math.sin(this.yaw) * rx * 0.5;
+    for (let row = 0; row < 3; row++) {
+      for (let i = -2; i <= 2; i++) {
+        const fx = cx + (i + (row % 2) * 0.5) * R * 0.2;
+        const fy = ry * (0.38 + row * 0.2);
+        x.beginPath();
+        x.arc(fx, fy, R * 0.12, 0, Math.PI);
+        x.strokeStyle = `rgba(150,175,255,${0.16 - row * 0.03})`;
+        x.lineWidth = Math.max(0.6, R * 0.025);
+        x.stroke();
+      }
+    }
+    x.restore();
+    x.save();
+    x.strokeStyle = "rgba(90,169,255,0.28)";
+    x.lineWidth = Math.max(0.8, R * 0.03);
+    x.stroke(body);
     x.restore();
   }
 

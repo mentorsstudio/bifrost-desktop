@@ -158,3 +158,24 @@ body.settings-window .switch.on { background: var(--aurora-teal) !important; }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: rgba(148, 170, 255, 0.18); border-radius: 6px; border: 2px solid transparent; background-clip: padding-box; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* ── Janela do Bifrost (hub) ─────────────────────────────────────────────── */
+:root {
+  --hub-panel: #0b1022;
+  --hub-card: #121a33;
+  --hub-field: #182143;
+  --hub-line: rgba(148, 170, 255, 0.10);
+  --hub-text: #eef2ff;
+  --hub-body: #dfe5fb;
+  --hub-secondary: #9aa6c8;
+  --hub-muted: #67729a;
+  --hub-accent: #9d7bff;
+  --hub-on-accent: #0a0820;
+  --hub-green: #3ee6a8;
+  --hub-red: #ff5c7a;
+}
+body.hub-window {
+  background: radial-gradient(900px 500px at 0% 0%, rgba(79, 227, 193, 0.08), transparent 60%), #05070f !important;
+}
+.hub-side { background: transparent !important; }
+.hub-item.on { box-shadow: inset 2px 0 0 var(--aurora-violet); }

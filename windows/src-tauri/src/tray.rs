@@ -1,4 +1,4 @@
-// Notification-area icon: Open, Weekly recap, Wardrobe, Settings, Pause, Quit.
+// Notification-area icon: Open, Weekly recap, Adornments, Settings, Pause, Quit.
 // "Update Bifrost to X…" shows under Open only while a new version is out
 // (update.rs). While one waits, the tray Huginn turns blue like the island's.
 
@@ -17,7 +17,7 @@ use crate::island::WINDOW_LABEL;
 const ITEMS: [(&str, &str); 6] = [
     ("open", n_("Open Bifrost")),
     ("recap", n_("Weekly recap")),
-    ("wardrobe", n_("Wardrobe…")),
+    ("wardrobe", n_("Adornments…")),
     ("settings", n_("Settings…")),
     ("pause", n_("Pause")),
     ("quit", n_("Quit")),

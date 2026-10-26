@@ -151,8 +151,29 @@ export function backdrop(canvas: HTMLCanvasElement, color: string, pointerFrom: 
       ctx.beginPath();
       ctx.roundRect(0, 0, w, h, radius);
       ctx.clip();
-      ctx.fillStyle = "#020203";
+      const night = ctx.createLinearGradient(0, 0, 0, h);
+      night.addColorStop(0, "#0d1430");
+      night.addColorStop(1, "#05070f");
+      ctx.fillStyle = night;
       ctx.fillRect(0, 0, w, h);
+      // Aurora: three soft ribbons that drift — the Bifrost over the page.
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      for (const [i, c] of (["79,227,193", "90,169,255", "157,123,255"] as const).entries()) {
+        const g = ctx.createLinearGradient(0, 0, w, 0);
+        g.addColorStop(0, `rgba(${c},0)`);
+        g.addColorStop(0.5, `rgba(${c},0.10)`);
+        g.addColorStop(1, `rgba(${c},0)`);
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        const base = h * (0.28 + i * 0.12);
+        ctx.moveTo(0, base);
+        for (let x = 0; x <= w; x += 12) ctx.lineTo(x, base + Math.sin(x / 90 + t * 0.35 + i * 1.7) * h * 0.08);
+        for (let x = w; x >= 0; x -= 12) ctx.lineTo(x, base + h * 0.16 + Math.sin(x / 70 + t * 0.3 + i) * h * 0.06);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
       const lin = ctx.createLinearGradient(w, 0, w * 0.35, h);
       lin.addColorStop(0, rgba(color, 0.1));
       lin.addColorStop(1, "rgba(0,0,0,0)");
