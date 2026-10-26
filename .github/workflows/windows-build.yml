@@ -1,0 +1,68 @@
+name: Windows build (Paulo / MCP)
+
+# Builds the Windows installer of the personal MCP build and keeps it as a
+# workflow artifact only: nothing is published (see LICENSE-ASSETS.md).
+
+on:
+  push:
+    branches: [paulo-mcp]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: windows
+    steps:
+      - uses: actions/checkout@v4
+
+      # rmcp (the MCP SDK) needs Rust 1.88 or newer.
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: windows/package-lock.json
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            windows/target
+          key: paulo-windows-cargo-${{ hashFiles('windows/Cargo.lock') }}
+          restore-keys: paulo-windows-cargo-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Front-end tests
+        run: npm test
+
+      - name: Build the hook relay
+        run: cargo build --release -p coucou-hook
+
+      - name: Rust tests
+        run: cargo test -p coucou --lib
+
+      - name: Build and pack the installer
+        shell: pwsh
+        run: |
+          npm run pack
+          Get-ChildItem release | Format-Table Name, Length
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Coucou-Paulo-MCP-Windows
+          path: |
+            windows/release/*.exe
+            windows/release/*.msi
+            windows/target/release/coucou.exe
+            windows/target/release/coucou-hook.exe
+          retention-days: 14
