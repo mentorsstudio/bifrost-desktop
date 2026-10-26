@@ -2,9 +2,9 @@
 
 **Bifrost** (repositório: `mentorsstudio/bifrost-desktop`) é um fork pessoal do
 [Coucou](https://github.com/louis-cfm/coucou), de Louis Raillé (base: commit `47d1c2d`), para
-**Windows/Linux** em que o chat do Mochi usa **MCP (Model Context Protocol)** em vez de chaves
+**Windows/Linux** em que o chat do Huginn usa **MCP (Model Context Protocol)** em vez de chaves
 de API, e o próprio app vira um **servidor MCP** para que Grok Bot, Hermes e outros agentes
-mostrem avisos, peçam aprovação e abram sessões no Mochi.
+mostrem avisos, peçam aprovação e abram sessões no Huginn.
 
 - O que mudou: `windows/src-tauri/src/mcp/` (cliente, provedor de chat, servidor embutido),
   `windows/src/settings/mcp.ts` (tela "Servidores MCP"), MCP como provedor padrão. Os provedores
@@ -42,14 +42,28 @@ mostrem avisos, peçam aprovação e abram sessões no Mochi.
 - Atualização automática: continua olhando os releases do Coucou original, mas só aceita
   arquivos `Bifrost-Windows-*`, então na prática nunca troca o Bifrost pelo Coucou.
 
+## Identidade visual
+
+- **Tema**: céu noturno com a ponte arco-íris/aurora. Paleta: noite `#05070F` `#0A0F1F` `#111830`
+  `#18213F`; texto `#EEF2FF`; aurora `#4FE3C1` (verde-água) `#5AA9FF` (céu) `#9D7BFF` (violeta)
+  `#FF6FAE` (rosa) `#FFC65C` (ouro); erro `#FF5C7A`. Folha: `windows/src/theme/bifrost.css`.
+- **Fonte**: Space Grotesk (OFL), empacotada em `windows/src/theme/fonts/` — sem CDN.
+- **Mascote**: **Huginn**, corvo mensageiro (o de Odin que voa entre os mundos): corpo em gota
+  azul-noite, olhos que brilham como aurora, bico dourado, topete violeta e asas; estados
+  parado/trabalhando/pensando/aprovação/pergunta/concluído/erro/dormindo. Palavra de ativação:
+  "OK Bifrost".
+- **Adornos** (antigo "guarda-roupa"): halo de aurora, faixa de runas, cachecol de gelo, coroa de
+  estrelas, elmo, lanterna; automático: Yule (21/12–6/1) cachecol, solstício (19–25/6) coroa,
+  31/10–2/11 lanterna, Páscoa −2…+1 runas.
+- **Sons**: originais, sintetizados (`windows/scripts/gen-sounds.py`, sinos pentatônicos em Ré,
+  vento, cristal).
+- **Instalador**: imagens próprias do NSIS/WiX (`windows/src-tauri/installer/`), idioma pt-BR.
+- Capturas: `windows/screenshots/` (geradas por `dev/screens.html` e `dev/settings-shot.html`).
+
 ## Licença e créditos
 
 Baseado no **Coucou**, de **Louis Raillé** — código sob a licença MIT original
 (**Copyright (c) 2026 Louis Raillé**, veja [`LICENSE`](LICENSE)); as modificações desta versão
-seguem a mesma licença.
-
-O ícone do Bifrost (arco-íris sobre quadrado escuro, `windows/src-tauri/icons-src/bifrost.svg`)
-é novo. **Ainda usados e de uso pessoal** ([`LICENSE-ASSETS.md`](LICENSE-ASSETS.md), de Louis
-Raillé): o nome e o personagem **Mochi** (desenhado em código, com suas expressões/animações) e os
-**sons** (`NotchBuddy/Resources/sounds/`, embutidos no app). Esta versão é para **uso pessoal**;
-para distribuir, troque também o Mochi e os sons ou peça permissão escrita ao autor.
+seguem a mesma licença. O Bifrost não embute mais o personagem, o ícone nem os sons do Coucou
+(veja [`LICENSE-ASSETS.md`](LICENSE-ASSETS.md)). Os identificadores de protocolo do pareamento
+com o celular (`coucou-relay/v1`, `_coucou._tcp` etc.) foram mantidos por compatibilidade.

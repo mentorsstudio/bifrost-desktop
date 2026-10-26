@@ -151,12 +151,12 @@ export function renderShareImage(s: WeeklySummary, hideProjects: boolean): HTMLC
   const W = SHARE_W;
   const cx = W / 2;
 
-  // Background: near-black with an indigo glow low in the frame.
-  x.fillStyle = "#0B0C0E";
+  // Background: night sky with an aurora glow low in the frame.
+  x.fillStyle = "#070A16";
   x.fillRect(0, 0, W, SHARE_H);
   const glow = x.createRadialGradient(cx, SHARE_H * 0.75, 0, cx, SHARE_H * 0.75, 900);
-  glow.addColorStop(0, "rgba(99,102,241,0.30)");
-  glow.addColorStop(0.65, "rgba(99,102,241,0)");
+  glow.addColorStop(0, "rgba(157,123,255,0.30)");
+  glow.addColorStop(0.65, "rgba(79,227,193,0)");
   x.fillStyle = glow;
   x.fillRect(0, 0, W, SHARE_H);
 

@@ -1,3 +1,16 @@
+# Bifrost (fork do Paulo) — o que o app do Windows usa
+
+O app **Bifrost** gerado a partir de `windows/` **não embute mais nenhum dos itens de uso pessoal listados abaixo**:
+
+- personagem: o **Mochi** foi substituído pelo **Huginn**, um corvo mensageiro original desenhado em código (`windows/src/mochi/engine.ts`, `greeting.ts`, `outfits.ts`, `windows/src/upload/canvas.ts`), com adornos próprios (halo de aurora, faixa de runas, cachecol de gelo, coroa de estrelas, elmo, lanterna);
+- sons: os 29 WAVs de `NotchBuddy/Resources/sounds/` foram substituídos por sons originais sintetizados (`windows/sounds/`, gerados por `windows/scripts/gen-sounds.py`);
+- ícone: novo (`windows/src-tauri/icons-src/bifrost.svg`); imagens do instalador geradas por `windows/scripts/gen-installer-art.py`;
+- capturas: `windows/screenshots/` agora mostra só a interface redesenhada.
+
+Os itens abaixo continuam no repositório (Mac/Android/docs do projeto original), sob as condições do autor original, mas não entram no Bifrost. O **código** continua sob a licença MIT (Copyright (c) 2026 Louis Raillé). Fonte embutida: Space Grotesk (SIL OFL 1.1, `windows/src/theme/fonts/OFL-SpaceGrotesk.txt`).
+
+---
+
 # Coucou — name, character and artwork
 
 Copyright (c) 2026 Louis Raillé. All rights reserved, except as stated below.

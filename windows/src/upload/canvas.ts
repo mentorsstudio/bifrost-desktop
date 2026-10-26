@@ -372,8 +372,8 @@ export class UploadCanvas {
 
     // Body.
     const bg = ctx.createLinearGradient(rx * 0.7, -ry * 0.9, -rx * 0.8, ry * 0.9);
-    bg.addColorStop(0, "#EDEDEF");
-    bg.addColorStop(1, "#C4C5CA");
+    bg.addColorStop(0, "#3E4A7A");
+    bg.addColorStop(1, "#0F1327");
     ctx.fillStyle = bg;
     ctx.fill();
 
@@ -520,7 +520,7 @@ export class UploadCanvas {
 
 // ── Eye shapes ──────────────────────────────────────────────────────────────
 
-const INK = "#0E0F12";
+const INK = "rgb(220,244,255)"; // olhos do Huginn: brilho frio
 
 function drawEye(ctx: CanvasRenderingContext2D, shape: UploadEyeShape, w: number, h: number) {
   switch (shape) {
