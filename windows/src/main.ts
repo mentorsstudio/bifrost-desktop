@@ -1,6 +1,7 @@
 // Entry point: boot the bridge, wire the island, start the greeting.
 
 import "./style.css";
+import "./theme/bifrost.css";
 import { Bridge, IS_TAURI, onEvent } from "./core/bridge";
 import { Sound } from "./core/sound";
 import { State, type Settings } from "./core/state";
@@ -113,7 +114,7 @@ async function main() {
 
   // A query only matches the ratio it was made for: once it changes, watch the
   // new one, or the next monitor's scale goes unnoticed and the zoom stays wrong.
-  // One frame redraws Mochi at the new ratio, even while the loop is idle.
+  // One frame redraws Huginn at the new ratio, even while the loop is idle.
   const watchRatio = () => {
     window
       .matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`)

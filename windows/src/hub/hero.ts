@@ -1,8 +1,8 @@
 // The coloured band on top of each page of the Bifrost window: a deep black
 // with the page's colour breathing in a corner, particles that drift all the
-// time and move away from the pointer, and the page's little Mochis walking on
+// time and move away from the pointer, and the page's little Huginns walking on
 // its floor — they hop, look around, wave, and react when poked. Also the
-// glowing cards and the Mochis of empty pages. Port of FlowHubMochis.swift.
+// glowing cards and the Huginns of empty pages. Port of FlowHubMochis.swift.
 //
 // One animation loop draws every live canvas; it stops when none is left or
 // the window is hidden, so a hidden window costs nothing, and skips the ones
@@ -208,7 +208,7 @@ export function backdrop(canvas: HTMLCanvasElement, color: string, pointerFrom: 
   });
 }
 
-// ── The Mochis ────────────────────────────────────────────────────────────────
+// ── The Huginns ────────────────────────────────────────────────────────────────
 
 export interface MochiSpec {
   color: string;
@@ -242,7 +242,7 @@ class Walker {
   }
 }
 
-/** The page's Mochis on the band's floor, in the right part of `canvas`. */
+/** The page's Huginns on the band's floor, in the right part of `canvas`. */
 export function troupe(canvas: HTMLCanvasElement, cast: MochiSpec[], width: number) {
   const walkers = cast.map((spec) => new Walker(spec));
   let pointer: { x: number; y: number } | null = null;
@@ -340,7 +340,7 @@ export function troupe(canvas: HTMLCanvasElement, cast: MochiSpec[], width: numb
   });
 }
 
-/** One Mochi alone (the sidebar's logo, an empty page). */
+/** One Huginn alone (the sidebar's logo, an empty page). */
 export function liveMochi(canvas: HTMLCanvasElement, color = "#F5F6F8", state: BotStateName = "idle") {
   const engine = new BotEngine();
   engine.bodyColor = hexToRGB(color);
@@ -380,14 +380,14 @@ const m = (color: string, size: number, start: number, extra: Partial<MochiSpec>
 });
 
 export const THEMES: Record<string, Theme> = {
-  dictation: { color: "#FB923C", cast: [m("#F5F6F8", 66, 0.2), m("#FB923C", 52, 0.65), m("#F472B6", 44, 0.95, { outfit: "bow" })] },
-  notes: { color: "#3B9EFF", cast: [m("#3B9EFF", 58, 0.1, { outfit: "roundGlasses" }), m("#34D399", 50, 0.5), m("#A78BFA", 46, 0.9)] },
-  insights: { color: "#34D399", cast: [m("#F7B32B", 62, 0.3, { outfit: "crown" }), m("#34D399", 48, 0.75), m("#F5F6F8", 40, 1)] },
-  dictionary: { color: "#A78BFA", cast: [m("#A78BFA", 60, 0.2, { outfit: "roundGlasses" }), m("#F5F6F8", 48, 0.8, { outfit: "beanie" })] },
+  dictation: { color: "#FB923C", cast: [m("#F5F6F8", 66, 0.2), m("#FB923C", 52, 0.65), m("#F472B6", 44, 0.95, { outfit: "starCrown" })] },
+  notes: { color: "#3B9EFF", cast: [m("#3B9EFF", 58, 0.1, { outfit: "runeBand" }), m("#34D399", 50, 0.5), m("#A78BFA", 46, 0.9)] },
+  insights: { color: "#34D399", cast: [m("#F7B32B", 62, 0.3, { outfit: "starCrown" }), m("#34D399", 48, 0.75), m("#F5F6F8", 40, 1)] },
+  dictionary: { color: "#A78BFA", cast: [m("#A78BFA", 60, 0.2, { outfit: "runeBand" }), m("#F5F6F8", 48, 0.8, { outfit: "helm" })] },
   snippets: { color: "#F7B32B", cast: [m("#F7B32B", 56, 0.15, { state: "working" }), m("#FB923C", 46, 0.6), m("#F5F6F8", 40, 0.95)] },
-  styles: { color: "#F472B6", cast: [m("#F472B6", 60, 0.25, { outfit: "sunglasses" }), m("#F5F6F8", 48, 0.7, { outfit: "bow" }), m("#22D3EE", 42, 1, { outfit: "partyHat" })] },
+  styles: { color: "#F472B6", cast: [m("#F472B6", 60, 0.25, { outfit: "auroraHalo" }), m("#F5F6F8", 48, 0.7, { outfit: "starCrown" }), m("#22D3EE", 42, 1, { outfit: "helm" })] },
   flowsettings: { color: "#8E939C", cast: [m("#F5F6F8", 56, 0.3), m("#8E939C", 46, 0.95, { state: "sleeping", roams: false })] },
-  general: { color: "#8E939C", cast: [m("#F5F6F8", 60, 0.4, { outfit: "scarf" }), m("#FB923C", 46, 0.85)] },
+  general: { color: "#8E939C", cast: [m("#F5F6F8", 60, 0.4, { outfit: "frostScarf" }), m("#FB923C", 46, 0.85)] },
   pills: {
     color: "#F5A524",
     cast: [m("#F5A524", 44, 0.05), m("#3B9EFF", 44, 0.3), m("#34D399", 44, 0.55), m("#E07950", 44, 0.8), m("#A78BFA", 44, 1)],
@@ -398,12 +398,12 @@ export const THEMES: Record<string, Theme> = {
   },
   chat: { color: "#E07950", cast: [m("#E07950", 58, 0.3, { state: "thinking", roams: false }), m("#F5F6F8", 48, 0.85)] },
   integrations: { color: "#7C5CFF", cast: [m("#7C5CFF", 54, 0.15), m("#22D3EE", 46, 0.55), m("#F7B32B", 42, 0.95)] },
-  phone: { color: "#3DDC84", cast: [m("#3DDC84", 56, 0.25), m("#F5F6F8", 46, 0.8, { outfit: "beanie" })] },
-  voice: { color: "#F97316", cast: [m("#F97316", 60, 0.3), m("#F5F6F8", 48, 0.85, { outfit: "roundGlasses" })] },
-  shortcuts: { color: "#6366F1", cast: [m("#6366F1", 56, 0.2, { outfit: "sunglasses" }), m("#F5F6F8", 46, 0.8)] },
+  phone: { color: "#3DDC84", cast: [m("#3DDC84", 56, 0.25), m("#F5F6F8", 46, 0.8, { outfit: "helm" })] },
+  voice: { color: "#F97316", cast: [m("#F97316", 60, 0.3), m("#F5F6F8", 48, 0.85, { outfit: "runeBand" })] },
+  shortcuts: { color: "#6366F1", cast: [m("#6366F1", 56, 0.2, { outfit: "runeBand" }), m("#F5F6F8", 46, 0.8)] },
 };
 
-/** The band itself: title, line, actions, and the Mochis. */
+/** The band itself: title, line, actions, and the Huginns. */
 export function hero(page: string, title: string, subtitle: string | null, actions: HTMLElement[] = [], compact = false): HTMLElement {
   const theme = THEMES[page] ?? THEMES.general;
   const el = document.createElement("div");
@@ -449,7 +449,7 @@ export function glowCard(color: string, ...content: (HTMLElement | string)[]): H
   return el;
 }
 
-/** An empty page: a Mochi asleep, and a line. */
+/** An empty page: a Huginn asleep, and a line. */
 export function emptyState(text: string, state: BotStateName = "sleeping", color = "#F5F6F8"): HTMLElement {
   const el = document.createElement("div");
   el.className = "hub-empty";

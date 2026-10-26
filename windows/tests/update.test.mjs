@@ -105,7 +105,7 @@ test("nothing opens over a waiting permission, and nothing is marked shown", () 
   assert.deepEqual(sent("update_shown"), []);
 });
 
-test("an announcement opens the card with Mochi surprised; Later snoozes it", () => {
+test("an announcement opens the card with Huginn surprised; Later snoozes it", () => {
   emit("update-status", OUT);
   assert.equal(Updates.status.latest.version, "0.6.0");
   emit("update-offer", "announce");

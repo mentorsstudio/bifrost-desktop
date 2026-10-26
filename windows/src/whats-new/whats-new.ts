@@ -1,4 +1,4 @@
-// What's new after an update, and the blue Mochi while one waits — the rules,
+// What's new after an update, and the blue Huginn while one waits — the rules,
 // pure, so tests/whats-new.test.mjs checks them. The island side is in
 // controller.ts, the card in views/whatsnew.ts.
 //
@@ -156,7 +156,7 @@ export function usedBefore(facts: {
     || facts.notes > 0;
 }
 
-// ── The blue Mochi while a version waits ──────────────────────────────────────
+// ── The blue Huginn while a version waits ──────────────────────────────────────
 
 /** "Later" keeps the version quiet for a day, the blue included (Mac: snooze). */
 export const LATER_MS = 24 * 3600 * 1000;
@@ -179,7 +179,7 @@ export function updateWaiting(status: UpdateStatus, later: Later | null, nowMs: 
   return true;
 }
 
-/** Mochi turns blue only when he has nothing else to say. */
+/** Huginn turns blue only when he has nothing else to say. */
 export function showsUpdateHint(waiting: boolean, state: BotStateName, pending: boolean): boolean {
   return waiting && !pending && (state === "idle" || state === "sleeping");
 }
@@ -189,7 +189,7 @@ export function releasePage(platform: "windows" | "linux", version: string): str
   return `https://github.com/Louis-CFM/coucou/releases/tag/${platform}-v${encodeURIComponent(version)}`;
 }
 
-/** Buy Mochi a coffee: the same Stripe link as the Bifrost page (docs/index.html). */
+/** Buy Huginn a coffee: the same Stripe link as the Bifrost page (docs/index.html). */
 export const COFFEE_URL = "https://buy.stripe.com/dRm6oGbfa7Kqcqs0hxes003";
 
 /** The blue of an update, and of the arrow badge. */

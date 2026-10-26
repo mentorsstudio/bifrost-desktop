@@ -273,7 +273,7 @@ pub fn should_ask(asked_at: Option<i64>, now: i64) -> bool {
     due(asked_at, now, ASK_AGAIN)
 }
 
-/// Whether Mochi says "Bifrost X is out": newer than what runs, and not shown
+/// Whether Huginn says "Bifrost X is out": newer than what runs, and not shown
 /// or put off for that version in the last day.
 pub fn should_announce(version: &str, current: &str, snoozed_version: Option<&str>, snoozed_at: Option<i64>, now: i64) -> bool {
     if !is_newer(version, current) {
@@ -821,7 +821,7 @@ mod tests {
                 "digest": "sha256:24175a765704082c8b2e751f8b5ccb76b1eb3440ff2fd1e9c4cbe780c2193baa" }] },
             { "tag_name": "windows-v0.5.0", "draft": false, "prerelease": false,
               "html_url": "https://github.com/Louis-CFM/coucou/releases/tag/windows-v0.5.0",
-              "body": "Bifrost for Windows 0.5.0 — Mochi at the top of your screen.\n\n## What's new\n\n- **Flow dictation** on Windows — hold right Ctrl\n- Other things",
+              "body": "Bifrost for Windows 0.5.0 — Huginn at the top of your screen.\n\n## What's new\n\n- **Flow dictation** on Windows — hold right Ctrl\n- Other things",
               "assets": [
                 { "name": "Bifrost-Windows-0.5.0-setup.exe", "size": 10950620,
                   "browser_download_url": "https://github.com/Louis-CFM/coucou/releases/download/windows-v0.5.0/Bifrost-Windows-0.5.0-setup.exe",

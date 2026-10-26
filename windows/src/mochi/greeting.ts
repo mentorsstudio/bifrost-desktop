@@ -1,5 +1,5 @@
 // The launch "bifrost-desktop" (greeting v2) — port of GreetingCanvasView.swift.
-// Mochi drops into the island, bounces, slides to the side and waves hello with
+// Huginn drops into the island, bounces, slides to the side and waves hello with
 // a quick little hand, then comes back and settles in the compact island.
 // Everything is laid out in the same 640×150 reference space as on macOS.
 
@@ -28,7 +28,7 @@ const T = {
 
 export const GREETING_END = T.end;
 
-/** The greeting's own sound, played from the start (greeting.wav, the Mac's file). */
+/** The greeting's own sound (greeting.wav, original Bifrost chime). */
 const GREETING_SOUND = "greeting";
 
 // ── Geometry (640×150) ────────────────────────────────────────────────────────
@@ -220,13 +220,13 @@ function smallPose(): Pose {
   };
 }
 
-/** Mochi's pose `t` seconds in; `tc` is when the collapse began (∞ if not yet). */
+/** Huginn's pose `t` seconds in; `tc` is when the collapse began (∞ if not yet). */
 export function greetingPose(t: number, tc = Number.POSITIVE_INFINITY): Pose {
   if (t < tc) return greetPose(Math.min(t, T.end + 10));
   const a = greetPose(tc);
   const b = smallPose();
   // Same curve and duration (340 ms) as the island shrinking around him: with
-  // the Mac's inOut ease the island got ahead of Mochi and cut his body off
+  // the Mac's inOut ease the island got ahead of Huginn and cut his body off
   // when the greeting was left early.
   const k = seg(t, tc, tc + T.COLLAPSE);
   const e = k >= 1 ? 1 : closeCurve(k);
@@ -290,7 +290,7 @@ function handRPos(hw: number, hh: number, p: Pose) {
 }
 
 /**
- * Bounding box of Mochi's body and hands in the 640×150 space — what must stay
+ * Bounding box of Huginn's body and hands in the 640×150 space — what must stay
  * inside the island so nothing of him is cut off.
  */
 export function mochiBounds(p: Pose): { left: number; right: number; top: number; bottom: number } | null {
@@ -382,14 +382,14 @@ function mochiPath(hw: number, hh: number): Path2D {
   return p;
 }
 
-/** White body gradient. A canvas gradient pads past its ends, so the corners are never left unpainted. */
+/** Huginn feather gradient (night blue). A canvas gradient pads past its ends, so the corners are never left unpainted. */
 function whiteFill(
   x: CanvasRenderingContext2D, path: Path2D,
   x0: number, y0: number, x1: number, y1: number,
 ) {
   const g = x.createLinearGradient(x0, y0, x1, y1);
-  g.addColorStop(0, "rgb(251,251,252)");
-  g.addColorStop(1, "rgb(231,233,236)");
+  g.addColorStop(0, "rgb(62,74,122)");
+  g.addColorStop(1, "rgb(15,19,39)");
   x.fillStyle = g;
   x.fill(path);
 }
@@ -416,8 +416,8 @@ function drawHandR(x: CanvasRenderingContext2D, hw: number, hh: number, p: Pose)
   x.rotate(h.ang);
   rr(x, -h.L / 2, -h.T / 2, h.L, h.T, h.T / 2);
   const g = x.createLinearGradient(h.L / 2, -h.T / 2, -h.L / 2, h.T / 2);
-  g.addColorStop(0, "rgb(251,251,252)");
-  g.addColorStop(1, "rgb(231,233,236)");
+  g.addColorStop(0, "rgb(62,74,122)");
+  g.addColorStop(1, "rgb(15,19,39)");
   x.fillStyle = g;
   x.fill();
   x.strokeStyle = "rgba(0,0,0,0.08)";
@@ -434,9 +434,9 @@ function drawMochi(x: CanvasRenderingContext2D, p: Pose) {
   // Halo: golden → blue, two passes for a soft aura
   if (p.halo > 0) {
     const bl = p.haloBlue;
-    const cr = Math.round(lerp(232, 59, bl));
-    const cg = Math.round(lerp(195, 158, bl));
-    const cb = Math.round(lerp(154, 255, bl));
+    const cr = Math.round(lerp(79, 157, bl));
+    const cg = Math.round(lerp(227, 123, bl));
+    const cb = Math.round(lerp(193, 255, bl));
     for (const [R, alpha] of [[hw * 2.6, 0.18], [hw * 4.2, 0.07]] as const) {
       const g = x.createRadialGradient(p.x, p.y, 0, p.x, p.y, R);
       g.addColorStop(0, `rgba(${cr},${cg},${cb},${alpha * p.halo})`);
@@ -461,17 +461,39 @@ function drawMochi(x: CanvasRenderingContext2D, p: Pose) {
 
   if (p.tint > 0) {
     const g = x.createLinearGradient(0, hh, 0, -hh * 0.1);
-    g.addColorStop(0, `rgba(127,180,234,${p.tint})`);
-    g.addColorStop(1, "rgba(127,180,234,0)");
+    g.addColorStop(0, `rgba(157,123,255,${p.tint})`);
+    g.addColorStop(1, "rgba(157,123,255,0)");
     x.fillStyle = g;
     x.fill(body);
   }
 
+  // Topete (crest) and golden beak — Huginn
+  x.save();
+  for (const [dx, len, rot] of [[-0.18, 0.5, -0.42], [0.02, 0.62, -0.06], [0.2, 0.44, 0.32]] as const) {
+    x.save();
+    x.translate(dx * hw, -hh * 0.92);
+    x.rotate(rot);
+    const cg = x.createLinearGradient(0, 0, 0, -len * hh);
+    cg.addColorStop(0, "rgb(62,74,122)");
+    cg.addColorStop(1, "rgba(157,123,255,0.95)");
+    x.beginPath();
+    x.moveTo(-hh * 0.09, 0);
+    x.quadraticCurveTo(-hh * 0.06, -len * hh * 0.7, 0, -len * hh);
+    x.quadraticCurveTo(hh * 0.06, -len * hh * 0.7, hh * 0.09, 0);
+    x.closePath();
+    x.fillStyle = cg;
+    x.fill();
+    x.restore();
+  }
+  x.restore();
+
   // Eyes
   x.save();
   x.clip(body);
-  x.fillStyle = "#16171A";
-  x.strokeStyle = "#16171A";
+  x.fillStyle = "rgb(220,244,255)";
+  x.strokeStyle = "rgb(220,244,255)";
+  x.shadowColor = "rgba(79,227,193,0.85)";
+  x.shadowBlur = p.hb * 0.08;
   const er = p.hb * 0.06;
   const sp = p.hb * 0.19;
   const lx = p.lookX * hw * 0.42;
@@ -501,6 +523,25 @@ function drawMochi(x: CanvasRenderingContext2D, p: Pose) {
   }
   x.restore();
 
+  // Beak
+  {
+    const bx = p.lookX * hw * 0.42;
+    const by = p.lookY * hh * 0.28 + hh * 0.42;
+    const bw = p.hb * 0.07;
+    const bh = p.hb * 0.11;
+    const bg = x.createLinearGradient(0, by - bh * 0.3, 0, by + bh);
+    bg.addColorStop(0, "#FFD27A");
+    bg.addColorStop(1, "#E39A2E");
+    x.beginPath();
+    x.moveTo(bx - bw, by);
+    x.lineTo(bx, by - bh * 0.3);
+    x.lineTo(bx + bw, by);
+    x.lineTo(bx, by + bh);
+    x.closePath();
+    x.fillStyle = bg;
+    x.fill();
+  }
+
   // Activity badge
   if (p.badge > 0.01) {
     const br = hh * 0.3;
@@ -511,11 +552,11 @@ function drawMochi(x: CanvasRenderingContext2D, p: Pose) {
     x.beginPath();
     x.arc(0, 0, br + hh * 0.07, 0, Math.PI * 2);
     x.fill();
-    x.fillStyle = "#3BA0F5";
+    x.fillStyle = "#5AA9FF";
     x.beginPath();
     x.arc(0, 0, br, 0, Math.PI * 2);
     x.fill();
-    x.fillStyle = "#0B1B3A";
+    x.fillStyle = "#071022";
     for (const i of [-1, 0, 1]) {
       x.beginPath();
       x.arc(i * br * 0.5, 0, br * 0.17, 0, Math.PI * 2);
@@ -530,7 +571,7 @@ function drawMochi(x: CanvasRenderingContext2D, p: Pose) {
 function drawParticles(x: CanvasRenderingContext2D, t: number, p: Pose) {
   if (!(p.card > 0 || p.fx < 1)) return;
 
-  // Warp streaks: white vertical lines while Mochi falls in
+  // Warp streaks: white vertical lines while Huginn falls in
   if (t < 0.55) {
     const fadeOut = 1 - seg(t, 0.4, 0.55);
     x.lineCap = "butt";
@@ -563,7 +604,7 @@ function drawParticles(x: CanvasRenderingContext2D, t: number, p: Pose) {
   }
 }
 
-const MINI_COLORS = ["#E86A6A", "#3E86E0", "#EFAE5A", "#8C73F2"];
+const MINI_COLORS = ["#4FE3C1", "#5AA9FF", "#9D7BFF", "#FF6FAE"];
 
 function drawMinis(x: CanvasRenderingContext2D, alpha: number) {
   if (alpha <= 0.01) return;

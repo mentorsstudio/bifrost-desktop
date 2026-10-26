@@ -87,7 +87,9 @@ export function rebrand(obj) {
     .replace(/COUCOU/g, "BIFROST")
     .replace(/Coucou/g, "Bifrost")
     .replace(/(?<=[A-Za-z0-9_])coucou|coucou(?=[A-Za-z0-9_])/g, "bifrost_desktop")
-    .replace(/coucou/g, "bifrost-desktop");
+    .replace(/coucou/g, "bifrost-desktop")
+    .replace(/\bMochis\b/g, "Huginns")
+    .replace(/\bMochi\b/g, "Huginn");
   return JSON.parse(text);
 }
 

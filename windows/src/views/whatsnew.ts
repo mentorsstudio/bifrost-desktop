@@ -1,7 +1,7 @@
 // What's new after an update (whats-new/controller.ts decides when): first
 // what this version brings — an icon, a title and a line per item — then
-// "Your Bifrost so far", the numbers this computer kept, and Buy Mochi a
-// coffee. Same left inset as the other cards, Mochi on the left.
+// "Your Bifrost so far", the numbers this computer kept, and Buy Huginn a
+// coffee. Same left inset as the other cards, Huginn on the left.
 
 import { h, clear, svg } from "./dom";
 import { washRGBA } from "../core/layout";
@@ -86,9 +86,9 @@ export function buildWhatsNew(): ViewHost {
     stack.append(h("div", { class: "title one-line", text: t("Your Bifrost so far") }));
     if (WhatsNew.stats.length > 0) stack.append(chips);
     stack.append(
-      h("div", { class: "sub whatsnew-thanks", text: t("Bifrost is free and open source. If it saves you time, you can buy Mochi a coffee.") }),
+      h("div", { class: "sub whatsnew-thanks", text: t("Bifrost is free and open source. If it saves you time, you can buy Huginn a coffee.") }),
       h("div", { class: "actions" },
-        btn(`☕ ${t("Buy Mochi a coffee")}`, "primary", () => WhatsNew.openCoffee(COFFEE_URL)),
+        btn(`☕ ${t("Buy Huginn a coffee")}`, "primary", () => WhatsNew.openCoffee(COFFEE_URL)),
         btn(t("OK"), "secondary", () => WhatsNew.done()),
       ),
     );

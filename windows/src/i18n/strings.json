@@ -977,18 +977,18 @@
    "de": "Bifrost konnte nicht einfügen: Deine Worte wurden kopiert. Drücke ⌘V und erlaube Bedienungshilfen, damit Bifrost sie für dich einfügt.",
    "tr": "Bifrost yapıştıramadı: sözlerin kopyalandı. ⌘V tuşlarına bas ve Bifrost'nun senin için yapıştırabilmesi için Erişilebilirlik izni ver."
   },
-  "Bifrost is free and open source. If it saves you time, you can buy Mochi a coffee.": {
-   "zh-Hans": "Bifrost 免费且开源。如果它帮你节省了时间，可以请 Mochi 喝杯咖啡。",
-   "hi": "Bifrost मुफ़्त और ओपन सोर्स है। अगर यह आपका समय बचाता है, तो Mochi को एक कॉफ़ी पिला सकते हैं।",
-   "es": "Bifrost es gratis y de código abierto. Si te ahorra tiempo, puedes invitar a Mochi a un café.",
-   "ar": "Bifrost مجاني ومفتوح المصدر. إن وفّر عليك الوقت، يمكنك دعوة Mochi إلى قهوة.",
-   "fr": "Bifrost est gratuit et open source. S’il te fait gagner du temps, tu peux offrir un café à Mochi.",
-   "bn": "Bifrost বিনামূল্যে ও ওপেন সোর্স। এটি আপনার সময় বাঁচালে Mochi-কে এক কাপ কফি খাওয়াতে পারেন।",
-   "pt-BR": "O Bifrost é gratuito e de código aberto. Se ele economiza seu tempo, você pode pagar um café para o Mochi.",
-   "ru": "Bifrost бесплатный и с открытым кодом. Если он экономит вам время, можно угостить Mochi кофе.",
-   "id": "Bifrost gratis dan open source. Kalau ini menghemat waktumu, kamu bisa traktir Mochi kopi.",
-   "de": "Bifrost ist kostenlos und Open Source. Wenn es dir Zeit spart, kannst du Mochi einen Kaffee spendieren.",
-   "tr": "Bifrost ücretsiz ve açık kaynak. Sana zaman kazandırıyorsa Mochi’ye bir kahve ısmarlayabilirsin."
+  "Bifrost is free and open source. If it saves you time, you can buy Huginn a coffee.": {
+   "zh-Hans": "Bifrost 免费且开源。如果它帮你节省了时间，可以请 Huginn 喝杯咖啡。",
+   "hi": "Bifrost मुफ़्त और ओपन सोर्स है। अगर यह आपका समय बचाता है, तो Huginn को एक कॉफ़ी पिला सकते हैं।",
+   "es": "Bifrost es gratis y de código abierto. Si te ahorra tiempo, puedes invitar a Huginn a un café.",
+   "ar": "Bifrost مجاني ومفتوح المصدر. إن وفّر عليك الوقت، يمكنك دعوة Huginn إلى قهوة.",
+   "fr": "Bifrost est gratuit et open source. S’il te fait gagner du temps, tu peux offrir un café à Huginn.",
+   "bn": "Bifrost বিনামূল্যে ও ওপেন সোর্স। এটি আপনার সময় বাঁচালে Huginn-কে এক কাপ কফি খাওয়াতে পারেন।",
+   "pt-BR": "O Bifrost é gratuito e de código aberto. Se ele economiza seu tempo, você pode pagar um café para o Huginn.",
+   "ru": "Bifrost бесплатный и с открытым кодом. Если он экономит вам время, можно угостить Huginn кофе.",
+   "id": "Bifrost gratis dan open source. Kalau ini menghemat waktumu, kamu bisa traktir Huginn kopi.",
+   "de": "Bifrost ist kostenlos und Open Source. Wenn es dir Zeit spart, kannst du Huginn einen Kaffee spendieren.",
+   "tr": "Bifrost ücretsiz ve açık kaynak. Sana zaman kazandırıyorsa Huginn’ye bir kahve ısmarlayabilirsin."
   },
   "Bifrost is up to date": {
    "zh-Hans": "Bifrost 已是最新版本",
@@ -1172,18 +1172,18 @@
    "de": "Aktivster Tag",
    "tr": "En yoğun gün"
   },
-  "Buy Mochi a coffee": {
-   "zh-Hans": "请 Mochi 喝咖啡",
-   "hi": "Mochi को कॉफ़ी पिलाएँ",
-   "es": "Invitar a Mochi a un café",
-   "ar": "ادعُ Mochi إلى قهوة",
-   "fr": "Offrir un café à Mochi",
-   "bn": "Mochi-কে কফি খাওয়ান",
-   "pt-BR": "Pagar um café para o Mochi",
-   "ru": "Угостить Mochi кофе",
-   "id": "Traktir Mochi kopi",
-   "de": "Mochi einen Kaffee spendieren",
-   "tr": "Mochi’ye kahve ısmarla"
+  "Buy Huginn a coffee": {
+   "zh-Hans": "请 Huginn 喝咖啡",
+   "hi": "Huginn को कॉफ़ी पिलाएँ",
+   "es": "Invitar a Huginn a un café",
+   "ar": "ادعُ Huginn إلى قهوة",
+   "fr": "Offrir un café à Huginn",
+   "bn": "Huginn-কে কফি খাওয়ান",
+   "pt-BR": "Pagar um café para o Huginn",
+   "ru": "Угостить Huginn кофе",
+   "id": "Traktir Huginn kopi",
+   "de": "Huginn einen Kaffee spendieren",
+   "tr": "Huginn’ye kahve ısmarla"
   },
   "COMMANDS": {
    "zh-Hans": "命令",
@@ -1276,18 +1276,18 @@
    "de": "Screenshot für Claude aufnehmen",
    "tr": "Claude için ekran görüntüsü al"
   },
-  "Captured. Mochi has it.": {
-   "zh-Hans": "截好了，Mochi 吞下了它。",
+  "Captured. Huginn has it.": {
+   "zh-Hans": "截好了，Huginn 吞下了它。",
    "hi": "कैप्चर हो गया। मोची के पास है।",
-   "es": "Capturado. Mochi lo tiene.",
+   "es": "Capturado. Huginn lo tiene.",
    "ar": "تم الالتقاط. موتشي ابتلعه.",
-   "fr": "Capturé. Mochi l'a avalé.",
+   "fr": "Capturé. Huginn l'a avalé.",
    "bn": "ক্যাপচার হয়েছে। মোচির কাছে আছে।",
-   "pt-BR": "Capturado. O Mochi pegou.",
+   "pt-BR": "Capturado. O Huginn pegou.",
    "ru": "Готово. Мочи проглотил снимок.",
-   "id": "Tertangkap. Mochi menyimpannya.",
-   "de": "Aufgenommen. Mochi hat es.",
-   "tr": "Ekran görüntüsü alındı. Mochi'de."
+   "id": "Tertangkap. Huginn menyimpannya.",
+   "de": "Aufgenommen. Huginn hat es.",
+   "tr": "Ekran görüntüsü alındı. Huginn'de."
   },
   "Change plan": {
    "zh-Hans": "修改计划",
@@ -1484,18 +1484,18 @@
    "de": "Claude Code ist nicht angemeldet oder der Schlüssel ist nicht mehr gültig.",
    "tr": "Claude Code oturumu açık değil veya anahtarı artık geçerli değil."
   },
-  "Claude Code, Codex and the other agents Mochi follows.": {
-   "zh-Hans": "Mochi 关注的 Claude Code、Codex 和其他智能体。",
+  "Claude Code, Codex and the other agents Huginn follows.": {
+   "zh-Hans": "Huginn 关注的 Claude Code、Codex 和其他智能体。",
    "hi": "Claude Code, Codex और बाकी एजेंट जिन पर मोची नज़र रखता है।",
-   "es": "Claude Code, Codex y los demás agentes que sigue Mochi.",
+   "es": "Claude Code, Codex y los demás agentes que sigue Huginn.",
    "ar": "Claude Code وCodex وبقية الوكلاء الذين يتابعهم موتشي.",
-   "fr": "Claude Code, Codex et les autres agents que Mochi suit.",
+   "fr": "Claude Code, Codex et les autres agents que Huginn suit.",
    "bn": "Claude Code, Codex আর অন্য এজেন্ট যাদের মোচি অনুসরণ করে।",
-   "pt-BR": "Claude Code, Codex e os outros agentes que o Mochi acompanha.",
+   "pt-BR": "Claude Code, Codex e os outros agentes que o Huginn acompanha.",
    "ru": "Claude Code, Codex и другие агенты, за которыми следит Мочи.",
-   "id": "Claude Code, Codex, dan agen lain yang diikuti Mochi.",
-   "de": "Claude Code, Codex und die anderen Agenten, denen Mochi folgt.",
-   "tr": "Claude Code, Codex ve Mochi'nin takip ettiği diğer ajanlar."
+   "id": "Claude Code, Codex, dan agen lain yang diikuti Huginn.",
+   "de": "Claude Code, Codex und die anderen Agenten, denen Huginn folgt.",
+   "tr": "Claude Code, Codex ve Huginn'nin takip ettiği diğer ajanlar."
   },
   "Claude Desktop chats (experimental)": {
    "zh-Hans": "Claude Desktop 聊天（实验性）",
@@ -2381,18 +2381,18 @@
    "de": "Entwurf",
    "tr": "Taslak"
   },
-  "Drop a file named like one of Mochi's sounds (finish.wav, approval.mp3, greet.m4a…) in the sounds folder to replace it, then Reload.": {
-   "zh-Hans": "在声音文件夹中放入与 Mochi 某个声音同名的文件（finish.wav、approval.mp3、greet.m4a…）即可替换它，然后重新载入。",
-   "hi": "Mochi की किसी साउंड के नाम वाली फ़ाइल (finish.wav, approval.mp3, greet.m4a…) साउंड फ़ोल्डर में रखें, वह उसकी जगह ले लेगी; फिर Reload करें।",
-   "es": "Deja en la carpeta de sonidos un archivo con el nombre de uno de los sonidos de Mochi (finish.wav, approval.mp3, greet.m4a…) para reemplazarlo y luego recarga.",
-   "ar": "ضع في مجلد الأصوات ملفًا يحمل اسم أحد أصوات Mochi (finish.wav وapproval.mp3 وgreet.m4a…) ليحل محله، ثم أعد التحميل.",
-   "fr": "Déposez dans le dossier des sons un fichier nommé comme l'un des sons de Mochi (finish.wav, approval.mp3, greet.m4a…) pour le remplacer, puis rechargez.",
-   "bn": "Mochi-র কোনো সাউন্ডের নামে একটি ফাইল (finish.wav, approval.mp3, greet.m4a…) সাউন্ড ফোল্ডারে রাখুন, সেটি বদলে যাবে; তারপর Reload করুন।",
-   "pt-BR": "Coloque na pasta de sons um arquivo com o nome de um dos sons do Mochi (finish.wav, approval.mp3, greet.m4a…) para substituí-lo e depois recarregue.",
-   "ru": "Положите в папку звуков файл с именем одного из звуков Mochi (finish.wav, approval.mp3, greet.m4a…), чтобы заменить его, затем перезагрузите.",
-   "id": "Taruh file bernama seperti salah satu suara Mochi (finish.wav, approval.mp3, greet.m4a…) di folder suara untuk menggantinya, lalu muat ulang.",
-   "de": "Lege eine Datei mit dem Namen eines Mochi-Klangs (finish.wav, approval.mp3, greet.m4a…) im Klangordner ab, um ihn zu ersetzen. Lade die Klänge anschließend neu.",
-   "tr": "Mochi'nin seslerinden birini değiştirmek için aynı adı taşıyan bir dosyayı (finish.wav, approval.mp3, greet.m4a…) sesler klasörüne bırak, ardından sesleri yeniden yükle."
+  "Drop a file named like one of Huginn's sounds (finish.wav, approval.mp3, greet.m4a…) in the sounds folder to replace it, then Reload.": {
+   "zh-Hans": "在声音文件夹中放入与 Huginn 某个声音同名的文件（finish.wav、approval.mp3、greet.m4a…）即可替换它，然后重新载入。",
+   "hi": "Huginn की किसी साउंड के नाम वाली फ़ाइल (finish.wav, approval.mp3, greet.m4a…) साउंड फ़ोल्डर में रखें, वह उसकी जगह ले लेगी; फिर Reload करें।",
+   "es": "Deja en la carpeta de sonidos un archivo con el nombre de uno de los sonidos de Huginn (finish.wav, approval.mp3, greet.m4a…) para reemplazarlo y luego recarga.",
+   "ar": "ضع في مجلد الأصوات ملفًا يحمل اسم أحد أصوات Huginn (finish.wav وapproval.mp3 وgreet.m4a…) ليحل محله، ثم أعد التحميل.",
+   "fr": "Déposez dans le dossier des sons un fichier nommé comme l'un des sons de Huginn (finish.wav, approval.mp3, greet.m4a…) pour le remplacer, puis rechargez.",
+   "bn": "Huginn-র কোনো সাউন্ডের নামে একটি ফাইল (finish.wav, approval.mp3, greet.m4a…) সাউন্ড ফোল্ডারে রাখুন, সেটি বদলে যাবে; তারপর Reload করুন।",
+   "pt-BR": "Coloque na pasta de sons um arquivo com o nome de um dos sons do Huginn (finish.wav, approval.mp3, greet.m4a…) para substituí-lo e depois recarregue.",
+   "ru": "Положите в папку звуков файл с именем одного из звуков Huginn (finish.wav, approval.mp3, greet.m4a…), чтобы заменить его, затем перезагрузите.",
+   "id": "Taruh file bernama seperti salah satu suara Huginn (finish.wav, approval.mp3, greet.m4a…) di folder suara untuk menggantinya, lalu muat ulang.",
+   "de": "Lege eine Datei mit dem Namen eines Huginn-Klangs (finish.wav, approval.mp3, greet.m4a…) im Klangordner ab, um ihn zu ersetzen. Lade die Klänge anschließend neu.",
+   "tr": "Huginn'nin seslerinden birini değiştirmek için aynı adı taşıyan bir dosyayı (finish.wav, approval.mp3, greet.m4a…) sesler klasörüne bırak, ardından sesleri yeniden yükle."
   },
   "Drop a file or window, or ask me anything.": {
    "zh-Hans": "拖入文件或窗口，或问我任何问题。",
@@ -2979,18 +2979,18 @@
    "de": "Freihändig",
    "tr": "Eller serbest"
   },
-  "He sweats when the processor is at full load, flushes when the Mac is hot, puffs up when memory is short and gets sleepy when the battery is low. Point at Mochi to see why. Read only while Mochi is on screen; nothing leaves your Mac.": {
-   "zh-Hans": "处理器满载时他会流汗，Mac 发热时他会脸红，内存不足时他会鼓起来，电量低时他会犯困。把指针放到 Mochi 上就能看到原因。仅在 Mochi 显示时读取，所有数据都留在你的 Mac 上。",
+  "He sweats when the processor is at full load, flushes when the Mac is hot, puffs up when memory is short and gets sleepy when the battery is low. Point at Huginn to see why. Read only while Huginn is on screen; nothing leaves your Mac.": {
+   "zh-Hans": "处理器满载时他会流汗，Mac 发热时他会脸红，内存不足时他会鼓起来，电量低时他会犯困。把指针放到 Huginn 上就能看到原因。仅在 Huginn 显示时读取，所有数据都留在你的 Mac 上。",
    "hi": "प्रोसेसर पूरी तरह व्यस्त हो तो उसे पसीना आता है, Mac गर्म हो तो वह लाल हो जाता है, मेमोरी कम हो तो फूल जाता है और बैटरी कम हो तो उसे नींद आती है। वजह देखने के लिए मोची पर पॉइंटर रखें। सिर्फ़ तब पढ़ा जाता है जब मोची स्क्रीन पर हो; कुछ भी आपके Mac से बाहर नहीं जाता।",
-   "es": "Suda cuando el procesador va al máximo, se pone rojo cuando el Mac se calienta, se hincha cuando falta memoria y le entra sueño cuando la batería está baja. Señala a Mochi para ver por qué. Solo se lee mientras Mochi está en pantalla; nada sale de tu Mac.",
+   "es": "Suda cuando el procesador va al máximo, se pone rojo cuando el Mac se calienta, se hincha cuando falta memoria y le entra sueño cuando la batería está baja. Señala a Huginn para ver por qué. Solo se lee mientras Huginn está en pantalla; nada sale de tu Mac.",
    "ar": "يتعرّق عندما يعمل المعالج بأقصى طاقته، ويحمرّ عندما يسخن جهاز Mac، وينتفخ عندما تنقص الذاكرة، ويغفو عندما تضعف البطارية. ضع المؤشر على موتشي لترى السبب. لا تتم القراءة إلا عندما يكون موتشي على الشاشة، ولا يغادر شيء جهازك.",
-   "fr": "Il transpire quand le processeur est à fond, rougit quand le Mac chauffe, gonfle quand la mémoire manque et s'endort quand la batterie est faible. Pointe Mochi pour voir pourquoi. Lu seulement quand Mochi est à l'écran ; rien ne quitte ton Mac.",
+   "fr": "Il transpire quand le processeur est à fond, rougit quand le Mac chauffe, gonfle quand la mémoire manque et s'endort quand la batterie est faible. Pointe Huginn pour voir pourquoi. Lu seulement quand Huginn est à l'écran ; rien ne quitte ton Mac.",
    "bn": "প্রসেসর পুরো চাপে থাকলে সে ঘামে, Mac গরম হলে লাল হয়ে যায়, মেমরি কম পড়লে ফুলে ওঠে আর ব্যাটারি কম হলে ঘুম পায়। কারণ দেখতে মোচির ওপর পয়েন্টার রাখুন। মোচি স্ক্রিনে থাকলেই শুধু পড়া হয়; কিছুই আপনার Mac ছেড়ে যায় না।",
-   "pt-BR": "Ele sua quando o processador está no máximo, fica vermelho quando o Mac esquenta, incha quando falta memória e fica com sono quando a bateria está fraca. Aponte para o Mochi para ver por quê. Só é lido enquanto o Mochi está na tela; nada sai do seu Mac.",
+   "pt-BR": "Ele sua quando o processador está no máximo, fica vermelho quando o Mac esquenta, incha quando falta memória e fica com sono quando a bateria está fraca. Aponte para o Huginn para ver por quê. Só é lido enquanto o Huginn está na tela; nada sai do seu Mac.",
    "ru": "Он потеет, когда процессор загружен полностью, краснеет, когда Mac нагревается, раздувается, когда не хватает памяти, и засыпает, когда батарея садится. Наведите на Мочи, чтобы узнать причину. Читается, только пока Мочи на экране; ничего не покидает ваш Mac.",
-   "id": "Dia berkeringat saat prosesor bekerja penuh, memerah saat Mac panas, menggembung saat memori kurang, dan mengantuk saat baterai lemah. Arahkan penunjuk ke Mochi untuk melihat alasannya. Hanya dibaca saat Mochi ada di layar; tidak ada yang keluar dari Mac-mu.",
-   "de": "Er schwitzt, wenn der Prozessor voll ausgelastet ist, wird rot, wenn der Mac heiß ist, bläht sich bei knappem Arbeitsspeicher auf und wird bei niedrigem Batteriestand müde. Zeige auf Mochi, um den Grund zu sehen. Die Werte werden nur gelesen, solange Mochi auf dem Bildschirm ist; nichts verlässt deinen Mac.",
-   "tr": "İşlemci tam yükteyken terler, Mac ısındığında kızarır, bellek azaldığında şişer ve pil azaldığında uykusu gelir. Nedenini görmek için imleci Mochi'nin üzerine getir. Bilgiler yalnızca Mochi ekrandayken okunur; hiçbir şey Mac'inden dışarı çıkmaz."
+   "id": "Dia berkeringat saat prosesor bekerja penuh, memerah saat Mac panas, menggembung saat memori kurang, dan mengantuk saat baterai lemah. Arahkan penunjuk ke Huginn untuk melihat alasannya. Hanya dibaca saat Huginn ada di layar; tidak ada yang keluar dari Mac-mu.",
+   "de": "Er schwitzt, wenn der Prozessor voll ausgelastet ist, wird rot, wenn der Mac heiß ist, bläht sich bei knappem Arbeitsspeicher auf und wird bei niedrigem Batteriestand müde. Zeige auf Huginn, um den Grund zu sehen. Die Werte werden nur gelesen, solange Huginn auf dem Bildschirm ist; nichts verlässt deinen Mac.",
+   "tr": "İşlemci tam yükteyken terler, Mac ısındığında kızarır, bellek azaldığında şişer ve pil azaldığında uykusu gelir. Nedenini görmek için imleci Huginn'nin üzerine getir. Bilgiler yalnızca Huginn ekrandayken okunur; hiçbir şey Mac'inden dışarı çıkmaz."
   },
   "Heard, e.g. cloud code": {
    "zh-Hans": "听到的，例如 cloud code",
@@ -3303,6 +3303,84 @@
    "id": "Mengarahkan kursor ke pulau akan membukanya; pulau menutup lagi sesaat setelah kursor pergi. Klik di dalamnya agar tetap terbuka.",
    "de": "Die Insel öffnet sich, wenn du den Mauszeiger darüber bewegst, und klappt kurz nach dem Verlassen wieder zu. Klicke hinein, damit sie geöffnet bleibt.",
    "tr": "İşaretçiyi adanın üzerine getirdiğinde ada açılır; işaretçi ayrıldıktan kısa süre sonra tekrar kapanır. Açık tutmak için içine tıkla."
+  },
+  "Huginn and your Mac": {
+   "zh-Hans": "Huginn 和你的 Mac",
+   "hi": "मोची और आपका Mac",
+   "es": "Huginn y tu Mac",
+   "ar": "موتشي وجهاز Mac",
+   "fr": "Huginn et ton Mac",
+   "bn": "মোচি আর আপনার Mac",
+   "pt-BR": "Huginn e seu Mac",
+   "ru": "Мочи и ваш Mac",
+   "id": "Huginn dan Mac-mu",
+   "de": "Huginn und dein Mac",
+   "tr": "Huginn ve Mac'in"
+  },
+  "Huginn checks Bifrost’s releases on GitHub a few times a day and tells you when one is out. Nothing about you is sent.": {
+   "zh-Hans": "Huginn 每天会在 GitHub 上查看几次 Bifrost 的版本，有新版本时告诉你。不会发送任何关于你的信息。",
+   "hi": "Huginn दिन में कुछ बार GitHub पर Bifrost के रिलीज़ देखता है और नया आने पर बताता है। आपके बारे में कुछ नहीं भेजा जाता।",
+   "es": "Huginn revisa las versiones de Bifrost en GitHub unas veces al día y te avisa cuando sale una. No se envía nada sobre ti.",
+   "ar": "يتحقق Huginn من إصدارات Bifrost على GitHub بضع مرات يوميًا ويخبرك عند صدور إصدار جديد. لا يُرسَل أي شيء عنك.",
+   "fr": "Huginn regarde les versions de Bifrost sur GitHub quelques fois par jour et te prévient quand il y en a une. Rien sur toi n’est envoyé.",
+   "bn": "Huginn দিনে কয়েকবার GitHub-এ Bifrost-র রিলিজ দেখে এবং নতুন এলে জানায়। আপনার সম্পর্কে কিছুই পাঠানো হয় না।",
+   "pt-BR": "O Huginn verifica as versões do Bifrost no GitHub algumas vezes por dia e avisa quando sai uma. Nada sobre você é enviado.",
+   "ru": "Huginn несколько раз в день проверяет релизы Bifrost на GitHub и сообщает о новых. О вас ничего не отправляется.",
+   "id": "Huginn memeriksa rilis Bifrost di GitHub beberapa kali sehari dan memberi tahu saat ada yang baru. Tidak ada data tentangmu yang dikirim.",
+   "de": "Huginn schaut ein paar Mal am Tag nach Bifrosts Releases auf GitHub und sagt dir, wenn eine neue da ist. Über dich wird nichts gesendet.",
+   "tr": "Huginn, Bifrost'nun GitHub'daki sürümlerine günde birkaç kez bakar ve yenisi çıkınca sana söyler. Seninle ilgili hiçbir şey gönderilmez."
+  },
+  "Huginn jumps when a chat reply is ready": {
+   "zh-Hans": "聊天回复完成时 Huginn 会跳起来",
+   "hi": "चैट का जवाब तैयार होने पर Huginn उछलता है",
+   "es": "Huginn salta cuando una respuesta del chat está lista",
+   "ar": "يقفز Huginn عندما يجهز رد الدردشة",
+   "fr": "Huginn saute quand une réponse de chat est prête",
+   "bn": "চ্যাটের উত্তর প্রস্তুত হলে Huginn লাফায়",
+   "pt-BR": "O Huginn pula quando uma resposta do chat fica pronta",
+   "ru": "Huginn подпрыгивает, когда ответ в чате готов",
+   "id": "Huginn melompat saat balasan chat siap",
+   "de": "Huginn springt, wenn eine Chat-Antwort bereit ist",
+   "tr": "Bir sohbet yanıtı hazır olduğunda Huginn zıplar"
+  },
+  "Huginn reacts to your Mac": {
+   "zh-Hans": "Huginn 会对你的 Mac 做出反应",
+   "hi": "मोची आपके Mac पर प्रतिक्रिया देता है",
+   "es": "Huginn reacciona a tu Mac",
+   "ar": "يتفاعل موتشي مع جهاز Mac",
+   "fr": "Huginn réagit à ton Mac",
+   "bn": "মোচি আপনার Mac-এ সাড়া দেয়",
+   "pt-BR": "Huginn reage ao seu Mac",
+   "ru": "Мочи реагирует на ваш Mac",
+   "id": "Huginn bereaksi pada Mac-mu",
+   "de": "Huginn reagiert auf deinen Mac",
+   "tr": "Huginn Mac'inin durumuna tepki verir"
+  },
+  "Huginn to desktop on/off": {
+   "zh-Hans": "Huginn 桌面开/关",
+   "hi": "Huginn डेस्कटॉप पर चालू / बंद",
+   "es": "Huginn en el escritorio sí / no",
+   "ar": "Huginn على / إيقاف سطح المكتب",
+   "fr": "Huginn sur le bureau oui / non",
+   "bn": "Huginn ডেস্কটপে চালু / বন্ধ",
+   "pt-BR": "Huginn na área de trabalho sim / não",
+   "ru": "Huginn на рабочем столе вкл / выкл",
+   "id": "Huginn di desktop ya / tidak",
+   "de": "Huginn auf dem Desktop ein/aus",
+   "tr": "Huginn'yi masaüstüne taşı / geri getir"
+  },
+  "Huginn, his sounds and how the notch behaves.": {
+   "zh-Hans": "Huginn、它的声音和刘海的行为。",
+   "hi": "मोची, उसकी आवाज़ें और नॉच का व्यवहार।",
+   "es": "Huginn, sus sonidos y cómo se comporta el notch.",
+   "ar": "موتشي وأصواته وسلوك النوتش.",
+   "fr": "Huginn, ses sons et le comportement du notch.",
+   "bn": "মোচি, তার শব্দ আর নচের আচরণ।",
+   "pt-BR": "O Huginn, seus sons e o comportamento do notch.",
+   "ru": "Мочи, его звуки и поведение чёлки.",
+   "id": "Huginn, suaranya, dan perilaku notch.",
+   "de": "Huginn, seine Klänge und das Verhalten der Notch.",
+   "tr": "Huginn, sesleri ve çentiğin davranışı."
   },
   "Inbox": {
    "zh-Hans": "收件箱",
@@ -4032,84 +4110,6 @@
    "de": "Empfänger fehlt.",
    "tr": "Alıcı eksik."
   },
-  "Mochi and your Mac": {
-   "zh-Hans": "Mochi 和你的 Mac",
-   "hi": "मोची और आपका Mac",
-   "es": "Mochi y tu Mac",
-   "ar": "موتشي وجهاز Mac",
-   "fr": "Mochi et ton Mac",
-   "bn": "মোচি আর আপনার Mac",
-   "pt-BR": "Mochi e seu Mac",
-   "ru": "Мочи и ваш Mac",
-   "id": "Mochi dan Mac-mu",
-   "de": "Mochi und dein Mac",
-   "tr": "Mochi ve Mac'in"
-  },
-  "Mochi checks Bifrost’s releases on GitHub a few times a day and tells you when one is out. Nothing about you is sent.": {
-   "zh-Hans": "Mochi 每天会在 GitHub 上查看几次 Bifrost 的版本，有新版本时告诉你。不会发送任何关于你的信息。",
-   "hi": "Mochi दिन में कुछ बार GitHub पर Bifrost के रिलीज़ देखता है और नया आने पर बताता है। आपके बारे में कुछ नहीं भेजा जाता।",
-   "es": "Mochi revisa las versiones de Bifrost en GitHub unas veces al día y te avisa cuando sale una. No se envía nada sobre ti.",
-   "ar": "يتحقق Mochi من إصدارات Bifrost على GitHub بضع مرات يوميًا ويخبرك عند صدور إصدار جديد. لا يُرسَل أي شيء عنك.",
-   "fr": "Mochi regarde les versions de Bifrost sur GitHub quelques fois par jour et te prévient quand il y en a une. Rien sur toi n’est envoyé.",
-   "bn": "Mochi দিনে কয়েকবার GitHub-এ Bifrost-র রিলিজ দেখে এবং নতুন এলে জানায়। আপনার সম্পর্কে কিছুই পাঠানো হয় না।",
-   "pt-BR": "O Mochi verifica as versões do Bifrost no GitHub algumas vezes por dia e avisa quando sai uma. Nada sobre você é enviado.",
-   "ru": "Mochi несколько раз в день проверяет релизы Bifrost на GitHub и сообщает о новых. О вас ничего не отправляется.",
-   "id": "Mochi memeriksa rilis Bifrost di GitHub beberapa kali sehari dan memberi tahu saat ada yang baru. Tidak ada data tentangmu yang dikirim.",
-   "de": "Mochi schaut ein paar Mal am Tag nach Bifrosts Releases auf GitHub und sagt dir, wenn eine neue da ist. Über dich wird nichts gesendet.",
-   "tr": "Mochi, Bifrost'nun GitHub'daki sürümlerine günde birkaç kez bakar ve yenisi çıkınca sana söyler. Seninle ilgili hiçbir şey gönderilmez."
-  },
-  "Mochi jumps when a chat reply is ready": {
-   "zh-Hans": "聊天回复完成时 Mochi 会跳起来",
-   "hi": "चैट का जवाब तैयार होने पर Mochi उछलता है",
-   "es": "Mochi salta cuando una respuesta del chat está lista",
-   "ar": "يقفز Mochi عندما يجهز رد الدردشة",
-   "fr": "Mochi saute quand une réponse de chat est prête",
-   "bn": "চ্যাটের উত্তর প্রস্তুত হলে Mochi লাফায়",
-   "pt-BR": "O Mochi pula quando uma resposta do chat fica pronta",
-   "ru": "Mochi подпрыгивает, когда ответ в чате готов",
-   "id": "Mochi melompat saat balasan chat siap",
-   "de": "Mochi springt, wenn eine Chat-Antwort bereit ist",
-   "tr": "Bir sohbet yanıtı hazır olduğunda Mochi zıplar"
-  },
-  "Mochi reacts to your Mac": {
-   "zh-Hans": "Mochi 会对你的 Mac 做出反应",
-   "hi": "मोची आपके Mac पर प्रतिक्रिया देता है",
-   "es": "Mochi reacciona a tu Mac",
-   "ar": "يتفاعل موتشي مع جهاز Mac",
-   "fr": "Mochi réagit à ton Mac",
-   "bn": "মোচি আপনার Mac-এ সাড়া দেয়",
-   "pt-BR": "Mochi reage ao seu Mac",
-   "ru": "Мочи реагирует на ваш Mac",
-   "id": "Mochi bereaksi pada Mac-mu",
-   "de": "Mochi reagiert auf deinen Mac",
-   "tr": "Mochi Mac'inin durumuna tepki verir"
-  },
-  "Mochi to desktop on/off": {
-   "zh-Hans": "Mochi 桌面开/关",
-   "hi": "Mochi डेस्कटॉप पर चालू / बंद",
-   "es": "Mochi en el escritorio sí / no",
-   "ar": "Mochi على / إيقاف سطح المكتب",
-   "fr": "Mochi sur le bureau oui / non",
-   "bn": "Mochi ডেস্কটপে চালু / বন্ধ",
-   "pt-BR": "Mochi na área de trabalho sim / não",
-   "ru": "Mochi на рабочем столе вкл / выкл",
-   "id": "Mochi di desktop ya / tidak",
-   "de": "Mochi auf dem Desktop ein/aus",
-   "tr": "Mochi'yi masaüstüne taşı / geri getir"
-  },
-  "Mochi, his sounds and how the notch behaves.": {
-   "zh-Hans": "Mochi、它的声音和刘海的行为。",
-   "hi": "मोची, उसकी आवाज़ें और नॉच का व्यवहार।",
-   "es": "Mochi, sus sonidos y cómo se comporta el notch.",
-   "ar": "موتشي وأصواته وسلوك النوتش.",
-   "fr": "Mochi, ses sons et le comportement du notch.",
-   "bn": "মোচি, তার শব্দ আর নচের আচরণ।",
-   "pt-BR": "O Mochi, seus sons e o comportamento do notch.",
-   "ru": "Мочи, его звуки и поведение чёлки.",
-   "id": "Mochi, suaranya, dan perilaku notch.",
-   "de": "Mochi, seine Klänge und das Verhalten der Notch.",
-   "tr": "Mochi, sesleri ve çentiğin davranışı."
-  },
   "Model": {
    "zh-Hans": "模型",
    "hi": "मॉडल",
@@ -4162,18 +4162,18 @@
    "de": "Moonshot-Schlüssel gespeichert.",
    "tr": "Moonshot anahtarı kaydedildi."
   },
-  "Move Mochi to my iPhone's Dynamic Island when my Mac is locked": {
-   "zh-Hans": "Mac 锁定时将 Mochi 移至我 iPhone 的灵动岛",
-   "hi": "Mac लॉक होने पर Mochi को मेरे iPhone की Dynamic Island पर ले जाएं",
-   "es": "Mover a Mochi a la Dynamic Island de mi iPhone cuando mi Mac esté bloqueado",
-   "ar": "نقل Mochi إلى Dynamic Island في iPhone عند إغلاق Mac",
-   "fr": "Déplacer Mochi vers la Dynamic Island de mon iPhone quand mon Mac est verrouillé",
-   "bn": "Mac লক থাকলে Mochi-কে আমার iPhone-এর Dynamic Island-এ নিয়ে যান",
-   "pt-BR": "Mover o Mochi para a Dynamic Island do meu iPhone quando meu Mac estiver bloqueado",
-   "ru": "Переносить Mochi на Dynamic Island моего iPhone, когда Mac заблокирован",
-   "id": "Pindahkan Mochi ke Dynamic Island iPhone saya saat Mac terkunci",
-   "de": "Mochi bei gesperrtem Mac in die Dynamic Island meines iPhone verschieben",
-   "tr": "Mac'im kilitlendiğinde Mochi'yi iPhone'umun Dynamic Island'ına taşı"
+  "Move Huginn to my iPhone's Dynamic Island when my Mac is locked": {
+   "zh-Hans": "Mac 锁定时将 Huginn 移至我 iPhone 的灵动岛",
+   "hi": "Mac लॉक होने पर Huginn को मेरे iPhone की Dynamic Island पर ले जाएं",
+   "es": "Mover a Huginn a la Dynamic Island de mi iPhone cuando mi Mac esté bloqueado",
+   "ar": "نقل Huginn إلى Dynamic Island في iPhone عند إغلاق Mac",
+   "fr": "Déplacer Huginn vers la Dynamic Island de mon iPhone quand mon Mac est verrouillé",
+   "bn": "Mac লক থাকলে Huginn-কে আমার iPhone-এর Dynamic Island-এ নিয়ে যান",
+   "pt-BR": "Mover o Huginn para a Dynamic Island do meu iPhone quando meu Mac estiver bloqueado",
+   "ru": "Переносить Huginn на Dynamic Island моего iPhone, когда Mac заблокирован",
+   "id": "Pindahkan Huginn ke Dynamic Island iPhone saya saat Mac terkunci",
+   "de": "Huginn bei gesperrtem Mac in die Dynamic Island meines iPhone verschieben",
+   "tr": "Mac'im kilitlendiğinde Huginn'yi iPhone'umun Dynamic Island'ına taşı"
   },
   "Muse Code hooks": {
    "zh-Hans": "Muse Code 钩子",
@@ -6840,18 +6840,18 @@
    "de": "Codex-Tarif in der Notch anzeigen",
    "tr": "Codex planını adada göster"
   },
-  "Show Mochi on": {
-   "zh-Hans": "Mochi 显示在",
+  "Show Huginn on": {
+   "zh-Hans": "Huginn 显示在",
    "hi": "मोची को यहाँ दिखाएँ",
-   "es": "Mostrar a Mochi en",
+   "es": "Mostrar a Huginn en",
    "ar": "عرض موتشي على",
-   "fr": "Afficher Mochi sur",
+   "fr": "Afficher Huginn sur",
    "bn": "মোচিকে দেখান",
-   "pt-BR": "Mostrar o Mochi em",
+   "pt-BR": "Mostrar o Huginn em",
    "ru": "Показывать Мочи на",
-   "id": "Tampilkan Mochi di",
-   "de": "Mochi anzeigen auf",
-   "tr": "Mochi'yi göster:"
+   "id": "Tampilkan Huginn di",
+   "de": "Huginn anzeigen auf",
+   "tr": "Huginn'yi göster:"
   },
   "Show approval requests in the notch": {
    "zh-Hans": "在刘海中显示审批请求",
@@ -9258,18 +9258,18 @@
    "de": "vor {n} Min.",
    "tr": "{n} dk önce"
   },
-  "« OK Bifrost », Mochi's voice and the dictation key.": {
-   "zh-Hans": "“OK Bifrost”、Mochi 的声音和听写按键。",
+  "« OK Bifrost », Huginn's voice and the dictation key.": {
+   "zh-Hans": "“OK Bifrost”、Huginn 的声音和听写按键。",
    "hi": "“OK Bifrost”, मोची की आवाज़ और डिक्टेशन कुंजी।",
-   "es": "«OK Bifrost», la voz de Mochi y la tecla de dictado.",
+   "es": "«OK Bifrost», la voz de Huginn y la tecla de dictado.",
    "ar": "«OK Bifrost» وصوت موتشي ومفتاح الإملاء.",
-   "fr": "« OK Bifrost », la voix de Mochi et la touche de dictée.",
+   "fr": "« OK Bifrost », la voix de Huginn et la touche de dictée.",
    "bn": "“OK Bifrost”, মোচির কণ্ঠ আর ডিক্টেশন কী।",
-   "pt-BR": "“OK Bifrost”, a voz do Mochi e a tecla de ditado.",
+   "pt-BR": "“OK Bifrost”, a voz do Huginn e a tecla de ditado.",
    "ru": "«OK Bifrost», голос Мочи и клавиша диктовки.",
-   "id": "“OK Bifrost”, suara Mochi, dan tombol dikte.",
-   "de": "« OK Bifrost », Mochis Stimme und die Diktiertaste.",
-   "tr": "« OK Bifrost », Mochi'nin sesi ve dikte tuşu."
+   "id": "“OK Bifrost”, suara Huginn, dan tombol dikte.",
+   "de": "« OK Bifrost », Huginns Stimme und die Diktiertaste.",
+   "tr": "« OK Bifrost », Huginn'nin sesi ve dikte tuşu."
   },
   "« OK Bifrost » — voice wake word": {
    "zh-Hans": "« OK Bifrost » — 语音唤醒词",

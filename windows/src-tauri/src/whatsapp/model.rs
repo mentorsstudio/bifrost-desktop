@@ -177,7 +177,7 @@ impl Inbox {
         self.conversations.values().map(|c| c.unread).sum()
     }
 
-    /// Adds a message to its conversation. `Notify` when it should reach you (Mochi reacts),
+    /// Adds a message to its conversation. `Notify` when it should reach you (Huginn reacts),
     /// `Quiet` when it is kept but stays silent (a muted group, your own message).
     /// `history`: an older message loaded on demand: kept, never counted as unread, never announced.
     pub fn add(&mut self, message: Message, filters: &Filters, name: Option<&str>, history: bool) -> Outcome {

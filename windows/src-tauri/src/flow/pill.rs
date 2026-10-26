@@ -1,6 +1,6 @@
 // The pill of Flow dictation: a small see-through capsule at the bottom of the
 // screen (or on its left or right edge) while dictation is on. It opens into
-// Mochi and nine dots while you speak, into a toolbar under the pointer, and
+// Huginn and nine dots while you speak, into a toolbar under the pointer, and
 // shows a call being recorded and short messages. Port of FlowPill.swift.
 //
 // Its window is borderless, transparent, always on top, never takes the

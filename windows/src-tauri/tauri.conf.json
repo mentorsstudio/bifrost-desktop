@@ -51,8 +51,8 @@
     "resources": { "../target/release/bifrost-hook.exe": "bifrost-hook.exe" },
     "copyright": "Bifrost © Paulo — baseado no Coucou © Louis Raille (MIT)",
     "category": "DeveloperTool",
-    "shortDescription": "Mochi lives at the top of your screen",
-    "longDescription": "Bifrost puts Mochi at the top of your screen: it shows your Claude Code sessions and a few integrations, and lets you approve, answer, chat and drop files without leaving what you are doing.",
+    "shortDescription": "Huginn lives at the top of your screen",
+    "longDescription": "Bifrost puts Huginn at the top of your screen: it shows your Claude Code sessions and a few integrations, and lets you approve, answer, chat and drop files without leaving what you are doing.",
     "windows": {
       "nsis": {
         "installMode": "currentUser",

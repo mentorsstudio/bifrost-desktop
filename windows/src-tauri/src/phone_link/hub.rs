@@ -160,11 +160,10 @@ pub struct ApprovalIn {
     pub command: String,
 }
 
-/// The values the island stores for Mochi's wardrobe ("auto" follows the seasons on the phone's own calendar).
-/// Same raw values as the Mac and the PC; anything else is not sent.
-pub const OUTFIT_CHOICES: [&str; 13] = [
-    "auto", "none", "partyHat", "beanie", "crown", "sunglasses", "roundGlasses",
-    "bow", "scarf", "witchHat", "pumpkin", "santaHat", "bunnyEars",
+/// The values the island stores for Huginn's wardrobe ("auto" follows the seasons on the phone's own calendar).
+/// Huginn's adornments (Bifrost); anything else is not sent.
+pub const OUTFIT_CHOICES: [&str; 8] = [
+    "auto", "none", "auroraHalo", "runeBand", "frostScarf", "starCrown", "helm", "lantern",
 ];
 
 fn clean_services(cards: Vec<ServiceIn>) -> Vec<ServiceIn> {
@@ -500,7 +499,7 @@ struct Sub {
     details: bool,
     /// The phone asked for `answers` and the user's switch was on when it connected.
     answers: bool,
-    /// The phone asked for `prefs` (the outfit Mochi wears on the computer).
+    /// The phone asked for `prefs` (the outfit Huginn wears on the computer).
     prefs: bool,
     /// The phone asked for `diffs` and the user's switch was on when it connected.
     diffs: bool,
@@ -536,7 +535,7 @@ struct Inner {
     sessions: Vec<Session>,
     approval: Option<Approval>,
     question: Option<Question>,
-    /// What Mochi wears on the computer: one of [`OUTFIT_CHOICES`]; None until the island has said.
+    /// What Huginn wears on the computer: one of [`OUTFIT_CHOICES`]; None until the island has said.
     outfit: Option<&'static str>,
     /// The last `usage` line (None: the island has nothing to say).
     usage: Option<Arc<str>>,
@@ -890,7 +889,7 @@ impl Hub {
         }
     }
 
-    /// What Mochi wears on the computer ("auto" or an outfit, see [`OUTFIT_CHOICES`]); anything else is ignored.
+    /// What Huginn wears on the computer ("auto" or an outfit, see [`OUTFIT_CHOICES`]); anything else is ignored.
     /// Only phones that have `prefs` hear of it, and a new one at once.
     pub fn publish_outfit(&self, outfit: &str) {
         let Some(choice) = OUTFIT_CHOICES.iter().find(|c| **c == outfit) else { return };
@@ -1765,26 +1764,26 @@ mod tests {
     #[test]
     fn a_phone_with_prefs_hears_the_outfit_when_it_connects_and_whenever_it_changes() {
         let (hub, _) = hub();
-        hub.publish_outfit("beanie");
+        hub.publish_outfit("helm");
         let (tx, mut rx) = mpsc::channel(16);
         hub.subscribe_with(tx, 1_000, Caps { prefs: true, ..Caps::default() });
         let first = drain(&mut rx);
-        assert!(first.iter().any(|l| l["type"] == "prefs" && l["outfit"] == "beanie"), "{first:?}");
-        hub.publish_outfit("crown");
+        assert!(first.iter().any(|l| l["type"] == "prefs" && l["outfit"] == "helm"), "{first:?}");
+        hub.publish_outfit("starCrown");
         let next = drain(&mut rx);
         assert_eq!(next.len(), 1);
-        assert_eq!(next[0], serde_json::json!({ "type": "prefs", "outfit": "crown" }));
-        hub.publish_outfit("crown"); // the same again: nothing new
+        assert_eq!(next[0], serde_json::json!({ "type": "prefs", "outfit": "starCrown" }));
+        hub.publish_outfit("starCrown"); // the same again: nothing new
         assert!(drain(&mut rx).is_empty());
     }
 
     #[test]
     fn a_phone_without_prefs_never_hears_of_the_outfit() {
         let (hub, _) = hub();
-        hub.publish_outfit("scarf");
+        hub.publish_outfit("frostScarf");
         let (tx, mut rx) = mpsc::channel(16);
         hub.subscribe_with(tx, 1_000, Caps { details: true, answers: true, ..Caps::default() });
-        hub.publish_outfit("bow");
+        hub.publish_outfit("auroraHalo");
         assert!(drain(&mut rx).iter().all(|l| l["type"] != "prefs"));
     }
 
@@ -1794,7 +1793,7 @@ mod tests {
         let (tx, mut rx) = mpsc::channel(16);
         hub.subscribe_with(tx, 1_000, Caps { prefs: true, ..Caps::default() });
         drain(&mut rx);
-        for bad in ["", "topHat", "Beanie", "beanie ", "../../etc", "auto\nauto"] {
+        for bad in ["", "topHat", "beanie", "Helm", "helm ", "../../etc", "auto\nauto"] {
             hub.publish_outfit(bad);
         }
         assert!(drain(&mut rx).is_empty());

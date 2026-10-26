@@ -105,18 +105,18 @@
         {
           "icon": "update",
           "title": {
-            "en": "Mochi turns blue for updates",
-            "fr": "Mochi bleu pour les mises à jour",
-            "es": "Mochi azul cuando hay versión nueva",
-            "pt-BR": "Mochi azul quando há versão nova",
-            "ru": "Синий Mochi — есть обновление",
-            "zh-Hans": "有更新时 Mochi 变蓝",
-            "hi": "अपडेट पर Mochi नीला",
-            "ar": "Mochi يتحول للأزرق عند التحديث",
-            "bn": "আপডেটে Mochi নীল",
-            "id": "Mochi biru saat ada pembaruan",
-            "de": "Mochi wird blau bei Updates",
-            "tr": "Güncellemede Mochi maviye döner"
+            "en": "Huginn turns blue for updates",
+            "fr": "Huginn bleu pour les mises à jour",
+            "es": "Huginn azul cuando hay versión nueva",
+            "pt-BR": "Huginn azul quando há versão nova",
+            "ru": "Синий Huginn — есть обновление",
+            "zh-Hans": "有更新时 Huginn 变蓝",
+            "hi": "अपडेट पर Huginn नीला",
+            "ar": "Huginn يتحول للأزرق عند التحديث",
+            "bn": "আপডেটে Huginn নীল",
+            "id": "Huginn biru saat ada pembaruan",
+            "de": "Huginn wird blau bei Updates",
+            "tr": "Güncellemede Huginn maviye döner"
           },
           "detail": {
             "en": "A new version turns him blue, in the island and the tray. On Windows, one click installs it.",

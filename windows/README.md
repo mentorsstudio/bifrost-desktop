@@ -6,7 +6,7 @@
 
 # Bifrost for Windows
 
-**Mochi doesn't get a notch on a PC — so it lives at the top of your screen instead.**
+**Huginn doesn't get a notch on a PC — so it lives at the top of your screen instead.**
 
 Approve Claude Code permissions, watch your session work, drop a file, chat with Claude, keep an eye on your services — without leaving what you're doing.
 
@@ -17,7 +17,7 @@ Approve Claude Code permissions, watch your session work, drop a file, chat with
 
 </div>
 
-<img src="screenshots/greeting.png" width="640" alt="Mochi waving hello at launch">
+<img src="screenshots/greeting.png" width="640" alt="Huginn waving hello at launch">
 
 ---
 
@@ -44,33 +44,33 @@ You can also [build it yourself](#build-it-yourself).
 
 ## Using it
 
-<img src="screenshots/compact.png" width="292" alt="The compact island, with the integration pills as mini Mochis">
+<img src="screenshots/compact.png" width="292" alt="The compact island, with the integration pills as mini Huginns">
 <img src="screenshots/overview.png" width="640" alt="The overview: the focused integration on the left, the other pills on the right">
 <img src="screenshots/approval.png" width="640" alt="A Claude Code permission request, with Deny and Allow">
 <img src="screenshots/chat.png" width="640" alt="Chatting with Claude from the island">
-<img src="screenshots/drop.png" width="640" alt="Mochi turned into a box, waiting for a file">
+<img src="screenshots/drop.png" width="640" alt="Huginn turned into a box, waiting for a file">
 
 | What you do | What happens |
 |---|---|
-| Move the mouse to the very top-centre of the screen | Mochi peeks out |
+| Move the mouse to the very top-centre of the screen | Huginn peeks out |
 | Click the small island | It opens. With **Settings → General → Open on hover**, resting the pointer on it is enough, and it folds again shortly after the pointer leaves (click inside to keep it open) |
-| Click Mochi | It gets annoyed. Three times in a row and it goes dizzy |
-| Rest the pointer on Mochi for two seconds | Hearts |
-| Right-click Mochi | The wardrobe: rest the pointer on an outfit to try it on, click to keep it. **Auto** dresses him for the season (witch hat in October, Santa hat in December…) |
-| Drag Mochi out of the island | He moves onto your desktop and hangs out there, in his outfit, watching your cursor. Drop him back on the island to bring him home |
-| On the desktop: click / right-click / double-click Mochi | Poke him / the wardrobe / he flies home. Drag him to move him |
-| Drag a file onto the island | Mochi turns into a box, swallows it, then offers to answer questions about it |
+| Click Huginn | It gets annoyed. Three times in a row and it goes dizzy |
+| Rest the pointer on Huginn for two seconds | Hearts |
+| Right-click Huginn | The wardrobe: rest the pointer on an outfit to try it on, click to keep it. **Auto** dresses him for the season (witch hat in October, Santa hat in December…) |
+| Drag Huginn out of the island | He moves onto your desktop and hangs out there, in his outfit, watching your cursor. Drop him back on the island to bring him home |
+| On the desktop: click / right-click / double-click Huginn | Poke him / the wardrobe / he flies home. Drag him to move him |
+| Drag a file onto the island | Huginn turns into a box, swallows it, then offers to answer questions about it |
 | Click a file in the session ticker | Its diff opens in the island; ↗ opens the file in VS Code, ‹ or `Esc` goes back |
 | `Esc` | Closes the island |
-| Put a file named like one of Mochi's sounds (`finish.wav`, `approval.mp3`, `greet.m4a`…) in the sounds folder | It replaces that sound after **Settings → General → Reload sounds**. **Open sounds folder** shows the folder: `~/.config/bifrost-desktop/sounds` on Linux, `%APPDATA%\Bifrost\sounds` on Windows |
+| Put a file named like one of Huginn's sounds (`finish.wav`, `approval.mp3`, `greet.m4a`…) in the sounds folder | It replaces that sound after **Settings → General → Reload sounds**. **Open sounds folder** shows the folder: `~/.config/bifrost-desktop/sounds` on Linux, `%APPDATA%\Bifrost\sounds` on Windows |
 | Tray icon | Open, Weekly recap, Wardrobe…, Settings…, Pause, Quit — and **Update Bifrost to X…** while a new version is out |
 | `Ctrl+Alt+Space` | Opens the chat, from any app |
 | `Ctrl+Alt+A` | Jumps to the waiting permission or question |
 | `Ctrl+Alt+T` | Brings the session's window forward ("Open terminal") |
 | `Ctrl+Alt+→` / `Ctrl+Alt+←` | Next / previous pill |
-| `Ctrl+Alt+S` | Mutes or unmutes Mochi |
+| `Ctrl+Alt+S` | Mutes or unmutes Huginn |
 | `Ctrl+Alt+G` | Opens the wardrobe |
-| `Ctrl+Alt+D` | Sends Mochi to the desktop, or brings him home |
+| `Ctrl+Alt+D` | Sends Huginn to the desktop, or brings him home |
 | `Ctrl+Alt+N` | Opens and closes the island (off until you turn it on) |
 | In the open island: `Ctrl+→` `Ctrl+←`, `Ctrl+1`–`Ctrl+9` | Switch pills |
 | In the open island: `Ctrl+↓` `Ctrl+↑`, `Ctrl+O` | Walk the open GitHub list, open the highlighted row |
@@ -99,13 +99,13 @@ a combination too.
 
 Older Intel graphics drivers rotate the screen on `Ctrl+Alt+←` / `→`; if yours
 still does, those two show up as *In use*. On Linux, Xfce and MATE keep
-`Ctrl+Alt+D` to show the desktop, so there **Send Mochi to the desktop** shows
+`Ctrl+Alt+D` to show the desktop, so there **Send Huginn to the desktop** shows
 up as *In use* until you give it other keys.
 
 Everything else happens on its own: a Claude Code permission request opens the
 island with **Deny / Allow**, a question from Claude Code shows its options to
 pick from, a finished session shows what it did, and
-your integrations sit in the coloured pills next to Mochi.
+your integrations sit in the coloured pills next to Huginn.
 
 A permission card or a question stays until you answer it: the mouse leaving
 never folds it, it comes up even when the island is already open or another
@@ -115,7 +115,7 @@ island shrinks to its compact size and stays on screen, nothing is answered, and
 opening it again shows the card. **Open terminal** brings the window the session
 runs in to the front.
 
-When Mochi lives on the desktop, he flies back to the island with a permission
+When Huginn lives on the desktop, he flies back to the island with a permission
 request or a question and returns to his spot once you have answered; he does a
 little jump when a task finishes, and dozes off when nothing has happened for
 two minutes and your cursor is elsewhere — asleep, he costs nothing: no cursor
@@ -214,7 +214,7 @@ and lines changed, commands run, permissions and questions, your top agent,
 top project, busiest day and longest session. **Tray → Weekly recap** opens it
 any day.
 
-**Share image** turns it into a 1080 × 1920 picture with Mochi. **Save image**
+**Share image** turns it into a 1080 × 1920 picture with Huginn. **Save image**
 writes it to your Pictures folder (Downloads if there is none) as
 `Bifrost weekly recap YYYY-MM-DD.png`, never over an existing file; **Copy** puts
 it on the clipboard. **Hide project names** leaves the project out of the image.
@@ -234,7 +234,7 @@ default) follows your system's language when it is one of these, English
 otherwise. The island, the settings window and the tray menu switch at once —
 nothing restarts, and the island keeps its sessions, steps and chat.
 
-In Arabic the island's cards read right to left; Mochi, the pills and the
+In Arabic the island's cards read right to left; Huginn, the pills and the
 header stay where they are, and commands, code and file paths stay left to
 right. Steps already in a session's ticker keep the language they were written
 in, as on the Mac.
@@ -271,7 +271,7 @@ PC — nothing leaves it then — and warns before a key would travel over plain
 
 Answers from every provider are shown as **Markdown**: headings, lists, bold,
 inline code, quotes, and code blocks with a copy button. It is built from text
-nodes, never parsed as HTML, and only `http`/`https` links open. Mochi greets
+nodes, never parsed as HTML, and only `http`/`https` links open. Huginn greets
 you by your first name when your account has one (the Windows display name or
 the Linux GECOS full name; a bare login name is not used).
 
@@ -336,7 +336,7 @@ account only, because WhatsApp may restrict accounts that abuse it.
 - Click a conversation for its last ten messages and a reply field. **Enter**
   sends, **Shift+Enter** starts a new line and **Escape** goes back. Nothing is
   ever sent without your Enter or click.
-- On a new message Mochi smiles, with the "pop" sound if sounds are on.
+- On a new message Huginn smiles, with the "pop" sound if sounds are on.
 - Groups stay quiet unless you are mentioned. A right-click on a row ignores
   that chat.
 - Read receipts are sent only when you open a conversation, or only when you
@@ -380,7 +380,7 @@ unauthenticated, no cookies, nothing about you. It keeps the published
 `windows-vX.Y.Z` releases (`linux-vX.Y.Z` on Linux — never the rolling
 `windows-latest` / `linux-latest`, drafts or prereleases) and takes the highest.
 When it is newer than yours, the island opens on it once a day at most, with
-Mochi surprised: **Bifrost X is out**, the first line of its *What's new*, and the
+Huginn surprised: **Bifrost X is out**, the first line of its *What's new*, and the
 version you have; **Update now · What's new · Later**. The tray menu offers
 **Update Bifrost to X…** for as long as it is out.
 
@@ -437,13 +437,13 @@ Bifrost-Windows-setup.exe          the same file under the rolling name
 
 Installing is optional — `target/release/bifrost-desktop.exe` runs on its own. There is no
 window in the taskbar and no console: the island at the top of the screen and the
-Mochi in the notification area are the whole app, and Quit lives in its menu.
+Huginn in the notification area are the whole app, and Quit lives in its menu.
 
 The 29 sounds are the macOS app's own files; they are never duplicated in this
 folder. The path is declared once, in `SOUNDS_DIR` at the top of
 `vite.config.ts` — when they move to `shared/sounds/`, change that one line.
 
-The app icon and the tray icon are drawn in code, like Mochi itself:
+The app icon and the tray icon are drawn in code, like Huginn itself:
 
 ```powershell
 npm run icons          # regenerates src-tauri/icons from scripts/gen-icons.mjs
@@ -454,8 +454,8 @@ npm run icons          # regenerates src-tauri/icons from scripts/gen-icons.mjs
 ```
 windows/
   src/                 island front end (TypeScript, no framework)
-    mochi/             Mochi and the launch greeting, in Canvas 2D
-    desktop/           Mochi's own little window, when he lives on the desktop
+    mochi/             Huginn and the launch greeting, in Canvas 2D
+    desktop/           Huginn's own little window, when he lives on the desktop
     island/            state machine, hooks, integrations
     views/             every island view
     settings/          the settings window
@@ -568,14 +568,14 @@ own window.
 - **Spotify** (Settings → Integrations) is read from the system media
   controls, the session Spotify publishes for the media keys: the same pill
   and card as on Linux (cover, progress bar, play/pause, previous, next,
-  shuffle, repeat), and Mochi dances while it plays. Nothing is polled: one
+  shuffle, repeat), and Huginn dances while it plays. Nothing is polled: one
   thread waits for the session's change events while the pill is declared.
   The volume is Spotify's own in the Windows mixer. Works with the installer
   from spotify.com and the Microsoft Store app; **Open Spotify** goes through
   its `spotify:` link, and without Spotify **Get Spotify** opens its download
   page. Windows gives no Spotify link for the track, so an ad is told apart by
   having a title and no artist or album.
-- Not in this version: sending a dropped file by email and dragging Mochi onto
+- Not in this version: sending a dropped file by email and dragging Huginn onto
   a window to attach it as context. On the Mac, email goes through Resend or
   Apple Mail's scripting; neither has a safe equivalent that attaches a file
   here, and the drop card would need a third button it doesn't have.
@@ -615,7 +615,7 @@ own window.
   row scrolls into view where the Mac's three-row list doesn't follow it; in the
   chat field `Ctrl+↑` `Ctrl+↓` keep moving the cursor. **Go to alert** brings
   up any agent's waiting card on its own pill; **Toggle the island** folds a
-  waiting card rather than dropping it, like `Esc` in the island. **Send Mochi
+  waiting card rather than dropping it, like `Esc` in the island. **Send Huginn
   to the desktop** (`Ctrl+Alt+D`, the Mac's `⌃⌥D`)
   flies him to his spot, or to the bottom-right corner when that spot was on a
   display that is gone; pressed again, he flies home.
@@ -634,14 +634,14 @@ own window.
     leaves to the image. A turn cut short by the session ending still counts.
   - Tray → Pause doesn't stop the history (it stays on the machine anyway);
     switch it off in Settings → General.
-- The wardrobe opens with a right-click on Mochi, from the tray menu, or with
+- The wardrobe opens with a right-click on Huginn, from the tray menu, or with
   its global shortcut (`Ctrl+Alt+G` by default). In the compact island a tall hat
   is cut by the top edge of the screen, as it is by the notch on a Mac.
 - Languages: chosen in Settings, independently of the system, and applied
   without a restart (the Mac's **Restart Bifrost** isn't needed). Arabic turns
-  the island's text right to left but not its layout: Mochi and the pills keep
+  the island's text right to left but not its layout: Huginn and the pills keep
   their sides.
-- Mochi on the desktop dances to Spotify. While he dances he stays awake (the
+- Huginn on the desktop dances to Spotify. While he dances he stays awake (the
   Mac lets him doze off mid-dance). Dropping him on a window doesn't attach it
   to the chat. While he
   sleeps, the transparent square around him (120 px) takes the first mouse
@@ -685,15 +685,15 @@ What changes on Linux:
   window anywhere.
 - **Click-through** is the window's input region, kept equal to the island
   shape, so the compositor sends every other click to what is underneath.
-- **Mochi's eyes** follow the pointer only while it is over the island: Wayland
+- **Huginn's eyes** follow the pointer only while it is over the island: Wayland
   gives no app the cursor position anywhere else. On the desktop, likewise,
   they follow it only while it is over him, and "the cursor is far away" (so
   he may fall asleep) means it hasn't been over him for a few seconds.
-- **Mochi on the desktop** is a layer-shell surface on the island's display
+- **Huginn on the desktop** is a layer-shell surface on the island's display
   (KDE Plasma, COSMIC, Hyprland, Sway…), placed with margins and dragged within
   that display; on X11 it is an ordinary always-on-top window that goes
   anywhere. **GNOME on Wayland** has no layer-shell and lets no app place its
-  own window, so there Mochi can't leave the island: dragging him does nothing,
+  own window, so there Huginn can't leave the island: dragging him does nothing,
   and the desktop shortcut only makes him grumble.
 - **Claude Code hooks** go through `~/.local/share/bifrost-desktop/bin/bifrost-hook` and a
   Unix socket at `$XDG_RUNTIME_DIR/bifrost-desktop.sock`. Both ends check that the other
@@ -730,7 +730,7 @@ What changes on Linux:
 - **Spotify** (Settings → Integrations) is read over MPRIS, Spotify's D-Bus
   interface on the session bus: the pill shows the track and plays, pauses
   or skips on hover, the card has the cover, the progress bar (drag to
-  seek), shuffle, previous, next, repeat and the volume, and Mochi dances
+  seek), shuffle, previous, next, repeat and the volume, and Huginn dances
   while it plays — in the compact island, on the Spotify card, on the pill
   and on the desktop. Nothing is polled: one thread waits on the bus for
   Spotify's own signals while the pill is declared, and stops when it isn't.
@@ -746,7 +746,7 @@ What changes on Linux:
   Code. Codex is found on `$PATH`, in `~/.local/bin`, npm's global prefix, Volta,
   Bun, pnpm, or nvm (newest Node first), since a desktop launch often has a
   shorter `$PATH` than your shell.
-- **Mochi's greeting** uses the full name in your account's GECOS field
+- **Huginn's greeting** uses the full name in your account's GECOS field
   (`chfn` sets it); without one the chat stays neutral.
 - **Files**: preferences in `~/.config/bifrost-desktop/`, the log at
   `~/.local/share/bifrost-desktop/bifrost-desktop.log`, the weekly recap history beside it in
@@ -760,7 +760,7 @@ What changes on Linux:
 - **Copying the recap image** needs a WebKitGTK with image clipboard support;
   where it is missing, the island says so and Save still works.
 - What the Windows build leaves out, this one does too: sending a file by
-  email and dragging Mochi onto a window.
+  email and dragging Huginn onto a window.
 - **New versions** are announced (once you agree), but **Update now** opens
   the release page: update the AppImage, .deb, .rpm or Arch package the way
   you installed it.

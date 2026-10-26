@@ -6,6 +6,7 @@
 // window lets clicks through; it draws only while something moves.
 
 import "./pill.css";
+import "../theme/bifrost.css";
 import { Bridge, onEvent } from "../core/bridge";
 import { FlowBridge, clock, type PillState } from "../core/flow";
 import type { Settings } from "../core/state";
@@ -45,7 +46,7 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls = "", text = ""):
   return e;
 }
 
-// ── Mochi ─────────────────────────────────────────────────────────────────────
+// ── Huginn ─────────────────────────────────────────────────────────────────────
 
 const mochi = new BotEngine();
 mochi.isMini = true;
@@ -377,7 +378,7 @@ function tick(now: number) {
     if (vertical()) bar.style.width = `${size}px`;
     else bar.style.height = `${size}px`;
   }
-  // Mochi: his eyes wander while you speak; still while only a call shows.
+  // Huginn: his eyes wander while you speak; still while only a call shows.
   if (l !== "note" || hovered) {
     mochi.lookX = Math.sin(now / 900) * 0.6;
     mochi.lookY = Math.cos(now / 1300) * 0.3;

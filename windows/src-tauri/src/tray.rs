@@ -1,6 +1,6 @@
 // Notification-area icon: Open, Weekly recap, Wardrobe, Settings, Pause, Quit.
 // "Update Bifrost to X…" shows under Open only while a new version is out
-// (update.rs). While one waits, the tray Mochi turns blue like the island's.
+// (update.rs). While one waits, the tray Huginn turns blue like the island's.
 
 use std::sync::Mutex;
 
@@ -113,10 +113,10 @@ pub fn set_update(app: &AppHandle, version: Option<&str>) {
     }
 }
 
-/// Bifrost's update blue, #3B82F6, the colour of Mochi while a new version waits.
+/// Bifrost's update blue, #3B82F6, the colour of Huginn while a new version waits.
 const UPDATE_BLUE: [f32; 3] = [59.0, 130.0, 246.0];
 
-/// The tray Mochi in the update blue: the light body takes the blue and keeps its
+/// The tray Huginn in the update blue: the light body takes the blue and keeps its
 /// shading, the dark outline and eyes stay as they are, transparency untouched.
 pub fn tint_blue(rgba: &[u8]) -> Vec<u8> {
     let mut out = Vec::with_capacity(rgba.len());
@@ -134,7 +134,7 @@ pub fn tint_blue(rgba: &[u8]) -> Vec<u8> {
 }
 
 /// The island says whether a new version waits (consent, newer, not put off with
-/// Later): blue Mochi in the tray, or the usual one.
+/// Later): blue Huginn in the tray, or the usual one.
 #[tauri::command]
 pub fn tray_update_hint(app: AppHandle, on: bool) {
     let Some(tray) = app.tray_by_id("bifrost-desktop") else { return };
@@ -156,7 +156,7 @@ mod tests {
         let px = [
             245, 240, 235, 255, // the off-white body
             10, 10, 10, 255, // the outline
-            250, 250, 250, 0, // transparent around Mochi
+            250, 250, 250, 0, // transparent around Huginn
         ];
         let out = tint_blue(&px);
         let body = &out[0..4];

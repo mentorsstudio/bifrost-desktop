@@ -1,4 +1,4 @@
-// Your own sounds: a file named like one of Mochi's sounds in the sounds folder
+// Your own sounds: a file named like one of Huginn's sounds in the sounds folder
 // replaces it (finish.wav, approval.mp3, greet.m4a…), as on the Mac
 // (SoundEngine.customFolder). The folder is platform::config_dir()/sounds:
 // ~/.config/bifrost-desktop/sounds on Linux, %APPDATA%\Bifrost\sounds on Windows.

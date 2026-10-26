@@ -1,0 +1,160 @@
+/* Bifrost — identidade visual própria (fork do Paulo).
+   Céu noturno + ponte arco-íris/aurora. Carregado depois da folha de cada janela,
+   então estes valores vencem os antigos. Fonte: Space Grotesk (SIL OFL 1.1),
+   empacotada em ./fonts — nada vem de CDN. */
+
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("./fonts/SpaceGrotesk-Variable.woff2") format("woff2");
+  font-weight: 300 700;
+  font-display: swap;
+}
+
+:root {
+  --font: "Space Grotesk", "Segoe UI Variable Text", "Segoe UI", "Nirmala UI", "Microsoft YaHei UI",
+    "Microsoft YaHei", "Noto Sans", "Noto Sans Devanagari", "Noto Sans Bengali", "Noto Sans Arabic",
+    "Noto Sans CJK SC", "Noto Sans SC", "Droid Sans Fallback", sans-serif;
+  --mono: "JetBrains Mono", "Cascadia Mono", "Consolas", ui-monospace, monospace;
+
+  /* Noite */
+  --night-0: #05070f;
+  --night-1: #0a0f1f;
+  --night-2: #111830;
+  --night-3: #18213f;
+  --bg: var(--night-1);
+  --card: #0f1529;
+  --card-flat: #0b1022;
+  --tab-on: #1a2346;
+  --hairline: rgba(148, 170, 255, 0.10);
+
+  /* Texto */
+  --ink: #eef2ff;
+  --ink-2: #e4e9fb;
+  --dim: #9aa6c8;
+  --dim-2: #8590b3;
+  --dim-3: #67729a;
+  --dim-4: #57618a;
+  --dim-5: #48527a;
+
+  /* Aurora (o arco da ponte) */
+  --aurora-teal: #4fe3c1;
+  --aurora-sky: #5aa9ff;
+  --aurora-violet: #9d7bff;
+  --aurora-rose: #ff6fae;
+  --aurora-gold: #ffc65c;
+  --prism: linear-gradient(90deg, #4fe3c1 0%, #5aa9ff 28%, #9d7bff 55%, #ff6fae 80%, #ffc65c 100%);
+
+  /* Estados */
+  --red: #ff5c7a;
+  --red-text: #ff9fb2;
+  --green: #3ee6a8;
+  --green-2: #4fe3c1;
+  --amber: #ffc65c;
+  --cyan: #5ad7ff;
+  --indigo: #7c8cff;
+  --pink: #ff6fae;
+}
+
+html, body { font-family: var(--font); letter-spacing: 0.005em; }
+
+/* ── Ilha (overlay no topo da tela) ─────────────────────────────────────── */
+#island {
+  background:
+    radial-gradient(120% 140% at 50% -40%, rgba(90, 169, 255, 0.10), transparent 60%),
+    linear-gradient(180deg, var(--night-0), #070b18) !important;
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 10px 30px -12px rgba(77, 120, 255, 0.35), inset 0 -1px 0 rgba(157, 123, 255, 0.18);
+}
+#island::after {
+  content: "";
+  position: absolute;
+  left: 12px; right: 12px; bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--prism);
+  background-size: 200% 100%;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 6px rgba(157, 123, 255, 0.55));
+  animation: bifrost-aurora 9s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes bifrost-aurora {
+  0%, 100% { background-position: 0% 50%; opacity: 0.65; }
+  50% { background-position: 100% 50%; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #island::after { animation: none; }
+}
+
+/* Cartões, botões, abas: cantos mais secos, borda com brilho frio */
+.int-card, .up-card, .drop-card, .overview, .np-pill, .recap-chip, .picker-chip, .gh-mini, .wardrobe-item {
+  border-radius: 8px !important;
+  border-color: var(--hairline) !important;
+}
+.btn, .model-btn, .send-btn, .seg, .tab {
+  border-radius: 7px !important;
+  font-family: var(--font);
+  letter-spacing: 0.01em;
+}
+.btn.primary, .send-btn {
+  background: var(--prism) !important;
+  color: #071022 !important;
+  font-weight: 600;
+}
+.tab.on, .tab[aria-selected="true"] { background: var(--tab-on) !important; box-shadow: inset 0 -2px 0 var(--aurora-violet); }
+.title { font-weight: 600; letter-spacing: 0.01em; }
+
+/* ── Janela de configurações ────────────────────────────────────────────── */
+body.settings-window {
+  background:
+    radial-gradient(900px 420px at 85% -10%, rgba(157, 123, 255, 0.16), transparent 60%),
+    radial-gradient(800px 380px at 0% 0%, rgba(79, 227, 193, 0.10), transparent 55%),
+    var(--night-1) !important;
+  background-attachment: fixed !important;
+}
+body.settings-window h1 {
+  font: 700 20px var(--font);
+  letter-spacing: -0.01em;
+  background: var(--prism);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+body.settings-window section {
+  background: linear-gradient(180deg, rgba(24, 33, 63, 0.75), rgba(15, 21, 41, 0.9)) !important;
+  border: 1px solid var(--hairline) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 12px 28px -18px rgba(0, 0, 0, 0.8);
+}
+body.settings-window section > h2 { font: 600 13.5px var(--font); letter-spacing: 0.02em; text-transform: none; }
+body.settings-window button {
+  border-radius: 7px !important;
+  font-family: var(--font) !important;
+}
+body.settings-window button.primary {
+  background: var(--prism) !important;
+  color: #071022 !important;
+  font-weight: 600;
+}
+body.settings-window button.danger { background: rgba(255, 92, 122, 0.14) !important; color: var(--red-text) !important; }
+body.settings-window input, body.settings-window select, body.settings-window textarea {
+  background: var(--night-0) !important;
+  border: 1px solid rgba(148, 170, 255, 0.16) !important;
+  border-radius: 7px !important;
+  color: var(--ink) !important;
+  font-family: var(--font);
+}
+body.settings-window input:focus, body.settings-window select:focus, body.settings-window textarea:focus {
+  outline: none;
+  border-color: var(--aurora-violet) !important;
+  box-shadow: 0 0 0 3px rgba(157, 123, 255, 0.22);
+}
+body.settings-window .notice { border-radius: 8px !important; }
+body.settings-window .hint { color: var(--dim) !important; }
+body.settings-window .switch input:checked + span,
+body.settings-window .switch.on { background: var(--aurora-teal) !important; }
+
+/* Barra de rolagem fina, fria */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(148, 170, 255, 0.18); border-radius: 6px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-track { background: transparent; }

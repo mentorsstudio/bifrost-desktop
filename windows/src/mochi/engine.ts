@@ -1,13 +1,12 @@
-// Mochi — direct port of NotchBuddy/Sources/App/BotEngine.swift to Canvas 2D.
-// Same constants, same tweens, same easings, same particles. The only intentional
-// difference is the `happy`/`wink` eye arc, which follows the prototype
-// (design/prototype/notch-buddy.html, the visual source of truth) — the Swift
-// arc angles produce a different shape.
+// Huginn — o corvo mensageiro do Bifrost, desenhado em código (Canvas 2D).
+// O motor de estados/animações (tweens, partículas, emotes) segue o do app
+// original; o personagem em si é novo: corpo de corvo azul-noite em forma de
+// gota, olhos que brilham como aurora, bico dourado, topete de penas e asas.
 
 import { Ease, lerp, type EaseFn } from "../core/anim";
 import { Sound } from "../core/sound";
 import type { BotEmoteName, BotStateName } from "../core/layout";
-import { PUMPKIN_BODY, drawOutfitBehind, drawOutfitFront, makeHead } from "./outfits";
+import { drawOutfitBehind, drawOutfitFront, makeHead } from "./outfits";
 import type { Outfit } from "./wardrobe";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -67,23 +66,26 @@ const EYE_W = 0.25;
 const EYE_H = 0.27;
 const EYE_SP = 0.37;
 const EYE_P = -0.12;
-const BASE_TOP: RGB = [0.929, 0.929, 0.937]; // #EDEDEF
-const BASE_BOTTOM: RGB = [0.769, 0.773, 0.792]; // #C4C5CA
-const INK = "rgb(26,20,18)"; // #1A1412
+const BASE_TOP: RGB = [0.243, 0.290, 0.478]; // #3E4A7A — penas com luz da aurora
+const BASE_BOTTOM: RGB = [0.059, 0.075, 0.153]; // #0F1327 — penas na sombra
+const INK = "rgb(220,244,255)"; // olhos: brilho frio
+const EYE_GLOW = "rgba(79,227,193,0.85)"; // #4FE3C1
+const BEAK_TOP = "#FFD27A";
+const BEAK_BOTTOM = "#E39A2E";
 const MINI_INK = "rgb(16,19,26)"; // #10131A
 
 const C = {
-  idle: [0.902, 0.914, 0.933] as RGB,
-  working: [0.231, 0.62, 1] as RGB,
-  thinking: [0.545, 0.361, 0.965] as RGB,
-  searching: [0.388, 0.396, 0.949] as RGB,
-  approval: [0.961, 0.647, 0.141] as RGB,
-  question: [0.133, 0.827, 0.933] as RGB,
-  error: [0.957, 0.314, 0.369] as RGB,
-  finished: [0.204, 0.831, 0.6] as RGB,
-  ratelimit: [0.984, 0.573, 0.235] as RGB,
-  sleeping: [0.58, 0.635, 0.722] as RGB,
-  dizzy: [0.957, 0.447, 0.714] as RGB,
+  idle: [0.933, 0.949, 1] as RGB, // #EEF2FF
+  working: [0.353, 0.663, 1] as RGB, // #5AA9FF
+  thinking: [0.616, 0.482, 1] as RGB, // #9D7BFF
+  searching: [0.486, 0.549, 1] as RGB, // #7C8CFF
+  approval: [1, 0.776, 0.361] as RGB, // #FFC65C
+  question: [0.31, 0.89, 0.757] as RGB, // #4FE3C1
+  error: [1, 0.361, 0.478] as RGB, // #FF5C7A
+  finished: [0.243, 0.902, 0.659] as RGB, // #3EE6A8
+  ratelimit: [1, 0.6, 0.31] as RGB, // #FF994F
+  sleeping: [0.42, 0.478, 0.66] as RGB, // #6B7AA8
+  dizzy: [1, 0.435, 0.682] as RGB, // #FF6FAE
 };
 
 const base = {
@@ -196,10 +198,10 @@ export function danceTransform(seconds: number, level: number, R: number) {
 
 export class BotEngine {
   isMini = false;
-  /** Solid body colour for mini bots / integration pills (null = Mochi gradient). */
+  /** Solid body colour for mini bots / integration pills (null = Huginn gradient). */
   bodyColor: RGB | null = null;
   /**
-   * A new Bifrost waits (whats-new/whats-new.ts): while Mochi is idle or asleep
+   * A new Bifrost waits (whats-new/whats-new.ts): while Huginn is idle or asleep
    * he wears the up-arrow badge. The island turns his body blue alongside.
    */
   private updateHint: RGB | null = null;
@@ -209,7 +211,7 @@ export class BotEngine {
   sx = 1; sy = 1; oy = 0; ox = 0;
   tint = 0; morph = 0; hands = 0; blush = 0; es = 1; badgeS = 0;
 
-  // Outfit (the main Mochi only — minis never wear one). `outfit` is what is
+  // Outfit (the main Huginn only — minis never wear one). `outfit` is what is
   // drawn; it changes only once the previous one has left.
   outfit: Outfit = "none";
   /** 0 = gone, 1 = fully on. */
@@ -324,7 +326,7 @@ export class BotEngine {
     this.setBadge(this.stateBadge());
   }
 
-  /** Whether the update hint shows now: only over an idle or sleeping Mochi. */
+  /** Whether the update hint shows now: only over an idle or sleeping Huginn. */
   get showsUpdateHint(): boolean {
     return this.updateHint != null && (this.state === "idle" || this.state === "sleeping");
   }
@@ -531,8 +533,8 @@ export class BotEngine {
   }
 
   /**
-   * Dresses Mochi. Animated: the old outfit leaves (180 ms), the new one drops
-   * in (350 ms) and Mochi does a little squash — BotEngine.setOutfit on macOS.
+   * Dresses Huginn. Animated: the old outfit leaves (180 ms), the new one drops
+   * in (350 ms) and Huginn does a little squash — BotEngine.setOutfit on macOS.
    */
   setOutfit(next: Outfit, animated = true) {
     if (next === this.outfitTarget) return;
@@ -830,7 +832,7 @@ export class BotEngine {
       x.save();
       x.clip(body);
       const yOffset = Math.sin(this.yaw) * rx * 0.8;
-      x.fillStyle = `rgba(255,120,150,${0.5 * blushVal})`;
+      x.fillStyle = `rgba(157,123,255,${0.45 * blushVal})`;
       for (const sd of [-1, 1]) {
         x.beginPath();
         x.ellipse(sd * rx * 0.55 + yOffset, ry * 0.2, R * 0.17, R * 0.1, 0, 0, Math.PI * 2);
@@ -839,7 +841,9 @@ export class BotEngine {
       x.restore();
     }
 
+    if (!this.isMini && this.morph < 0.6) this.drawCrest(x, R, ry);
     this.drawEyes(x, body, R, rx, ry);
+    if (!this.isMini && this.morph < 0.5) this.drawBeak(x, body, R, rx, ry);
     if (this.morph > 0.05) this.drawMouth(x, body, R);
 
     if (head) drawOutfitFront(x, this.outfit, head, outfitState);
@@ -867,8 +871,9 @@ export class BotEngine {
       const sa = Math.sin(a);
       const px0 = rx * (ca >= 0 ? Math.pow(ca, expN) : -Math.pow(-ca, expN));
       const py0 = ry * (sa >= 0 ? Math.pow(sa, expN) : -Math.pow(-sa, expN));
-      let px = px0;
-      let py = py0;
+      // Huginn: gota — a cabeça (topo) mais estreita que o peito.
+      let px = px0 * (1 - 0.17 * Math.max(0, -sa));
+      let py = py0 * (sa > 0 ? 1.04 : 1);
       if (m >= 0.005) {
         const rr = rrPoint(ca, sa, tw, th, tr);
         px = lerp(px0, rr.x, m);
@@ -883,8 +888,7 @@ export class BotEngine {
 
   /** How much of the pumpkin's orange shows on the body (it comes and goes with the outfit). */
   private get pumpkinAlpha(): number {
-    if (this.isMini || this.outfit !== "pumpkin") return 0;
-    return Math.min(1, this.outfitPresence * 2.5) * (1 - this.morph);
+    return 0; // Huginn não vira abóbora: nenhum adorno muda a cor do corpo.
   }
 
   private drawBody(x: CanvasRenderingContext2D, body: Path2D, R: number, rx: number, ry: number) {
@@ -904,8 +908,8 @@ export class BotEngine {
     x.save();
     if (pumpkin > 0.001) {
       const pg = x.createLinearGradient(rx * 0.7, -ry * 0.85, -rx * 0.8, ry * 0.9);
-      pg.addColorStop(0, PUMPKIN_BODY[0]);
-      pg.addColorStop(1, PUMPKIN_BODY[1]);
+      pg.addColorStop(0, rgba(BASE_TOP));
+      pg.addColorStop(1, rgba(BASE_BOTTOM));
       x.globalAlpha = pumpkin;
       x.fillStyle = pg;
       x.fill(body);
@@ -937,6 +941,63 @@ export class BotEngine {
     x.restore();
   }
 
+  /** Topete: três penas no alto da cabeça, que balançam com a física. */
+  private drawCrest(x: CanvasRenderingContext2D, R: number, ry: number) {
+    const a = 1 - this.morph / 0.6;
+    const sway = this.physDx * 0.35 + Math.sin(now() * 1.7) * 0.04;
+    const topY = -ry * 0.98;
+    x.save();
+    x.globalAlpha *= Math.max(0, a);
+    for (const [dx, len, rot] of [[-0.14, 0.34, -0.42], [0.02, 0.44, -0.08], [0.16, 0.3, 0.3]] as const) {
+      x.save();
+      x.translate(dx * R + Math.sin(this.yaw) * R * 0.4, topY + R * 0.06);
+      x.rotate(rot + sway);
+      const g = x.createLinearGradient(0, 0, 0, -len * R);
+      g.addColorStop(0, rgba(BASE_TOP));
+      g.addColorStop(1, "rgba(157,123,255,0.95)");
+      x.beginPath();
+      x.moveTo(-R * 0.07, 0);
+      x.quadraticCurveTo(-R * 0.05, -len * R * 0.7, 0, -len * R);
+      x.quadraticCurveTo(R * 0.05, -len * R * 0.7, R * 0.07, 0);
+      x.closePath();
+      x.fillStyle = g;
+      x.fill();
+      x.restore();
+    }
+    x.restore();
+  }
+
+  /** Bico dourado em losango, abaixo dos olhos; some quando ele vira de costas. */
+  private drawBeak(x: CanvasRenderingContext2D, body: Path2D, R: number, rx: number, ry: number) {
+    const facing = Math.cos(this.yaw) * Math.cos(this.pitch);
+    if (facing <= 0.15) return;
+    const bx = Math.sin(this.yaw) * rx * 0.92;
+    const by = -Math.sin(EYE_P + this.pitch) * ry + R * 0.2;
+    const w = R * 0.17 * Math.max(0.3, Math.cos(this.yaw));
+    const h = R * 0.24;
+    x.save();
+    x.clip(body);
+    x.globalAlpha *= Math.min(1, (facing - 0.15) * 4) * (1 - this.morph * 2);
+    const g = x.createLinearGradient(0, by - h * 0.4, 0, by + h);
+    g.addColorStop(0, BEAK_TOP);
+    g.addColorStop(1, BEAK_BOTTOM);
+    x.beginPath();
+    x.moveTo(bx - w, by);
+    x.lineTo(bx, by - h * 0.32);
+    x.lineTo(bx + w, by);
+    x.lineTo(bx, by + h);
+    x.closePath();
+    x.fillStyle = g;
+    x.fill();
+    x.strokeStyle = "rgba(7,16,34,0.35)";
+    x.lineWidth = Math.max(0.6, R * 0.02);
+    x.beginPath();
+    x.moveTo(bx - w * 0.9, by + h * 0.02);
+    x.lineTo(bx + w * 0.9, by + h * 0.02);
+    x.stroke();
+    x.restore();
+  }
+
   private drawEyes(x: CanvasRenderingContext2D, body: Path2D, R: number, rx: number, ry: number) {
     let shape: EyeShape = this.eyeOverride ?? this.cfg.eye;
     // Dancing: happy eyes in the calm states.
@@ -953,6 +1014,10 @@ export class BotEngine {
     const ink = this.isMini ? MINI_INK : INK;
     x.fillStyle = ink;
     x.strokeStyle = ink;
+    if (!this.isMini) {
+      x.shadowColor = this.tint > 0.2 ? rgba(this.col, 0.9) : EYE_GLOW;
+      x.shadowBlur = Math.max(2, R * 0.22);
+    }
 
     for (const sd of [-1, 1]) {
       const eyeYaw = sd * EYE_SP + this.yaw;
@@ -1186,11 +1251,16 @@ export class BotEngine {
         g.addColorStop(0, rgba(BASE_TOP));
         g.addColorStop(1, rgba(BASE_BOTTOM));
       }
+      // Asa: pena alongada, com a ponta para fora e a borda iluminada pela aurora.
+      x.rotate(sd * 0.55);
       x.beginPath();
-      x.ellipse(0, 0, hew, heh, 0, 0, Math.PI * 2);
+      x.moveTo(-sd * hew * 0.9, -heh * 0.6);
+      x.quadraticCurveTo(sd * hew * 1.9, -heh * 1.1, sd * hew * 2.1, heh * 0.2);
+      x.quadraticCurveTo(sd * hew * 0.9, heh * 1.2, -sd * hew * 0.9, heh * 0.6);
+      x.closePath();
       x.fillStyle = g;
       x.fill();
-      x.strokeStyle = "rgba(0,0,0,0.08)";
+      x.strokeStyle = "rgba(90,169,255,0.45)";
       x.lineWidth = 1;
       x.stroke();
       x.restore();

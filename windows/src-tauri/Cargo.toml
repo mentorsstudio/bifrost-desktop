@@ -1,6 +1,6 @@
 [package]
 name = "bifrost-desktop"
-description = "Bifrost for Windows and Linux — Mochi lives at the top of your screen"
+description = "Bifrost for Windows and Linux — Huginn lives at the top of your screen"
 authors = ["Paulo", "Louis Raille (Coucou, original author)"]
 version.workspace = true
 edition.workspace = true

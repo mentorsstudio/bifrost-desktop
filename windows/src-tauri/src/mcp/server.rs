@@ -1,4 +1,4 @@
-// Bifrost's own MCP server: lets Grok Bot, Hermes, Alethe… drive Mochi.
+// Bifrost's own MCP server: lets Grok Bot, Hermes, Alethe… drive Huginn.
 //
 // Streamable HTTP on 127.0.0.1 only (`http://127.0.0.1:<port>/mcp`), and every
 // request must carry `Authorization: Bearer <token>`. The token is made on
@@ -31,7 +31,7 @@ pub const DEFAULT_PORT: u16 = 47821;
 type BoxFut<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 
 /// What the tools act on. The app implements it with the island; tests with a fake.
-pub trait Mochi: Send + Sync + 'static {
+pub trait Huginn: Send + Sync + 'static {
     /// A hook event for the island (`hook_event_name`, `session_id`…).
     fn emit(&self, payload: Value);
     /// A permission card; `allow` / `deny`, or `None` when nobody answered.
@@ -42,7 +42,7 @@ pub trait Mochi: Send + Sync + 'static {
 
 #[derive(Clone)]
 pub struct MochiServer {
-    mochi: Arc<dyn Mochi>,
+    mochi: Arc<dyn Huginn>,
 }
 
 fn schema(props: Value, required: &[&str]) -> Map<String, Value> {
@@ -51,17 +51,17 @@ fn schema(props: Value, required: &[&str]) -> Map<String, Value> {
 }
 
 pub fn tools() -> Vec<Tool> {
-    let agent = json!({"type": "string", "description": "Quem chama (ex.: grok, hermes, alethe). Vira a pílula do agente no Mochi."});
+    let agent = json!({"type": "string", "description": "Quem chama (ex.: grok, hermes, alethe). Vira a pílula do agente no Huginn."});
     let session = json!({"type": "string", "description": "Id da sessão (qualquer texto estável)."});
     vec![
         Tool::new(
             "notify",
-            "Mostra um aviso no Mochi (ilha no topo da tela).",
+            "Mostra um aviso no Huginn (ilha no topo da tela).",
             schema(json!({"message": {"type": "string"}, "title": {"type": "string"}, "agent": agent}), &["message"]),
         ),
         Tool::new(
             "ask_approval",
-            "Pede ao usuário Permitir/Negar no Mochi e devolve \"allow\", \"deny\" ou \"no_decision\" (ninguém respondeu em ~108 s).",
+            "Pede ao usuário Permitir/Negar no Huginn e devolve \"allow\", \"deny\" ou \"no_decision\" (ninguém respondeu em ~108 s).",
             schema(
                 json!({"action": {"type": "string", "description": "O que será feito (comando, operação)."},
                        "tool": {"type": "string", "description": "Nome curto da ação (ex.: Bash, Deploy)."},
@@ -71,7 +71,7 @@ pub fn tools() -> Vec<Tool> {
         ),
         Tool::new(
             "show_session",
-            "Abre/mostra uma sessão de agente no Mochi (como o início de uma tarefa).",
+            "Abre/mostra uma sessão de agente no Huginn (como o início de uma tarefa).",
             schema(json!({"session_id": session, "agent": agent, "cwd": {"type": "string"}, "prompt": {"type": "string"}}), &["session_id"]),
         ),
         Tool::new(
@@ -86,12 +86,12 @@ pub fn tools() -> Vec<Tool> {
         ),
         Tool::new(
             "end_session",
-            "Encerra uma sessão no Mochi.",
+            "Encerra uma sessão no Huginn.",
             schema(json!({"session_id": session, "agent": agent}), &["session_id"]),
         ),
         Tool::new(
             "chat",
-            "Envia uma mensagem ao chat do Mochi (o provedor das configurações) e devolve a resposta.",
+            "Envia uma mensagem ao chat do Huginn (o provedor das configurações) e devolve a resposta.",
             schema(json!({"message": {"type": "string"}}), &["message"]),
         ),
     ]
@@ -187,7 +187,7 @@ fn fail(t: impl Into<String>) -> CallToolResult {
 }
 
 impl MochiServer {
-    pub fn new(mochi: Arc<dyn Mochi>) -> Self {
+    pub fn new(mochi: Arc<dyn Huginn>) -> Self {
         Self { mochi }
     }
 
@@ -230,7 +230,7 @@ impl ServerHandler for MochiServer {
     fn get_info(&self) -> ServerConfig {
         ServerConfig::new(ServerCapabilities::builder().enable_tools().build())
             .with_server_info(Implementation::new("bifrost-desktop-mochi", env!("CARGO_PKG_VERSION")))
-            .with_instructions("Controla o Mochi do Bifrost: avisos, aprovações Permitir/Negar, sessões de agentes e chat.")
+            .with_instructions("Controla o Huginn do Bifrost: avisos, aprovações Permitir/Negar, sessões de agentes e chat.")
     }
 
     async fn list_tools(
@@ -268,7 +268,7 @@ pub fn authorized(header: Option<&str>, token: &str) -> bool {
 
 /// Serves until `cancel` fires. Returns the bound address (port 0 picks one).
 pub async fn serve(
-    mochi: Arc<dyn Mochi>,
+    mochi: Arc<dyn Huginn>,
     port: u16,
     token: String,
     cancel: tokio_util::sync::CancellationToken,
@@ -338,7 +338,7 @@ pub fn new_token() -> String {
 /// The island, as the tools see it.
 pub struct AppMochi(pub tauri::AppHandle);
 
-impl Mochi for AppMochi {
+impl Huginn for AppMochi {
     fn emit(&self, payload: Value) {
         use tauri::Emitter;
         crate::log::line(format!("mcp {}", payload["hook_event_name"].as_str().unwrap_or("")));
@@ -352,7 +352,7 @@ impl Mochi for AppMochi {
             use tauri::Manager;
             let settings = self.0.state::<crate::Shared>().settings.lock().unwrap().clone();
             if settings.chat_provider == super::chat::PROVIDER {
-                return Err("o chat do Mochi está no provedor MCP; escolha outro provedor para evitar laço".into());
+                return Err("o chat do Huginn está no provedor MCP; escolha outro provedor para evitar laço".into());
             }
             let chat = crate::chat::Chat::default();
             crate::chat::send(&self.0, &chat, &settings, message, None).await.map(|r| r.text)
@@ -384,7 +384,7 @@ pub fn token() -> String {
 pub fn start(app: tauri::AppHandle, port: u16) {
     tauri::async_runtime::spawn(async move {
         let token = token();
-        let mochi: Arc<dyn Mochi> = Arc::new(AppMochi(app));
+        let mochi: Arc<dyn Huginn> = Arc::new(AppMochi(app));
         match serve(mochi, port, token, tokio_util::sync::CancellationToken::new()).await {
             Ok(addr) => crate::log::line(format!("mcp server on http://{addr}/mcp")),
             Err(e) => crate::log::line(format!("mcp server: cannot listen on 127.0.0.1:{port}: {e}")),
@@ -404,7 +404,7 @@ mod tests {
     struct Fake {
         events: Mutex<Vec<Value>>,
     }
-    impl Mochi for Fake {
+    impl Huginn for Fake {
         fn emit(&self, payload: Value) {
             self.events.lock().unwrap().push(payload);
         }

@@ -810,7 +810,7 @@ fn ingest(c: &mut Ctl, messages: Vec<Message>) -> (Option<String>, Vec<String>) 
             groups.push(g);
         }
         if c.open_chat.as_deref() == Some(key.as_str()) {
-            // Read on screen: no unread, no Mochi. The receipt waits for a reply (or the next
+            // Read on screen: no unread, no Huginn. The receipt waits for a reply (or the next
             // opening), as Settings says.
             c.inbox.mark_read(&key);
             continue;

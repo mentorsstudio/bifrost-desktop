@@ -296,11 +296,11 @@ test("the outfit is published when the link comes up and whenever the wardrobe c
   assert.equal(p().length, 1);
   assert.equal(p()[0].outfit, "auto", "the default of the wardrobe");
 
-  State.settings.mochiOutfit = "beanie";
+  State.settings.mochiOutfit = "helm";
   State.notify();
   tick(250);
   assert.equal(p().length, 2);
-  assert.equal(p()[1].outfit, "beanie");
+  assert.equal(p()[1].outfit, "helm");
 
   State.notify();
   tick(250);

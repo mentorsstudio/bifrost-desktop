@@ -863,7 +863,7 @@ pub fn phone_link_publish_question(window: WebviewWindow, link: State<PhoneLink>
     Ok(())
 }
 
-/// What Mochi wears on the computer, for phones that asked for `prefs`.
+/// What Huginn wears on the computer, for phones that asked for `prefs`.
 #[tauri::command]
 pub fn phone_link_publish_prefs(window: WebviewWindow, link: State<PhoneLink>, outfit: String) -> Result<(), String> {
     only_island(&window)?;
