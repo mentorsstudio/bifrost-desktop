@@ -184,7 +184,7 @@ export const DEFAULT_SETTINGS: Settings = {
   showPlanInNotch: false,
   planRelayInstalled: false,
   showCodexPlanInNotch: false,
-  chatProvider: "anthropic",
+  chatProvider: "mcp",
   chatModels: {},
   ollamaUrl: "",
   lmstudioUrl: "",

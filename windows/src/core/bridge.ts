@@ -376,6 +376,20 @@ export const Bridge = {
 
   localConnect: (provider: "ollama" | "lmstudio" | "custom", url: string) =>
     callOrThrow<LocalServer>("local_connect", { provider, url }),
+  // ── MCP (Paulo build) ─────────────────────────────────────────────────────
+  mcpStatus: () => call<McpStatus>("mcp_status"),
+  mcpSaveServer: (name: string, config: McpServerConfig, previous: string | null) =>
+    callOrThrow<McpStatus>("mcp_save_server", { name, config, previous }),
+  mcpRemoveServer: (name: string) => callOrThrow<McpStatus>("mcp_remove_server", { name }),
+  mcpImport: (json: string) => callOrThrow<McpStatus>("mcp_import", { json }),
+  /** A server's bearer token goes to the credential store; it is never read back. */
+  mcpSetToken: (name: string, token: string) => callOrThrow<void>("mcp_set_token", { name, token }),
+  mcpTest: (name: string, config: McpServerConfig) => callOrThrow<McpToolInfo[]>("mcp_test", { name, config }),
+  mcpListTools: (name: string) => callOrThrow<McpToolInfo[]>("mcp_list_tools", { name }),
+  mcpSetChat: (chat: McpChat) => callOrThrow<McpStatus>("mcp_set_chat", { chat }),
+  mcpSetServer: (enabled: boolean, port: number) => callOrThrow<McpStatus>("mcp_set_server", { enabled, port }),
+  /** The embedded server's token, shown only when the user asks to copy it. */
+  mcpServerToken: () => callOrThrow<string>("mcp_server_token"),
   /** Copies a dropped file into the inbox. */
   ingestFile: (path: string) => callOrThrow<DroppedFile>("ingest_file", { path }),
   /** Only ever tells you whether a key exists — never its value. */
@@ -681,4 +695,41 @@ export async function onDragDrop(handler: (e: DragDropPayload) => void) {
 export async function onEvent<T>(name: string, handler: (payload: T) => void) {
   if (!IS_TAURI) return () => {};
   return listen<T>(name, (e) => handler(e.payload));
+}
+
+// ── MCP (Paulo build) ─────────────────────────────────────────────────────────
+
+export type McpServerConfig =
+  | { command: string; args?: string[]; env?: Record<string, string>; disabled?: boolean }
+  | { url: string; headers?: Record<string, string>; disabled?: boolean };
+
+export interface McpServerView {
+  name: string;
+  config: McpServerConfig;
+  hasToken: boolean;
+}
+
+export interface McpChat {
+  server: string;
+  mode: "tool" | "task" | string;
+  tool: string;
+  argument: string;
+  extraArgs: Record<string, unknown>;
+  statusTool: string;
+  idArgument: string;
+  timeoutSecs: number;
+  includeHistory: boolean;
+}
+
+export interface McpStatus {
+  servers: McpServerView[];
+  chat: McpChat;
+  serverEnabled: boolean;
+  serverPort: number;
+  serverUrl: string;
+}
+
+export interface McpToolInfo {
+  name: string;
+  description: string;
 }

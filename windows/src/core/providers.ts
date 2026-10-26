@@ -6,6 +6,7 @@ import type { Settings } from "./state";
 import { N_ } from "../i18n/i18n";
 
 export type ProviderId =
+  | "mcp"
   | "anthropic" | "openai" | "google" | "openrouter"
   | "ollama" | "lmstudio" | "custom";
 
@@ -24,6 +25,9 @@ export interface ProviderDef {
 }
 
 export const PROVIDERS: readonly ProviderDef[] = [
+  // Paulo build: no API key — the chat goes to an agent through an MCP server
+  // (Settings → Servidores MCP). Its "models" are the configured servers.
+  { id: "mcp", name: "MCP", accent: "#8B5CF6", key: null, urlField: null, defaultModel: "", prefer: null },
   { id: "anthropic", name: "Anthropic", accent: "#E07950", key: "anthropic-api-key", urlField: null, defaultModel: "claude-opus-5", prefer: "opus" },
   { id: "google", name: "Google", accent: "#4285F4", key: "google-api-key", urlField: null, defaultModel: "gemini-2.0-flash", prefer: "flash" },
   { id: "openai", name: "OpenAI", accent: "#10A37F", key: "openai-api-key", urlField: null, defaultModel: "gpt-4o", prefer: "mini" },
@@ -37,7 +41,8 @@ export const PROVIDERS: readonly ProviderDef[] = [
 export const CUSTOM_SERVER_KEY = "openai-compatible-key";
 
 export function providerDef(id: string): ProviderDef {
-  return PROVIDERS.find((p) => p.id === id) ?? PROVIDERS[0];
+  // An unknown id falls back to Claude, as before the MCP provider came first.
+  return PROVIDERS.find((p) => p.id === id) ?? PROVIDERS.find((p) => p.id === "anthropic")!;
 }
 
 /** The model the chat uses for the active provider. */
