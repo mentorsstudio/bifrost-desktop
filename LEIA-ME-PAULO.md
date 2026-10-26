@@ -12,6 +12,17 @@ mostrem avisos, peçam aprovação e abram sessões no Mochi.
 - Configuração, exemplos (Hermes PC/VPS, Alethe, Orca, Freya, Grok Bot) e como compilar:
   [`docs/mcp-pt-BR.md`](docs/mcp-pt-BR.md).
 
+## Valores já preenchidos
+
+- Hermes (PC): `C:\Users\paulo\AppData\Local\hermes\bin\hermes.exe mcp-serve --tools` — **ligado**
+- Alethe: `C:\Users\paulo\AppData\Local\Alethe\alethe-orchestrator-mcp.exe` — **ligado**
+- Hermes (VPS): `https://mcp.srv2096709.hstgr.cloud/mcp` — desligado; pede autenticação básica
+  (Traefik, HTTP 401). Preencha a credencial e ligue.
+- Orca: `C:\Users\paulo\AppData\Local\orca\bin\orca.exe mcp` — desligado; confirme o caminho.
+- Freya: `C:\Users\paulo\Freya\ponte-grokbot` — desligado; confirme o comando de entrada.
+- Para o Grok Bot alcançar o Coucou: `cloudflared tunnel --url http://127.0.0.1:47821`
+  (detalhes em `docs/mcp-pt-BR.md`).
+
 ## Licença
 
 O código continua sob a licença MIT original — **Copyright (c) 2026 Louis Raillé** — veja

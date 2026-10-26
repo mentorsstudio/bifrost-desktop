@@ -176,7 +176,7 @@ impl Default for Settings {
             phone_relay: false,
             phone_relay_url: String::new(),
             show_clock: false,
-            mcp_servers: BTreeMap::new(),
+            mcp_servers: crate::mcp::config::default_servers(),
             mcp_chat: crate::mcp::McpChat::default(),
             mcp_server_enabled: true,
             mcp_server_port: crate::mcp::server::DEFAULT_PORT,

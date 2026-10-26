@@ -47,6 +47,9 @@ pub async fn connect(config: &McpServer, token: Option<&str>) -> Result<Client, 
     let fut = async {
         match config {
             McpServer::Stdio { command, args, env, .. } => {
+                if crate::mcp::config::missing_command(command) {
+                    return Err(format!("programa não encontrado: {command} — confira o caminho ou desative este servidor"));
+                }
                 let mut cmd = tokio::process::Command::new(command);
                 cmd.args(args).envs(env).kill_on_drop(true);
                 #[cfg(windows)]

@@ -30,37 +30,54 @@ desliga uma entrada sem apagá-la.
       "args": ["mcp-serve", "--tools"]
     },
     "hermes-vps": {
-      "url": "https://mcp.srv2096709.hstgr.cloud/TROQUE-PELO-CAMINHO/mcp"
+      "url": "https://mcp.srv2096709.hstgr.cloud/mcp",
+      "disabled": true
     },
     "alethe": {
-      "command": "C:\\CAMINHO\\PARA\\alethe-orchestrator-mcp.exe",
-      "args": []
+      "command": "C:\\Users\\paulo\\AppData\\Local\\Alethe\\alethe-orchestrator-mcp.exe"
     },
     "orca": {
-      "command": "C:\\CAMINHO\\PARA\\orca.exe",
+      "command": "C:\\Users\\paulo\\AppData\\Local\\orca\\bin\\orca.exe",
       "args": ["mcp"],
       "disabled": true
     },
     "freya": {
-      "url": "https://TROQUE/mcp",
+      "command": "C:\\Users\\paulo\\Freya\\ponte-grokbot\\CONFIRME-O-COMANDO.exe",
       "disabled": true
     }
   }
 }
 ```
 
+Esses são os **padrões** que o app cria quando o `settings.json` ainda não tem `mcpServers`.
+Ligados: **hermes** e **alethe**. Desligados até você confirmar: **hermes-vps**, **orca**, **freya**.
+
 Observações:
 
-- **Hermes (VPS)**: o caminho exato do endpoint não estava em nenhum lugar acessível durante a
-  construção — troque `TROQUE-PELO-CAMINHO` pelo caminho real (o mesmo que o Grok Bot usa).
+- **Se o programa não existir**, o *Testar*/chat mostra "programa não encontrado: …" — confira o
+  caminho ou marque *Desativado*. Nada trava.
+- **Hermes (VPS)** — `https://mcp.srv2096709.hstgr.cloud/mcp`. Em 26/10/2026 todo caminho testado
+  (`/mcp`, `/`, `/sse`, `/tarefas/mcp`…) respondeu **401** com `WWW-Authenticate: Basic
+  realm="traefik"`: há uma autenticação básica do Traefik na frente, então o caminho exato não pôde
+  ser confirmado de fora. `/mcp` é o padrão do Streamable HTTP; se o Grok Bot usa outro, troque.
+  Para ligar: em *Editar*, coloque em `headers` `"Authorization": "Basic <usuário:senha em
+  base64>"` (ou, se o servidor usar Bearer, o campo *Token Bearer*) e desmarque *Desativado*.
+  O servidor "tarefas" (ferramentas `hermes_task_list/start/status/stop`) fica no mesmo host;
+  se ele tiver um caminho próprio, cadastre como `hermes-vps-tarefas` com a mesma autenticação.
 - **Tokens nunca vão no JSON.** Em *Editar* → *Token Bearer*, o token é guardado no cofre do
   sistema (Gerenciador de Credenciais do Windows / Secret Service no Linux) como
-  `mcp-token:<nome>` e enviado como `Authorization: Bearer …`. Cabeçalhos extras não secretos
-  podem ir em `headers`.
+  `mcp-token:<nome>` e enviado como `Authorization: Bearer …`. Cabeçalhos extras podem ir em
+  `headers` (atenção: `headers` fica no `settings.json` em texto puro).
 - `http://` só é aceito para `localhost`/`127.0.0.1`; remoto exige `https://`.
-- **Alethe, Orca, Freya**: as ferramentas deles não eram conhecidas. Cadastre, clique em
-  **Testar** para ver o `tools/list` e então escolha a ferramenta em *Chat via MCP*.
-  Orca e Freya vêm como `disabled` até se confirmar que falam MCP.
+- **Alethe**: `alethe-orchestrator-mcp.exe` (stdio). Clique em **Testar** para ver o
+  `tools/list` e escolha a ferramenta em *Chat via MCP*.
+- **Orca**: pela documentação pública do Orca, o CLI fica em `%LOCALAPPDATA%\orca\bin` e vira
+  servidor MCP com `orca mcp` (stdio, sem token). Em *Settings → AI & agents → Another MCP
+  client?* o Orca mostra o caminho exato — confira (a instalação está em
+  `C:\Users\paulo\AppData\Local\Orca`, hooks em `C:\Users\paulo\.orca\agent-hooks`) e então ligue.
+- **Freya**: a ponte está em `C:\Users\paulo\Freya\ponte-grokbot`, mas o comando de entrada
+  não é conhecido. Troque `CONFIRME-O-COMANDO.exe` pelo comando real (ex.: `node` com
+  `args: ["index.js"]`, ou um `.exe`) e ligue.
 
 ## 2. Chat via MCP (`mcpChat`)
 
@@ -167,3 +184,20 @@ release pública).
 `sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
 libdbus-1-dev libssl-dev libxdo-dev libasound2-dev libpulse-dev libgtk-layer-shell-dev clang cmake`
 e depois `cd windows && npm ci && npm run tauri build`.
+
+
+## Expor o servidor local (127.0.0.1:47821) com Cloudflare Tunnel
+
+O servidor MCP do Coucou só escuta em `127.0.0.1:47821`. Para o Grok Bot (que roda na nuvem)
+alcançá-lo:
+
+```powershell
+winget install Cloudflare.cloudflared
+cloudflared tunnel --url http://127.0.0.1:47821
+```
+
+O `cloudflared` imprime um endereço `https://<algo>.trycloudflare.com`. No Grok Bot, cadastre
+`https://<algo>.trycloudflare.com/mcp` com o token Bearer do Coucou (botão *Copiar JSON* na seção
+*Servidor MCP do Coucou*). O endereço rápido muda a cada execução; para um fixo, crie um túnel
+nomeado (`cloudflared tunnel login`, `cloudflared tunnel create coucou`, rota DNS no seu domínio).
+Nunca exponha o servidor sem o token.

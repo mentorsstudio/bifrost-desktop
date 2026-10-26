@@ -69,6 +69,35 @@ impl McpServer {
     }
 }
 
+/// Presets for Paulo's PC, used when settings.json has no `mcpServers` yet.
+/// Only Hermes (local) and Alethe start enabled; the rest need something the
+/// user must confirm first (credentials, entry command), so they come disabled.
+pub fn default_servers() -> BTreeMap<String, McpServer> {
+    let stdio = |command: &str, args: &[&str], disabled: bool| McpServer::Stdio {
+        command: command.into(),
+        args: args.iter().map(|a| a.to_string()).collect(),
+        env: BTreeMap::new(),
+        disabled,
+    };
+    let http = |url: &str| McpServer::Http { url: url.into(), headers: BTreeMap::new(), disabled: true };
+    BTreeMap::from([
+        ("hermes".into(), stdio(r"C:\Users\paulo\AppData\Local\hermes\bin\hermes.exe", &["mcp-serve", "--tools"], false)),
+        // Behind Traefik basic auth (HTTP 401 for every path): fill the credentials, then enable.
+        ("hermes-vps".into(), http("https://mcp.srv2096709.hstgr.cloud/mcp")),
+        ("alethe".into(), stdio(r"C:\Users\paulo\AppData\Local\Alethe\alethe-orchestrator-mcp.exe", &[], false)),
+        // Orca's CLI lives in %LOCALAPPDATA%\orca\bin and serves MCP with `orca mcp`; confirm on the PC.
+        ("orca".into(), stdio(r"C:\Users\paulo\AppData\Local\orca\bin\orca.exe", &["mcp"], true)),
+        // Entry command of the bridge not confirmed: edit before enabling.
+        ("freya".into(), stdio(r"C:\Users\paulo\Freya\ponte-grokbot\CONFIRME-O-COMANDO.exe", &[], true)),
+    ])
+}
+
+/// A stdio command given as a path (has a separator) that is not on disk.
+pub fn missing_command(command: &str) -> bool {
+    let c = command.trim();
+    (c.contains('\\') || c.contains('/')) && !std::path::Path::new(c).exists()
+}
+
 fn is_loopback_url(url: &str) -> bool {
     let rest = url.trim_start_matches("http://");
     let host = rest.split(['/', '?']).next().unwrap_or("");
@@ -192,6 +221,16 @@ mod tests {
         assert_eq!(serde_json::to_string(&s).unwrap(), r#"{"command":"x"}"#);
         let back: McpServer = serde_json::from_str(r#"{"command":"x","disabled":true}"#).unwrap();
         assert!(back.disabled());
+    }
+
+    #[test]
+    fn presets_enable_only_hermes_and_alethe() {
+        let d = default_servers();
+        let on: Vec<_> = d.iter().filter(|(_, s)| !s.disabled()).map(|(n, _)| n.as_str()).collect();
+        assert_eq!(on, ["alethe", "hermes"]);
+        assert!(d.values().all(|s| s.validate().is_ok()));
+        assert!(missing_command(r"C:\nao\existe\x.exe"));
+        assert!(!missing_command("hermes.exe"));
     }
 
     #[test]
