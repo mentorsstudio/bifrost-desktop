@@ -2,7 +2,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { MCP_NAME, clientSnippet, configFromForm, formFromConfig, joinArgs, parsePairs, splitArgs } from "../src/core/mcp.ts";
+import { MCP_NAME, clientSnippet, credentialFromForm, configFromForm, formFromConfig, joinArgs, parsePairs, splitArgs } from "../src/core/mcp.ts";
 import { providerDef } from "../src/core/providers.ts";
 import { DEFAULT_SETTINGS } from "../src/core/state.ts";
 
@@ -42,4 +42,13 @@ test("forms round-trip and names are checked", () => {
   assert.ok(MCP_NAME.test("hermes-vps") && !MCP_NAME.test("a b"));
   const snippet = JSON.parse(clientSnippet("http://127.0.0.1:1/mcp", "tok"));
   assert.equal(snippet.mcpServers.coucou.headers.Authorization, "Bearer tok");
+});
+
+test("credential: user + password is Basic, else token, else none", () => {
+  assert.deepEqual(credentialFromForm(" u ", "p", "tok"), { kind: "basic", user: "u", password: "p" });
+  assert.deepEqual(credentialFromForm("", "", " tok "), { kind: "token", token: "tok" });
+  assert.deepEqual(credentialFromForm("", "", ""), { kind: "none" });
+  assert.equal(typeof credentialFromForm("u", "", ""), "string");
+  assert.equal(typeof credentialFromForm("", "p", ""), "string");
+  assert.equal(typeof credentialFromForm("a:b", "p", ""), "string");
 });

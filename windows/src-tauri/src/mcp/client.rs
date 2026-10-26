@@ -41,6 +41,45 @@ pub struct ToolInfo {
     pub description: String,
 }
 
+/// The secret stored for a remote server: a bearer token, or a whole
+/// `Basic <base64>` value (servers behind a reverse proxy's basic auth).
+#[derive(Debug, PartialEq)]
+pub enum Auth {
+    Bearer(String),
+    Basic(String),
+}
+
+impl Auth {
+    pub fn from_secret(secret: &str) -> Auth {
+        let s = secret.trim();
+        match s.get(..6) {
+            Some(p) if p.eq_ignore_ascii_case("basic ") => Auth::Basic(format!("Basic {}", s[6..].trim())),
+            _ => Auth::Bearer(s.strip_prefix("Bearer ").unwrap_or(s).to_string()),
+        }
+    }
+}
+
+/// `user:password` → the `Basic <base64>` value kept in the credential store.
+pub fn basic_value(user: &str, password: &str) -> String {
+    use base64::Engine;
+    format!("Basic {}", base64::engine::general_purpose::STANDARD.encode(format!("{user}:{password}")))
+}
+
+/// rmcp refuses `Authorization` as a custom header, so Basic auth rides as a
+/// default header of the HTTP client. No redirects: the header must not travel.
+fn basic_client(value: &str) -> Result<reqwest_mcp::Client, String> {
+    let mut v = reqwest_mcp::header::HeaderValue::from_str(value).map_err(|_| "credencial inválida".to_string())?;
+    v.set_sensitive(true);
+    let mut headers = reqwest_mcp::header::HeaderMap::new();
+    headers.insert(reqwest_mcp::header::AUTHORIZATION, v);
+    reqwest_mcp::Client::builder()
+        .default_headers(headers)
+        .redirect(reqwest_mcp::redirect::Policy::none())
+        .pool_max_idle_per_host(0)
+        .build()
+        .map_err(|e| e.to_string())
+}
+
 /// Opens a connection to `config`. `token` is the bearer for a remote server.
 pub async fn connect(config: &McpServer, token: Option<&str>) -> Result<Client, String> {
     config.validate()?;
@@ -65,7 +104,10 @@ pub async fn connect(config: &McpServer, token: Option<&str>) -> Result<Client, 
             }
             McpServer::Http { url, headers, .. } => {
                 let mut cfg = StreamableHttpClientTransportConfig::with_uri(url.trim().to_string());
-                cfg.auth_header = token.map(str::to_string);
+                let auth = token.map(Auth::from_secret);
+                if let Some(Auth::Bearer(t)) = &auth {
+                    cfg.auth_header = Some(t.clone());
+                }
                 for (k, v) in headers {
                     let name = reqwest::header::HeaderName::from_bytes(k.as_bytes())
                         .map_err(|_| format!("cabeçalho inválido: {k}"))?;
@@ -73,7 +115,13 @@ pub async fn connect(config: &McpServer, token: Option<&str>) -> Result<Client, 
                         .map_err(|_| format!("valor inválido no cabeçalho {k}"))?;
                     cfg.custom_headers.insert(name, value);
                 }
-                let transport = StreamableHttpClientTransport::from_config(cfg);
+                let transport = match auth {
+                    Some(Auth::Basic(value)) => {
+                        let client = basic_client(&value)?;
+                        StreamableHttpClientTransport::with_client(client, cfg)
+                    }
+                    _ => StreamableHttpClientTransport::from_config(cfg),
+                };
                 ().serve(transport).await.map_err(|e| format!("falha ao conectar: {e}"))
             }
         }
@@ -182,4 +230,38 @@ pub fn result_text(result: &CallToolResult) -> String {
 
 pub fn is_error(result: &CallToolResult) -> bool {
     result.is_error.unwrap_or(false)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{basic_value, Auth};
+
+    #[test]
+    fn basic_and_bearer_secrets() {
+        assert_eq!(basic_value("u", "p"), "Basic dTpw");
+        assert_eq!(Auth::from_secret("Basic dTpw"), Auth::Basic("Basic dTpw".into()));
+        assert_eq!(Auth::from_secret("basic  dTpw"), Auth::Basic("Basic dTpw".into()));
+        assert_eq!(Auth::from_secret("abc"), Auth::Bearer("abc".into()));
+        assert_eq!(Auth::from_secret("Bearer abc"), Auth::Bearer("abc".into()));
+        assert!(super::basic_client("Basic dTpw").is_ok());
+    }
+
+    /// End to end against real servers behind basic auth. Run by hand:
+    /// MCP_E2E_URLS="https://a/mcp https://b/mcp" MCP_E2E_BASIC_FILE=<user:pass file>
+    /// cargo test e2e_basic -- --ignored --nocapture. Prints tool names only.
+    #[test]
+    #[ignore]
+    fn e2e_basic_auth_tools_list() {
+        let file = std::env::var("MCP_E2E_BASIC_FILE").expect("MCP_E2E_BASIC_FILE");
+        let raw = std::fs::read_to_string(file).unwrap();
+        let (user, pass) = raw.trim().split_once(':').expect("user:pass");
+        let secret = basic_value(user, pass);
+        let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+        for url in std::env::var("MCP_E2E_URLS").unwrap().split_whitespace() {
+            let cfg = crate::mcp::McpServer::Http { url: url.into(), headers: Default::default(), disabled: false };
+            let tools = rt.block_on(super::test(&cfg, Some(&secret))).unwrap_or_else(|e| panic!("{url}: {e}"));
+            let names: Vec<_> = tools.iter().map(|t| t.name.as_str()).collect();
+            println!("{url} -> {names:?}");
+        }
+    }
 }

@@ -5,7 +5,7 @@
 import {
   Bridge, type McpChat, type McpServerConfig, type McpServerView, type McpStatus,
 } from "../core/bridge";
-import { MCP_NAME, clientSnippet, configFromForm, formFromConfig, type McpForm } from "../core/mcp";
+import { MCP_NAME, clientSnippet, credentialFromForm, configFromForm, formFromConfig, type McpForm } from "../core/mcp";
 import type { Settings } from "../core/state";
 import { h, clear } from "../views/dom";
 import { statusDot } from "./parts";
@@ -119,12 +119,15 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
     const url = input(f.url, "https://mcp.exemplo.com/mcp");
     const headers = area(f.headers, "Cabeçalho: valor (um por linha)");
     const token = input("", existing?.hasToken ? "•••• token salvo (deixe vazio para manter)" : "Token Bearer (opcional)", "password");
+    const basicUser = input("", existing?.hasToken ? "(credencial salva — deixe vazio para manter)" : "Usuário (Basic Auth, opcional)");
+    const basicPass = input("", "Senha (Basic Auth)", "password");
     const disabled = h("input", { type: "checkbox" }) as HTMLInputElement;
     disabled.checked = f.disabled;
     const msg = h("div", {});
     const stdioRows = h("div", { style: "display:flex;flex-direction:column;gap:6px" }, field("Comando", command), field("Argumentos", args), field("Ambiente", env));
     const httpRows = h("div", { style: "display:flex;flex-direction:column;gap:6px" }, field("URL", url), field("Cabeçalhos", headers), field("Token Bearer", token),
-      notice("hint", "O token vai para o cofre de credenciais do sistema, nunca para o settings.json."));
+      field("Usuário", basicUser), field("Senha", basicPass),
+      notice("hint", "Use o token Bearer OU usuário + senha (Basic Auth, ex.: Traefik). A credencial vai para o cofre do sistema, nunca para o settings.json."));
     const sync = () => {
       stdioRows.style.display = kind.value === "stdio" ? "" : "none";
       httpRows.style.display = kind.value === "http" ? "" : "none";
@@ -145,10 +148,12 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
       msg.append(n);
     };
     const storeToken = async (n: string) => {
-      if (kind.value === "http" && token.value.trim()) {
-        await Bridge.mcpSetToken(n, token.value.trim());
-        token.value = "";
-      }
+      if (kind.value !== "http") return;
+      const c = credentialFromForm(basicUser.value, basicPass.value, token.value);
+      if (typeof c === "string") throw new Error(c);
+      if (c.kind === "basic") await Bridge.mcpSetBasicAuth(n, c.user, c.password);
+      else if (c.kind === "token") await Bridge.mcpSetToken(n, c.token);
+      token.value = basicPass.value = basicUser.value = "";
     };
 
     const test = h("button", { text: "Testar conexão" });
@@ -176,7 +181,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
         show(notice("err", String(err).replace(/^Error:\s*/, "")));
       }
     });
-    const clearToken = h("button", { class: "danger", text: "Apagar token" });
+    const clearToken = h("button", { class: "danger", text: "Apagar credencial" });
     clearToken.style.display = existing?.hasToken ? "" : "none";
     clearToken.addEventListener("click", async () => {
       await Bridge.mcpSetToken(existing!.name, "");

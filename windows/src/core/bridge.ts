@@ -384,6 +384,8 @@ export const Bridge = {
   mcpImport: (json: string) => callOrThrow<McpStatus>("mcp_import", { json }),
   /** A server's bearer token goes to the credential store; it is never read back. */
   mcpSetToken: (name: string, token: string) => callOrThrow<void>("mcp_set_token", { name, token }),
+  mcpSetBasicAuth: (name: string, user: string, password: string) =>
+    callOrThrow<void>("mcp_set_basic_auth", { name, user, password }),
   mcpTest: (name: string, config: McpServerConfig) => callOrThrow<McpToolInfo[]>("mcp_test", { name, config }),
   mcpListTools: (name: string) => callOrThrow<McpToolInfo[]>("mcp_list_tools", { name }),
   mcpSetChat: (chat: McpChat) => callOrThrow<McpStatus>("mcp_set_chat", { chat }),

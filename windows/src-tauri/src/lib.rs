@@ -678,6 +678,16 @@ fn mcp_set_token(name: String, token: String) -> Result<(), String> {
     secrets::set_mcp_token(&name, token.trim())
 }
 
+/// Basic auth (e.g. Traefik in front of the server): kept in the credential
+/// store as the whole `Basic <base64>` value, under the same entry as a token.
+#[tauri::command]
+fn mcp_set_basic_auth(name: String, user: String, password: String) -> Result<(), String> {
+    if user.trim().is_empty() || user.contains(':') {
+        return Err("usuário vazio ou com ':'".into());
+    }
+    secrets::set_mcp_token(&name, &mcp::client::basic_value(user.trim(), &password))
+}
+
 /// "Testar conexão": a fresh connection and its tools/list.
 #[tauri::command]
 async fn mcp_test(name: String, config: mcp::McpServer) -> Result<Vec<mcp::client::ToolInfo>, String> {
@@ -1015,6 +1025,7 @@ pub fn run() {
             mcp_remove_server,
             mcp_import,
             mcp_set_token,
+            mcp_set_basic_auth,
             mcp_test,
             mcp_list_tools,
             mcp_set_chat,

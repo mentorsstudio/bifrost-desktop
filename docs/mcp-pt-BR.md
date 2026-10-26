@@ -33,6 +33,10 @@ desliga uma entrada sem apagá-la.
       "url": "https://mcp.srv2096709.hstgr.cloud/mcp",
       "disabled": true
     },
+    "hermes-vps-tarefas": {
+      "url": "https://mcp.srv2096709.hstgr.cloud/task/mcp",
+      "disabled": true
+    },
     "alethe": {
       "command": "C:\\Users\\paulo\\AppData\\Local\\Alethe\\alethe-orchestrator-mcp.exe"
     },
@@ -50,20 +54,26 @@ desliga uma entrada sem apagá-la.
 ```
 
 Esses são os **padrões** que o app cria quando o `settings.json` ainda não tem `mcpServers`.
-Ligados: **hermes** e **alethe**. Desligados até você confirmar: **hermes-vps**, **orca**, **freya**.
+Ligados: **hermes** e **alethe**. Desligados até você confirmar: **hermes-vps**, **hermes-vps-tarefas**, **orca**, **freya**.
 
 Observações:
 
 - **Se o programa não existir**, o *Testar*/chat mostra "programa não encontrado: …" — confira o
   caminho ou marque *Desativado*. Nada trava.
-- **Hermes (VPS)** — `https://mcp.srv2096709.hstgr.cloud/mcp`. Em 26/10/2026 todo caminho testado
-  (`/mcp`, `/`, `/sse`, `/tarefas/mcp`…) respondeu **401** com `WWW-Authenticate: Basic
-  realm="traefik"`: há uma autenticação básica do Traefik na frente, então o caminho exato não pôde
-  ser confirmado de fora. `/mcp` é o padrão do Streamable HTTP; se o Grok Bot usa outro, troque.
-  Para ligar: em *Editar*, coloque em `headers` `"Authorization": "Basic <usuário:senha em
-  base64>"` (ou, se o servidor usar Bearer, o campo *Token Bearer*) e desmarque *Desativado*.
-  O servidor "tarefas" (ferramentas `hermes_task_list/start/status/stop`) fica no mesmo host;
-  se ele tiver um caminho próprio, cadastre como `hermes-vps-tarefas` com a mesma autenticação.
+- **Hermes (VPS)** — dois servidores no mesmo host, ambos atrás de Basic Auth do Traefik
+  (sem login: HTTP 401; com login: HTTP 200), confirmados em 26/10/2026:
+  - `hermes-vps` → `https://mcp.srv2096709.hstgr.cloud/mcp` (conversas, mensagens, canais,
+    permissões, busca na web, visão, skills, voz);
+  - `hermes-vps-tarefas` → `https://mcp.srv2096709.hstgr.cloud/task/mcp` (servidor
+    `hermes-task`: `hermes_task_list`, `hermes_task_start`, `hermes_task_status`, `hermes_task_stop`).
+
+  **Como preencher o login:** *Servidores MCP* → *Editar* no servidor → campos **Usuário** e
+  **Senha** → *Salvar* (ou *Testar conexão*). O app monta `Authorization: Basic <base64>` e guarda
+  só no cofre do sistema (`mcp-token:<nome>`), nunca no `settings.json`. Faça isso nos dois
+  servidores e desmarque *Desativado*. *Apagar credencial* remove.
+- **Chat com tarefas do VPS**: em *Chat via MCP*, escolha o servidor `hermes-vps-tarefas`
+  (modo Tarefa, `hermes_task_start` / `hermes_task_status`). O `/mcp` do VPS não tem as
+  ferramentas `hermes_task_*`.
 - **Tokens nunca vão no JSON.** Em *Editar* → *Token Bearer*, o token é guardado no cofre do
   sistema (Gerenciador de Credenciais do Windows / Secret Service no Linux) como
   `mcp-token:<nome>` e enviado como `Authorization: Bearer …`. Cabeçalhos extras podem ir em

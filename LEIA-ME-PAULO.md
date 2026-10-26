@@ -16,8 +16,11 @@ mostrem avisos, peçam aprovação e abram sessões no Mochi.
 
 - Hermes (PC): `C:\Users\paulo\AppData\Local\hermes\bin\hermes.exe mcp-serve --tools` — **ligado**
 - Alethe: `C:\Users\paulo\AppData\Local\Alethe\alethe-orchestrator-mcp.exe` — **ligado**
-- Hermes (VPS): `https://mcp.srv2096709.hstgr.cloud/mcp` — desligado; pede autenticação básica
-  (Traefik, HTTP 401). Preencha a credencial e ligue.
+- Hermes (VPS): `https://mcp.srv2096709.hstgr.cloud/mcp` — desligado.
+- Hermes (VPS, tarefas): `https://mcp.srv2096709.hstgr.cloud/task/mcp` — desligado. É o que tem
+  `hermes_task_*`; use-o em *Chat via MCP* para tarefas no VPS.
+- Os dois pedem Basic Auth (Traefik): em *Editar*, preencha **Usuário** e **Senha** (vão para o
+  cofre do Windows, não para o `settings.json`) e desmarque *Desativado*.
 - Orca: `C:\Users\paulo\AppData\Local\orca\bin\orca.exe mcp` — desligado; confirme o caminho.
 - Freya: `C:\Users\paulo\Freya\ponte-grokbot` — desligado; confirme o comando de entrada.
 - Para o Grok Bot alcançar o Coucou: `cloudflared tunnel --url http://127.0.0.1:47821`

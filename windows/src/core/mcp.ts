@@ -98,3 +98,16 @@ export function clientSnippet(url: string, token: string): string {
     2,
   );
 }
+
+/** Which credential the form's fields describe: Basic (user + password), a bearer token, or none. */
+export function credentialFromForm(user: string, password: string, token: string):
+  { kind: "basic"; user: string; password: string } | { kind: "token"; token: string } | { kind: "none" } | string {
+  const u = user.trim();
+  if (u || password) {
+    if (!u) return "Preencha o usuário.";
+    if (u.includes(":")) return "O usuário não pode ter ':'.";
+    if (!password) return "Preencha a senha.";
+    return { kind: "basic", user: u, password };
+  }
+  return token.trim() ? { kind: "token", token: token.trim() } : { kind: "none" };
+}

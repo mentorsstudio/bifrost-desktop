@@ -82,8 +82,10 @@ pub fn default_servers() -> BTreeMap<String, McpServer> {
     let http = |url: &str| McpServer::Http { url: url.into(), headers: BTreeMap::new(), disabled: true };
     BTreeMap::from([
         ("hermes".into(), stdio(r"C:\Users\paulo\AppData\Local\hermes\bin\hermes.exe", &["mcp-serve", "--tools"], false)),
-        // Behind Traefik basic auth (HTTP 401 for every path): fill the credentials, then enable.
+        // Behind Traefik basic auth: fill user/password in Editar (credential store), then enable.
         ("hermes-vps".into(), http("https://mcp.srv2096709.hstgr.cloud/mcp")),
+        // Task server (hermes_task_list/start/status/stop), same basic auth.
+        ("hermes-vps-tarefas".into(), http("https://mcp.srv2096709.hstgr.cloud/task/mcp")),
         ("alethe".into(), stdio(r"C:\Users\paulo\AppData\Local\Alethe\alethe-orchestrator-mcp.exe", &[], false)),
         // Orca's CLI lives in %LOCALAPPDATA%\orca\bin and serves MCP with `orca mcp`; confirm on the PC.
         ("orca".into(), stdio(r"C:\Users\paulo\AppData\Local\orca\bin\orca.exe", &["mcp"], true)),
