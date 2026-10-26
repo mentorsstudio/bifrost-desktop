@@ -360,20 +360,30 @@ impl Mochi for AppMochi {
     }
 }
 
+/// The server's token: the stored one, or a new one stored now. When the
+/// credential store cannot keep it (no Secret Service running), it lives in
+/// memory for this session only, so the server still works and Settings still
+/// shows the token in use.
+pub fn token() -> String {
+    static TOKEN: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    TOKEN
+        .get_or_init(|| {
+            if let Some(t) = crate::secrets::get_server_token() {
+                return t;
+            }
+            let t = new_token();
+            if let Err(e) = crate::secrets::set_server_token(&t) {
+                crate::log::line(format!("mcp server: token kept for this session only ({e})"));
+            }
+            t
+        })
+        .clone()
+}
+
 /// Started once at launch when the setting is on.
 pub fn start(app: tauri::AppHandle, port: u16) {
     tauri::async_runtime::spawn(async move {
-        let token = match crate::secrets::get_server_token() {
-            Some(t) => t,
-            None => {
-                let t = new_token();
-                if let Err(e) = crate::secrets::set_server_token(&t) {
-                    crate::log::line(format!("mcp server: cannot store its token: {e}"));
-                    return;
-                }
-                t
-            }
-        };
+        let token = token();
         let mochi: Arc<dyn Mochi> = Arc::new(AppMochi(app));
         match serve(mochi, port, token, tokio_util::sync::CancellationToken::new()).await {
             Ok(addr) => crate::log::line(format!("mcp server on http://{addr}/mcp")),

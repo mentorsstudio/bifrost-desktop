@@ -720,12 +720,7 @@ fn mcp_set_server(shared: State<Shared>, enabled: bool, port: u16) -> Result<Mcp
 /// The embedded server's token, for the user to paste into a client (Grok Bot, Hermes…).
 #[tauri::command]
 fn mcp_server_token() -> Result<String, String> {
-    if let Some(t) = secrets::get_server_token() {
-        return Ok(t);
-    }
-    let t = mcp::server::new_token();
-    secrets::set_server_token(&t)?;
-    Ok(t)
+    Ok(mcp::server::token())
 }
 
 #[tauri::command]
