@@ -342,16 +342,16 @@ export class Island {
     this.fsm.openOnHover = State.settings.openOnHover;
     this.fsm.onTransition = (from, to) => {
       // The greeting is over, however it ended: back to his desktop spot.
-      if (from === "coucou" && to !== "coucou") this.desktop.launch();
+      if (from === "bifrost-desktop" && to !== "bifrost-desktop") this.desktop.launch();
       switch (to) {
         case "hidden":
           this.setMode("hidden");
           break;
         case "petit":
-          if (from === "coucou") this.greeting.interrupt();
+          if (from === "bifrost-desktop") this.greeting.interrupt();
           else if (from === "hidden" && !this.silentReveal) Sound.play("peek");
           this.setMode("compact");
-          if (from === "coucou") State.view = State.defaultView();
+          if (from === "bifrost-desktop") State.view = State.defaultView();
           if (!this.wasInIsland) this.fsm.mouseLeft();
           break;
         case "home":
@@ -361,7 +361,7 @@ export class Island {
           // say so on the next open, without polling while the island is shut.
           void refreshHookPills();
           break;
-        case "coucou":
+        case "bifrost-desktop":
           this.expand("greeting");
           this.greeting.start();
           break;
@@ -459,14 +459,14 @@ export class Island {
     this.expand(view);
   }
 
-  /** A new Coucou waits and Mochi has nothing else to say (he is blue). */
+  /** A new Bifrost waits and Mochi has nothing else to say (he is blue). */
   private updateHintOn(): boolean {
     return !State.paused && showsUpdateHint(Updates.waiting(), State.effectiveState, State.pendingApproval != null);
   }
 
   /**
    * What a click or a hover opens on: while Mochi is blue, the new version
-   * ("Coucou X is out", Update now); otherwise the usual view. A waiting
+   * ("Bifrost X is out", Update now); otherwise the usual view. A waiting
    * permission or question always comes first.
    */
   private openingView(): IslandViewName {
@@ -898,7 +898,7 @@ export class Island {
     const wasIn = this.wasInIsland;
     this.wasInIsland = inIsland;
     if (inIsland && !wasIn) {
-      if (this.fsm.state === "coucou") this.greeting.hover();
+      if (this.fsm.state === "bifrost-desktop") this.greeting.hover();
       this.fsm.mouseEntered();
     }
     if (!inIsland && wasIn) {
@@ -1114,7 +1114,7 @@ export class Island {
     if (!ctx) return;
 
     const focus = State.focusTask;
-    // A new Coucou waits: over an idle or sleeping Mochi, the blue and the arrow
+    // A new Bifrost waits: over an idle or sleeping Mochi, the blue and the arrow
     // badge (whats-new.ts). Anything Mochi has to say comes first.
     this.engine.setUpdateHint(this.updateHintOn() ? UPDATE_BLUE_RGB : null);
     // While a plan card is open Mochi wears the plan's colour, like its pill.

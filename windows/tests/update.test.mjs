@@ -127,7 +127,7 @@ test("an announcement with no version known yet, or while the chat is open, wait
   assert.deepEqual(shown, []);
 });
 
-test("the tray's Update Coucou to X… opens the card without marking anything", () => {
+test("the tray's Update Bifrost to X… opens the card without marking anything", () => {
   emit("update-status", OUT);
   State.mode = "expanded";
   State.view = "prompt";

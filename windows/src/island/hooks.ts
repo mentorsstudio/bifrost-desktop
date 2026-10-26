@@ -69,7 +69,7 @@ interface HookPayload {
   term_editor?: string;
   /** StatusLine (the plan usage relay): Claude Code's 5-hour and weekly limits. */
   rate_limits?: unknown;
-  /** Set by Coucou's own MCP server (mcp/server.rs): an ask_approval from an MCP client. */
+  /** Set by Bifrost's own MCP server (mcp/server.rs): an ask_approval from an MCP client. */
   coucou_mcp?: boolean;
 }
 
@@ -522,7 +522,7 @@ function handleHook(island: Island, payload: HookPayload) {
       // Any agent's card (Claude Code, Codex, Copilot CLI, Muse Code) comes up
       // the same way: beginApproval brought its pill to the front.
       island.alert(view);
-      // Coucou answers within 108 s or not at all; after that the terminal has
+      // Bifrost answers within 108 s or not at all; after that the terminal has
       // taken over and the card would be lying.
       pendingTimeout = window.setTimeout(() => {
         pendingTimeout = null;

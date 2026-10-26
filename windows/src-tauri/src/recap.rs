@@ -6,7 +6,7 @@
 // component. Never a command, a file path, file contents or a prompt.
 //
 // The history lives in recap.json under platform::local_dir()
-// (%LOCALAPPDATA%\Coucou on Windows, ~/.local/share/coucou on Linux), keeps a
+// (%LOCALAPPDATA%\Bifrost on Windows, ~/.local/share/bifrost-desktop on Linux), keeps a
 // 12-week rolling window and a hard cap on its length, and is written whole to
 // a temporary file then renamed over the old one, so a crash never leaves half
 // a file. Nothing in it ever leaves the machine.
@@ -436,7 +436,7 @@ fn write_history(path: &Path, history: &History) -> std::io::Result<()> {
     }
     let json = serde_json::to_vec(history)
         .map_err(|e| std::io::Error::new(ErrorKind::InvalidData, e))?;
-    let temp = path.with_extension(format!("json.coucou-{}", std::process::id()));
+    let temp = path.with_extension(format!("json.bifrost-desktop-{}", std::process::id()));
     let mut options = std::fs::OpenOptions::new();
     options.write(true).create(true).truncate(true);
     #[cfg(unix)]
@@ -454,7 +454,7 @@ fn write_history(path: &Path, history: &History) -> std::io::Result<()> {
     written
 }
 
-/// One line in coucou.log. Tests must never write to the real one.
+/// One line in bifrost-desktop.log. Tests must never write to the real one.
 fn note(message: String) {
     #[cfg(not(test))]
     crate::log::line(message);
@@ -662,9 +662,9 @@ fn save_png(dirs: &[PathBuf], data: &str, week: &str) -> Result<PathBuf, String>
         .find(|d| d.is_dir())
         .ok_or_else(|| crate::i18n::t("No Pictures or Downloads folder to save into."))?;
     let stem = if is_week_key(week) {
-        format!("Coucou weekly recap {week}")
+        format!("Bifrost weekly recap {week}")
     } else {
-        "Coucou weekly recap".to_string()
+        "Bifrost weekly recap".to_string()
     };
     write_unique(dir, &stem, &bytes)
         .map_err(|err| crate::i18n::tf("Could not save the image: {error}", &[("error", &err.to_string())]))
@@ -777,14 +777,14 @@ mod tests {
     const T0: i64 = 1_791_158_400;
 
     fn scratch(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("coucou-recap-{name}-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("bifrost-desktop-recap-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         dir
     }
 
     fn event(name: &str, session: &str, extra: Value) -> Value {
-        let mut v = json!({ "hook_event_name": name, "session_id": session, "cwd": "/home/me/code/coucou" });
+        let mut v = json!({ "hook_event_name": name, "session_id": session, "cwd": "/home/me/code/bifrost-desktop" });
         if let (Some(obj), Value::Object(more)) = (v.as_object_mut(), extra) {
             obj.extend(more);
         }
@@ -805,17 +805,17 @@ mod tests {
         r.observe(&event("PreToolUse", "s1", json!({ "tool_name": "Read" })), T0 + 20);
         r.observe(&event("PreToolUse", "s1", json!({ "tool_name": "AskUserQuestion" })), T0 + 25);
         r.observe(&event("PostToolUse", "s1", json!({ "tool_name": "Edit", "tool_input": {
-            "file_path": "/home/me/code/coucou/a.rs", "old_string": "a\nb\nc", "new_string": "a\nB\nc\nd" } })), T0 + 30);
+            "file_path": "/home/me/code/bifrost-desktop/a.rs", "old_string": "a\nb\nc", "new_string": "a\nB\nc\nd" } })), T0 + 30);
         r.observe(&event("PostToolUse", "s1", json!({ "tool_name": "Write", "tool_input": {
-            "file_path": "/home/me/code/coucou/b.rs", "content": "one\ntwo\nthree\n" } })), T0 + 40);
+            "file_path": "/home/me/code/bifrost-desktop/b.rs", "content": "one\ntwo\nthree\n" } })), T0 + 40);
         r.observe(&event("PostToolUse", "s1", json!({ "tool_name": "Edit", "tool_input": {
-            "file_path": "/home/me/code/coucou/a.rs", "old_string": "x", "new_string": "y" } })), T0 + 50);
+            "file_path": "/home/me/code/bifrost-desktop/a.rs", "old_string": "x", "new_string": "y" } })), T0 + 50);
         r.observe(&event("Stop", "s1", json!({})), T0 + HOUR);
 
         let view = r.view(0);
         assert_eq!(view.turns, vec![Turn {
             agent: "integration_claude".into(),
-            project: "coucou".into(),
+            project: "bifrost-desktop".into(),
             start: T0,
             end: T0 + HOUR,
             files_changed: 2,
@@ -830,7 +830,7 @@ mod tests {
         for secret in ["secret plan", "rm -rf", "a.rs", "/home/me", "one\\ntwo"] {
             assert!(!written.contains(secret), "{secret} must not be stored");
         }
-        assert_eq!(on_disk(&file)["turns"][0]["project"], "coucou");
+        assert_eq!(on_disk(&file)["turns"][0]["project"], "bifrost-desktop");
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -1036,11 +1036,11 @@ mod tests {
         let png = "data:image/png;base64,iVBORw0KGgo=";
         let first = save_png(&[missing.clone(), dir.clone()], png, "2026-10-05").unwrap();
         let second = save_png(&[dir.clone()], png, "2026-10-05").unwrap();
-        assert_eq!(first, dir.join("Coucou weekly recap 2026-10-05.png"));
-        assert_eq!(second, dir.join("Coucou weekly recap 2026-10-05 (2).png"));
+        assert_eq!(first, dir.join("Bifrost weekly recap 2026-10-05.png"));
+        assert_eq!(second, dir.join("Bifrost weekly recap 2026-10-05 (2).png"));
         // The week is a date or nothing: no path tricks through it.
         let third = save_png(&[dir.clone()], png, "../../x").unwrap();
-        assert_eq!(third, dir.join("Coucou weekly recap.png"));
+        assert_eq!(third, dir.join("Bifrost weekly recap.png"));
         // Not a PNG: refused.
         assert!(save_png(&[dir.clone()], "data:image/png;base64,aGVsbG8=", "").is_err());
         assert!(save_png(&[missing], png, "").is_err());

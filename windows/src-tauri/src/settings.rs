@@ -32,7 +32,7 @@ pub struct Settings {
     /// Show the Claude plan pill (5 h and weekly limits) in the island's header.
     /// Off until the user turns it on, so the header stays as it shipped.
     pub show_plan_in_notch: bool,
-    /// Coucou's status line relay is the one in Claude Code's settings.json.
+    /// Bifrost's status line relay is the one in Claude Code's settings.json.
     /// Like `hooks_installed`, the real state wins at launch over what was stored.
     pub plan_relay_installed: bool,
     /// Show the Codex plan pill (5 h / weekly limits from `codex app-server`).
@@ -106,7 +106,7 @@ pub struct Settings {
     pub mcp_servers: BTreeMap<String, crate::mcp::McpServer>,
     /// Which server and tool the "mcp" chat provider uses.
     pub mcp_chat: crate::mcp::McpChat,
-    /// Coucou's own MCP server on 127.0.0.1 (mcp/server.rs).
+    /// Bifrost's own MCP server on 127.0.0.1 (mcp/server.rs).
     pub mcp_server_enabled: bool,
     pub mcp_server_port: u16,
 }
@@ -195,7 +195,45 @@ fn settings_path() -> PathBuf {
 }
 
 pub fn load() -> Settings {
-    load_from(&settings_path())
+    let path = settings_path();
+    if let Some(old) = config_dir().parent().map(|p| p.join(LEGACY_DIR).join("settings.json")) {
+        migrate_legacy(&old, &path);
+    }
+    load_from(&path)
+}
+
+/// The folder this fork's settings lived in before it was renamed Bifrost.
+#[cfg(windows)]
+const LEGACY_DIR: &str = "Coucou";
+#[cfg(not(windows))]
+const LEGACY_DIR: &str = "coucou";
+
+/// One time: copies a Coucou settings.json into the Bifrost folder when there is
+/// none there yet. The old file is left in place (Coucou may still be installed).
+fn migrate_legacy(old: &std::path::Path, new: &std::path::Path) -> bool {
+    if new.exists() || !old.is_file() {
+        return false;
+    }
+    let Some(dir) = new.parent() else { return false };
+    crate::platform::ensure_private_dir(dir).is_ok() && std::fs::copy(old, new).is_ok()
+}
+
+#[cfg(test)]
+mod legacy_tests {
+    #[test]
+    fn coucou_settings_are_copied_once() {
+        let base = std::env::temp_dir().join(format!("bifrost-migrate-{}", std::process::id()));
+        let old = base.join("old").join("settings.json");
+        let new = base.join("new").join("settings.json");
+        std::fs::create_dir_all(old.parent().unwrap()).unwrap();
+        std::fs::write(&old, "{\"showClock\":true}").unwrap();
+        assert!(super::migrate_legacy(&old, &new));
+        assert_eq!(std::fs::read_to_string(&new).unwrap(), "{\"showClock\":true}");
+        std::fs::write(&old, "{}").unwrap();
+        assert!(!super::migrate_legacy(&old, &new), "never overwrites");
+        assert!(old.exists());
+        let _ = std::fs::remove_dir_all(&base);
+    }
 }
 
 pub fn save(settings: &Settings) -> std::io::Result<()> {
@@ -217,7 +255,7 @@ fn not_loaded() -> MutexGuard<'static, Vec<PathBuf>> {
     NOT_LOADED.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
-/// One line in coucou.log. Tests must never write to the real one.
+/// One line in bifrost-desktop.log. Tests must never write to the real one.
 fn note(message: String) {
     #[cfg(not(test))]
     crate::log::line(message);
@@ -262,7 +300,7 @@ fn salvage(fields: Map<String, Value>) -> Settings {
 
 /// The log line for a field `salvage` had to drop. The name comes straight from
 /// the file, so it is written escaped: a line break in it must not be able to
-/// start what looks like another line of coucou.log.
+/// start what looks like another line of bifrost-desktop.log.
 fn unusable_field(key: &str) -> String {
     format!("settings.json: {key:?} is not usable — its default is used instead")
 }
@@ -415,7 +453,7 @@ fn save_to(path: &Path, settings: &Settings) -> std::io::Result<()> {
 
     // Write beside the target and rename over it: a crash, a full disk or a
     // power cut leaves the previous settings.json intact rather than half a file.
-    let temp = path.with_extension(format!("json.coucou-{}", std::process::id()));
+    let temp = path.with_extension(format!("json.bifrost-desktop-{}", std::process::id()));
     let written = std::fs::File::create(&temp)
         .and_then(|mut file| write_whole(&mut file, &json))
         .and_then(|()| std::fs::rename(&temp, path));
@@ -501,7 +539,7 @@ mod tests {
     /// A fresh directory of our own, and the settings.json it will hold.
     fn scratch(name: &str) -> (PathBuf, PathBuf) {
         let dir = std::env::temp_dir()
-            .join(format!("coucou-settings-{name}-{}", std::process::id()));
+            .join(format!("bifrost-desktop-settings-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         let file = dir.join("settings.json");
@@ -1024,7 +1062,7 @@ mod tests {
         // directory squatting on that name, the write cannot even start.
         let (dir, file) = scratch("blocked");
         std::fs::write(&file, CUSTOM).unwrap();
-        let temp = dir.join(format!("settings.json.coucou-{}", std::process::id()));
+        let temp = dir.join(format!("settings.json.bifrost-desktop-{}", std::process::id()));
         std::fs::create_dir(&temp).unwrap();
 
         assert!(save_to(&file, &Settings::default()).is_err());

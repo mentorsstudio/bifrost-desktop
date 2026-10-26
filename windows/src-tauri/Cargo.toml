@@ -1,13 +1,13 @@
 [package]
-name = "coucou"
-description = "Coucou for Windows and Linux — Mochi lives at the top of your screen"
-authors = ["Louis Raille"]
+name = "bifrost-desktop"
+description = "Bifrost for Windows and Linux — Mochi lives at the top of your screen"
+authors = ["Paulo", "Louis Raille (Coucou, original author)"]
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "coucou_lib"
+name = "bifrost_desktop_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
@@ -57,7 +57,7 @@ cpal = "0.18"
 # downloaded or compiled. MIT/Zlib/Apache-2.0.
 miniz_oxide = "0.8"
 # MCP (Paulo build): the official Rust SDK — a client for the agents (stdio child process and
-# Streamable HTTP) and Coucou's own server on 127.0.0.1. Apache-2.0/MIT. hyper is already in the
+# Streamable HTTP) and Bifrost's own server on 127.0.0.1. Apache-2.0/MIT. hyper is already in the
 # tree through reqwest; it serves the embedded server's HTTP.
 rmcp = { version = "3.7", default-features = false, features = ["client", "server", "transport-child-process", "transport-streamable-http-client-reqwest", "reqwest", "transport-streamable-http-server"] }
 hyper = { version = "1", features = ["server", "http1"] }

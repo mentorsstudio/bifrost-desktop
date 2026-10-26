@@ -1,4 +1,4 @@
-// The MCP servers Coucou may talk to, as written in settings.json:
+// The MCP servers Bifrost may talk to, as written in settings.json:
 //
 //   "mcpServers": {
 //     "hermes":     { "command": "hermes.exe", "args": ["mcp-serve", "--tools"], "env": {} },

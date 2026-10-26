@@ -1,4 +1,4 @@
-// Coucou's own MCP server: lets Grok Bot, Hermes, Alethe… drive Mochi.
+// Bifrost's own MCP server: lets Grok Bot, Hermes, Alethe… drive Mochi.
 //
 // Streamable HTTP on 127.0.0.1 only (`http://127.0.0.1:<port>/mcp`), and every
 // request must carry `Authorization: Bearer <token>`. The token is made on
@@ -229,8 +229,8 @@ impl MochiServer {
 impl ServerHandler for MochiServer {
     fn get_info(&self) -> ServerConfig {
         ServerConfig::new(ServerCapabilities::builder().enable_tools().build())
-            .with_server_info(Implementation::new("coucou-mochi", env!("CARGO_PKG_VERSION")))
-            .with_instructions("Controla o Mochi do Coucou: avisos, aprovações Permitir/Negar, sessões de agentes e chat.")
+            .with_server_info(Implementation::new("bifrost-desktop-mochi", env!("CARGO_PKG_VERSION")))
+            .with_instructions("Controla o Mochi do Bifrost: avisos, aprovações Permitir/Negar, sessões de agentes e chat.")
     }
 
     async fn list_tools(

@@ -41,7 +41,7 @@ test("forms round-trip and names are checked", () => {
   assert.deepEqual(configFromForm(formFromConfig(c)), c);
   assert.ok(MCP_NAME.test("hermes-vps") && !MCP_NAME.test("a b"));
   const snippet = JSON.parse(clientSnippet("http://127.0.0.1:1/mcp", "tok"));
-  assert.equal(snippet.mcpServers.coucou.headers.Authorization, "Bearer tok");
+  assert.equal(snippet.mcpServers["bifrost-desktop"].headers.Authorization, "Bearer tok");
 });
 
 test("credential: user + password is Basic, else token, else none", () => {

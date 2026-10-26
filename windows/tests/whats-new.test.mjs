@@ -81,7 +81,7 @@ test("signs of an earlier install", () => {
   assert.equal(usedBefore({ consent: null, history: empty, dictations: 0, notes: 1 }), true);
 });
 
-test("your Coucou so far: every kept number, zeros left out", () => {
+test("your Bifrost so far: every kept number, zeros left out", () => {
   const turn = (start, end, linesAdded) => ({
     agent: "claude-code", project: "p", start, end, filesChanged: 1, linesAdded, linesRemoved: 3, commandsRun: 0, questions: 0,
   });
@@ -157,5 +157,5 @@ test("All changes and the coffee", () => {
   assert.equal(releasePage("windows", "0.5.2"), "https://github.com/Louis-CFM/coucou/releases/tag/windows-v0.5.2");
   assert.equal(releasePage("linux", "0.5.2"), "https://github.com/Louis-CFM/coucou/releases/tag/linux-v0.5.2");
   const site = readFileSync(new URL("../../docs/index.html", import.meta.url), "utf8");
-  assert.ok(site.includes(COFFEE_URL), "the same link as the Coucou page");
+  assert.ok(site.includes(COFFEE_URL), "the same link as the Bifrost page");
 });

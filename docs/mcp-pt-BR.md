@@ -1,6 +1,6 @@
-# Coucou (versão do Paulo) — MCP no lugar de chaves de API
+# Bifrost (versão do Paulo) — MCP no lugar de chaves de API
 
-Esta versão do Coucou para **Windows/Linux** (Tauri, pasta `windows/`) fala com agentes por
+Esta versão do Bifrost para **Windows/Linux** (Tauri, pasta `windows/`) fala com agentes por
 **MCP (Model Context Protocol)** em vez de chamar Anthropic/OpenAI/Google com chave de API.
 Os provedores antigos continuam lá (Configurações → Chat), mas o padrão agora é **MCP**.
 
@@ -8,11 +8,11 @@ São duas peças:
 
 1. **Cliente MCP** — o chat do Mochi manda a mensagem para um agente (Hermes, Alethe, Orca,
    Freya…) por uma ferramenta MCP. Configuração em `settings.json`, campo `mcpServers`.
-2. **Servidor MCP do Coucou** — o app expõe `http://127.0.0.1:47821/mcp` (só neste computador,
+2. **Servidor MCP do Bifrost** — o app expõe `http://127.0.0.1:47821/mcp` (só neste computador,
    com token Bearer) para que Grok Bot, Hermes etc. possam acionar o Mochi.
 
-`settings.json` fica em `%APPDATA%\fr.louisraille.coucou\` no Windows e em
-`~/.config/fr.louisraille.coucou/` no Linux. Dá para editar tudo pela tela
+`settings.json` fica em `%APPDATA%\com.paulocodex.bifrost\` no Windows e em
+`~/.config/com.paulocodex.bifrost/` no Linux. Dá para editar tudo pela tela
 **Configurações → Chat → Servidores MCP** (adicionar, editar, remover, **Testar** = `tools/list`,
 **Importar JSON**).
 
@@ -123,17 +123,17 @@ Exemplo de modo `tool` (servidor com uma ferramenta de chat genérica):
 modelo do chat, o chip **MCP** lista os servidores configurados: escolher um troca o servidor
 usado pelo chat.
 
-## 3. Servidor MCP do Coucou (para Grok Bot, Hermes…)
+## 3. Servidor MCP do Bifrost (para Grok Bot, Hermes…)
 
 Ligado por padrão em `http://127.0.0.1:47821/mcp` (`mcpServerEnabled`, `mcpServerPort`;
 mudanças valem no próximo início). Só aceita conexões deste computador e exige
 `Authorization: Bearer <token>`; o token é gerado na primeira execução e fica no cofre do sistema.
-Em **Configurações → Chat → Servidor MCP do Coucou → Copiar config para clientes**, o app copia:
+Em **Configurações → Chat → Servidor MCP do Bifrost → Copiar config para clientes**, o app copia:
 
 ```json
 {
   "mcpServers": {
-    "coucou": {
+    "bifrost-desktop": {
       "url": "http://127.0.0.1:47821/mcp",
       "headers": { "Authorization": "Bearer SEU_TOKEN" }
     }
@@ -160,7 +160,7 @@ cabeçalho `Host` (por padrão aceita só localhost); um túnel que reescreve o 
 `localhost:47821` funciona sem mudanças. Para clientes que só falam stdio:
 
 ```json
-{ "mcpServers": { "coucou": { "command": "npx", "args": ["-y", "mcp-remote", "http://127.0.0.1:47821/mcp", "--header", "Authorization:Bearer SEU_TOKEN"] } } }
+{ "mcpServers": { "bifrost-desktop": { "command": "npx", "args": ["-y", "mcp-remote", "http://127.0.0.1:47821/mcp", "--header", "Authorization:Bearer SEU_TOKEN"] } } }
 ```
 
 ## 4. Compilar
@@ -172,15 +172,15 @@ Pré-requisitos: [Rust](https://rustup.rs) **1.88+** (stable, toolchain MSVC), N
 **WebView2 Runtime** (já vem no Windows 11), e opcionalmente CMake/LLVM se o `sherpa-onnx` pedir.
 
 ```powershell
-git clone <seu-fork> coucou
-cd coucou\windows
+git clone <seu-fork> bifrost-desktop
+cd bifrost-desktop\windows
 git checkout paulo-mcp
 npm ci
-npm run pack        # = cargo build do coucou-hook + tauri build + cópia para release\
+npm run pack        # = cargo build do bifrost-hook + tauri build + cópia para release\
 # instaladores em windows\release\  (…-setup.exe e .msi)
 ```
 
-Para desenvolver: `npm run tauri dev`. Testes: `cargo test -p coucou --lib` e `npm test`
+Para desenvolver: `npm run tauri dev`. Testes: `cargo test -p bifrost-desktop --lib` e `npm test`
 (Node 24, por causa do suporte a TypeScript nos testes).
 
 ### GitHub Actions
@@ -198,7 +198,7 @@ e depois `cd windows && npm ci && npm run tauri build`.
 
 ## Expor o servidor local (127.0.0.1:47821) com Cloudflare Tunnel
 
-O servidor MCP do Coucou só escuta em `127.0.0.1:47821`. Para o Grok Bot (que roda na nuvem)
+O servidor MCP do Bifrost só escuta em `127.0.0.1:47821`. Para o Grok Bot (que roda na nuvem)
 alcançá-lo:
 
 ```powershell
@@ -207,7 +207,7 @@ cloudflared tunnel --url http://127.0.0.1:47821
 ```
 
 O `cloudflared` imprime um endereço `https://<algo>.trycloudflare.com`. No Grok Bot, cadastre
-`https://<algo>.trycloudflare.com/mcp` com o token Bearer do Coucou (botão *Copiar JSON* na seção
-*Servidor MCP do Coucou*). O endereço rápido muda a cada execução; para um fixo, crie um túnel
-nomeado (`cloudflared tunnel login`, `cloudflared tunnel create coucou`, rota DNS no seu domínio).
+`https://<algo>.trycloudflare.com/mcp` com o token Bearer do Bifrost (botão *Copiar JSON* na seção
+*Servidor MCP do Bifrost*). O endereço rápido muda a cada execução; para um fixo, crie um túnel
+nomeado (`cloudflared tunnel login`, `cloudflared tunnel create bifrost-desktop`, rota DNS no seu domínio).
 Nunca exponha o servidor sem o token.

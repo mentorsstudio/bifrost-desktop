@@ -23,7 +23,7 @@ pub fn compose(history: &[Value], question: &str, include_history: bool) -> Stri
     if !include_history || history.is_empty() {
         return question.to_string();
     }
-    let mut out = String::from("Conversa anterior com o usuário (pelo Mochi, no Coucou):\n");
+    let mut out = String::from("Conversa anterior com o usuário (pelo Mochi, no Bifrost):\n");
     for turn in history {
         let who = if turn["role"] == "user" { "Usuário" } else { "Assistente" };
         out.push_str(&format!("{who}: {}\n", turn["content"].as_str().unwrap_or_default()));

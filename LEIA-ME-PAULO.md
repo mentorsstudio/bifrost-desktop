@@ -1,6 +1,7 @@
-# Coucou — versão do Paulo (MCP)
+# Bifrost — versão do Paulo (MCP)
 
-Build pessoal do [Coucou](https://github.com/louis-cfm/coucou) (base: commit `47d1c2d`) para
+**Bifrost** (repositório: `mentorsstudio/bifrost-desktop`) é um fork pessoal do
+[Coucou](https://github.com/louis-cfm/coucou), de Louis Raillé (base: commit `47d1c2d`), para
 **Windows/Linux** em que o chat do Mochi usa **MCP (Model Context Protocol)** em vez de chaves
 de API, e o próprio app vira um **servidor MCP** para que Grok Bot, Hermes e outros agentes
 mostrem avisos, peçam aprovação e abram sessões no Mochi.
@@ -23,15 +24,32 @@ mostrem avisos, peçam aprovação e abram sessões no Mochi.
   cofre do Windows, não para o `settings.json`) e desmarque *Desativado*.
 - Orca: `C:\Users\paulo\AppData\Local\orca\bin\orca.exe mcp` — desligado; confirme o caminho.
 - Freya: `C:\Users\paulo\Freya\ponte-grokbot` — desligado; confirme o comando de entrada.
-- Para o Grok Bot alcançar o Coucou: `cloudflared tunnel --url http://127.0.0.1:47821`
+- Para o Grok Bot alcançar o Bifrost: `cloudflared tunnel --url http://127.0.0.1:47821`
   (detalhes em `docs/mcp-pt-BR.md`).
 
-## Licença
+## Nome, identificador e pastas
 
-O código continua sob a licença MIT original — **Copyright (c) 2026 Louis Raillé** — veja
-[`LICENSE`](LICENSE); as modificações desta versão seguem a mesma licença.
+- Nome do app: **Bifrost** (sem relação com o gateway de LLM "Bifrost" da Maxim AI). Executável
+  `bifrost-desktop.exe`, relay `bifrost-hook.exe`, crate `bifrost-desktop` / `bifrost_desktop_lib`.
+- Identificador Tauri: `com.paulocodex.bifrost` (também o serviço no cofre de credenciais).
+- Pastas no Windows: `%APPDATA%\Bifrost` (configurações), `%LOCALAPPDATA%\Bifrost` (relay, log,
+  inbox; também a pasta de instalação do .exe). No Linux: `~/.config/bifrost-desktop` e
+  `~/.local/share/bifrost-desktop`.
+- Migração: na primeira execução, se não houver `settings.json` do Bifrost, o de
+  `%APPDATA%\Coucou` é **copiado** (o original fica). Tokens salvos no cofre pelo Coucou
+  **não** migram: preencha de novo em *Servidores MCP*.
+- Palavra de ativação por voz: "OK Bifrost" (o antigo "OK Coucou" continua funcionando).
+- Atualização automática: continua olhando os releases do Coucou original, mas só aceita
+  arquivos `Bifrost-Windows-*`, então na prática nunca troca o Bifrost pelo Coucou.
 
-O nome **Coucou**, o personagem **Mochi**, o ícone e os sons **não** são MIT: pertencem a Louis
-Raillé ([`LICENSE-ASSETS.md`](LICENSE-ASSETS.md)). Esta versão é para **uso pessoal** (compilar e
-rodar para si). Para distribuir/publicar este fork, é preciso trocar nome, ícone, personagem e
-sons, ou ter permissão escrita do autor.
+## Licença e créditos
+
+Baseado no **Coucou**, de **Louis Raillé** — código sob a licença MIT original
+(**Copyright (c) 2026 Louis Raillé**, veja [`LICENSE`](LICENSE)); as modificações desta versão
+seguem a mesma licença.
+
+O ícone do Bifrost (arco-íris sobre quadrado escuro, `windows/src-tauri/icons-src/bifrost.svg`)
+é novo. **Ainda usados e de uso pessoal** ([`LICENSE-ASSETS.md`](LICENSE-ASSETS.md), de Louis
+Raillé): o nome e o personagem **Mochi** (desenhado em código, com suas expressões/animações) e os
+**sons** (`NotchBuddy/Resources/sounds/`, embutidos no app). Esta versão é para **uso pessoal**;
+para distribuir, troque também o Mochi e os sons ou peça permissão escrita ao autor.

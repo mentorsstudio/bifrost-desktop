@@ -1,7 +1,7 @@
-// MCP (Model Context Protocol) — the Paulo build of Coucou.
+// MCP (Model Context Protocol) — the Paulo build of Bifrost.
 //
 // Instead of API keys, the chat can talk to agents through MCP servers the
-// user configures (Hermes, Alethe, Orca, Freya…), and Coucou itself exposes a
+// user configures (Hermes, Alethe, Orca, Freya…), and Bifrost itself exposes a
 // small MCP server so those agents (and Grok Bot) can drive Mochi.
 //
 // * config.rs — the `mcpServers` entries of settings.json and their parser;

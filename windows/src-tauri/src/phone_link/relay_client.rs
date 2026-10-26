@@ -1022,13 +1022,13 @@ mod tests {
 
     // ── End to end through a real relay (run by android/relay/tools/e2e.sh, never by `cargo test`) ──
 
-    /// The computer's half of the end-to-end check: connects to the relay at `COUCOU_E2E_RELAY_URL` with the fixed test
+    /// The computer's half of the end-to-end check: connects to the relay at `BIFROST_E2E_RELAY_URL` with the fixed test
     /// credentials the Kotlin phone test also has, offers one approval and waits for the phone's decision. Ignored by
     /// default; the script runs it together with the phone side, against the real Worker or the Node twin.
     #[test]
     #[ignore = "needs a running relay and the Kotlin phone test: android/relay/tools/e2e.sh"]
     fn e2e_the_computer_side_for_the_phone_test() {
-        let url = std::env::var("COUCOU_E2E_RELAY_URL").expect("COUCOU_E2E_RELAY_URL");
+        let url = std::env::var("BIFROST_E2E_RELAY_URL").expect("BIFROST_E2E_RELAY_URL");
         let store = MemStore::default();
         store.set(ROOM_KEY, &crypto::base64url_encode(&[0x11; 16])).unwrap();
         store.set(PAIRING_KEY, &crypto::base64url_encode(&[0x22; 32])).unwrap();

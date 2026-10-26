@@ -1,13 +1,13 @@
-//! coucou-hook — the relay Claude Code (and every other agent) runs on each hook
+//! bifrost-hook — the relay Claude Code (and every other agent) runs on each hook
 //! event.
 //!
 //! Reads the hook JSON on stdin, maps the agent's event and field names onto
 //! Claude Code's (normalize.rs), adds a little terminal context, and hands it to
-//! Coucou over the named pipe `\\.\pipe\coucou-<sid>` (Windows) or the Unix
-//! socket `$XDG_RUNTIME_DIR/coucou.sock` (Linux).
+//! Bifrost over the named pipe `\\.\pipe\bifrost-desktop-<sid>` (Windows) or the Unix
+//! socket `$XDG_RUNTIME_DIR/bifrost-desktop.sock` (Linux).
 //!
 //! Hard rule (docs/CLAUDE.md): **never block the agent.**
-//! * If the pipe does not exist — Coucou is closed — we exit 0 immediately, with
+//! * If the pipe does not exist — Bifrost is closed — we exit 0 immediately, with
 //!   only the "no opinion" reply the agent expects (reply.rs), and the session
 //!   carries on untouched.
 //! * Every step runs under a deadline enforced by the main thread, so a pipe that
@@ -15,11 +15,11 @@
 //!   either: we abandon the worker and exit.
 //! * Only `PermissionRequest` waits for an answer, because approving from the
 //!   island is the whole point. No answer means no decision, and the agent asks
-//!   in its terminal exactly as if Coucou were not installed.
+//!   in its terminal exactly as if Bifrost were not installed.
 //!
-//! Usage: `coucou-hook [--agent <name>] [<EventName>]` (the event name is also
+//! Usage: `bifrost-hook [--agent <name>] [<EventName>]` (the event name is also
 //! read from the JSON; `--agent` is absent for Claude Code), or
-//! `coucou-hook --statusline` as Claude Code's status line command (plan usage,
+//! `bifrost-hook --statusline` as Claude Code's status line command (plan usage,
 //! see statusline.rs): it passes the plan limits on and runs the status line the
 //! user had before, so that keeps working.
 
@@ -202,7 +202,7 @@ fn prepare(raw: &[u8], args: &Args, env: &dyn Fn(&str) -> Option<String>, cwd: &
     Some(Event { line, name, question })
 }
 
-/// Which terminal the session runs in. Unlike macOS, Coucou here accepts events
+/// Which terminal the session runs in. Unlike macOS, Bifrost here accepts events
 /// from every terminal, so this is context only — never a filter.
 fn add_terminal_context(map: &mut Map<String, Value>, env: &dyn Fn(&str) -> Option<String>) {
     for (key, var) in [

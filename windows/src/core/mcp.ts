@@ -90,10 +90,10 @@ export function formFromConfig(c: McpServerConfig | null): McpForm {
   };
 }
 
-/** The JSON block to paste into Grok Bot / Claude / Cursor for Coucou's own server. */
+/** The JSON block to paste into Grok Bot / Claude / Cursor for Bifrost's own server. */
 export function clientSnippet(url: string, token: string): string {
   return JSON.stringify(
-    { mcpServers: { coucou: { url, headers: { Authorization: `Bearer ${token}` } } } },
+    { mcpServers: { "bifrost-desktop": { url, headers: { Authorization: `Bearer ${token}` } } } },
     null,
     2,
   );

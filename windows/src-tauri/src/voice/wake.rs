@@ -27,17 +27,17 @@ fn is_ok(word: &str) -> bool {
     matches!(word, "ok" | "okay" | "oke" | "okey" | "hey")
 }
 
-/// How Parakeet may write "coucou", in one word.
+/// How Parakeet may write "Bifrost" (the wake word; the old "coucou" still works), in one word.
 fn is_coucou(word: &str) -> bool {
     matches!(
         word,
-        "coucou" | "coucous" | "cuckoo" | "cucu" | "kuku" | "koukou" | "cookoo" | "coocoo" | "cocou" | "kukuu" | "couscous"
+        "bifrost" | "bifrosts" | "bifröst" | "bifrust" | "bifrosté" | "befrost" | "bivrost" | "coucou" | "coucous" | "cuckoo" | "cucu" | "kuku" | "koukou" | "cookoo" | "coocoo" | "cocou" | "kukuu" | "couscous"
     )
 }
 
 /// …or in two.
 fn is_coucou_pair(a: &str, b: &str) -> bool {
-    matches!((a, b), ("cou", "cou") | ("coo", "coo") | ("ku", "ku") | ("cu", "cu") | ("koo", "koo") | ("cuck", "oo"))
+    matches!((a, b), ("bi", "frost") | ("bee", "frost") | ("by", "frost") | ("bif", "rost") | ("cou", "cou") | ("coo", "coo") | ("ku", "ku") | ("cu", "cu") | ("koo", "koo") | ("cuck", "oo"))
 }
 
 /// When `text` holds the wake phrase, what was said after it (maybe nothing).
@@ -225,5 +225,15 @@ mod tests {
     fn french_answers_are_spoken_in_french() {
         assert_eq!(speech_lang("C'est fait, j'ai ajouté Stripe pour toi."), Some("fr-FR"));
         assert_eq!(speech_lang("Done, Stripe is in the island."), None);
+    }
+}
+
+#[cfg(test)]
+mod bifrost_wake_tests {
+    #[test]
+    fn ok_bifrost_wakes() {
+        assert_eq!(super::after_wake("OK Bifrost, abre o chat").as_deref(), Some("abre o chat"));
+        assert_eq!(super::after_wake("ok bi frost oi").as_deref(), Some("oi"));
+        assert_eq!(super::after_wake("ok coucou oi").as_deref(), Some("oi"));
     }
 }

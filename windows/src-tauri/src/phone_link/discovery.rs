@@ -34,7 +34,7 @@ pub fn txt(fingerprint: &str) -> Option<Vec<(String, String)>> {
     Some(vec![("v".to_string(), TXT_VERSION.to_string()), ("fp".to_string(), id)])
 }
 
-/// A DNS host label from the computer's name: ASCII letters, digits and hyphens, at most 63, "coucou" if nothing is left.
+/// A DNS host label from the computer's name: ASCII letters, digits and hyphens, at most 63, "bifrost-desktop" if nothing is left.
 pub fn host_label(name: &str) -> String {
     let mut label: String = name
         .chars()
@@ -45,7 +45,7 @@ pub fn host_label(name: &str) -> String {
         .take(63)
         .collect();
     if label.is_empty() {
-        label = "coucou".to_string();
+        label = "bifrost-desktop".to_string();
     }
     label
 }
@@ -63,7 +63,7 @@ pub fn advert(name: &str, port: u16, fingerprint: &str) -> Option<Advert> {
     let instance: String = name.trim().chars().take(48).collect();
     let instance = instance.trim().to_string();
     Some(Advert {
-        instance: if instance.is_empty() { "Coucou".to_string() } else { instance },
+        instance: if instance.is_empty() { "Bifrost".to_string() } else { instance },
         host: format!("{}.local.", host_label(name)),
         port,
         txt: txt(fingerprint)?,
@@ -206,7 +206,7 @@ pub mod tests {
         // not even inputs. Check the output anyway, as the rule is what matters.
         let ad = advert("Rhytam-PC", 47821, FP).unwrap();
         let everything = format!("{:?}", ad).to_lowercase();
-        for secret in [TOKEN.to_lowercase(), "coucou://".to_string(), "token".to_string(), "password".to_string()] {
+        for secret in [TOKEN.to_lowercase(), "bifrost-desktop://".to_string(), "token".to_string(), "password".to_string()] {
             assert!(!everything.contains(&secret), "announcement contains {secret}");
         }
         // The full certificate fingerprint is not in it either, only the short id.
@@ -221,9 +221,9 @@ pub mod tests {
         assert_eq!(ad.instance, "Rhytam's PC");
         assert_eq!(ad.host, "Rhytam-s-PC.local.");
         assert_eq!(ad.port, 47821);
-        assert_eq!(host_label("***"), "coucou");
+        assert_eq!(host_label("***"), "bifrost-desktop");
         assert_eq!(host_label(&"a".repeat(100)).len(), 63);
-        assert_eq!(advert("   ", 1, FP).unwrap().instance, "Coucou");
+        assert_eq!(advert("   ", 1, FP).unwrap().instance, "Bifrost");
     }
 
     #[test]

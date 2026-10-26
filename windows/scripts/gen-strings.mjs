@@ -23,7 +23,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const SOURCE = resolve(here, "../../NotchBuddy/Resources/Localizable.xcstrings");
 const OUTPUT = resolve(here, "../src/i18n/strings.json");
 
-/** The languages Coucou ships, in the Mac's picker order. English is the source. */
+/** The languages Bifrost ships, in the Mac's picker order. English is the source. */
 export const LANGUAGES = ["en", "zh-Hans", "hi", "es", "ar", "fr", "bn", "pt-BR", "ru", "id", "de", "tr"];
 
 /**
@@ -81,6 +81,16 @@ function readLocalization(loc, names) {
   return typeof value === "string" ? convertFormat(value, names) : undefined;
 }
 
+/** Bifrost (Paulo's fork): the Mac catalog says "Coucou"; this build is named Bifrost. */
+export function rebrand(obj) {
+  const text = JSON.stringify(obj)
+    .replace(/COUCOU/g, "BIFROST")
+    .replace(/Coucou/g, "Bifrost")
+    .replace(/(?<=[A-Za-z0-9_])coucou|coucou(?=[A-Za-z0-9_])/g, "bifrost_desktop")
+    .replace(/coucou/g, "bifrost-desktop");
+  return JSON.parse(text);
+}
+
 export function generate(catalog) {
   const strings = {};
   for (const [macKey, entry] of Object.entries(catalog.strings ?? {})) {
@@ -103,7 +113,7 @@ export function generate(catalog) {
     if (typeof en !== "string") out.en = en;
     strings[key] = out;
   }
-  const sorted = Object.fromEntries(Object.entries(strings).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+  const sorted = Object.fromEntries(Object.entries(rebrand(strings)).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
   return {
     _generated: "By scripts/gen-strings.mjs from NotchBuddy/Resources/Localizable.xcstrings. Do not edit: run `node scripts/gen-strings.mjs`.",
     languages: LANGUAGES,

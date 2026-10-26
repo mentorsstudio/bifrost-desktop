@@ -1,17 +1,17 @@
-// "Coucou 0.6.0 is out" in the island, and on Windows one click to install it.
+// "Bifrost 0.6.0 is out" in the island, and on Windows one click to install it.
 // Port of MacUpdate.swift / MacUpdater.swift (the Mac's GitHub build).
 //
 // Nothing is asked of GitHub before the user says yes: the island asks once
 // (again a day later at most if the card was left unanswered), or Settings →
 // General → Updates. "Check now" is a click, so it works either way. Once
-// allowed, Coucou looks at launch and every 6 hours: one unauthenticated
+// allowed, Bifrost looks at launch and every 6 hours: one unauthenticated
 // `GET /repos/Louis-CFM/coucou/releases`, no cookies, nothing about the user.
 //
 // Windows: the installer this copy came from — the per-user setup.exe in
-// %LOCALAPPDATA%\Coucou, the per-machine .msi under Program Files — is
+// %LOCALAPPDATA%\Bifrost, the per-machine .msi under Program Files — is
 // downloaded from GitHub only (redirects to github.com, api.github.com and
 // *.githubusercontent.com, nothing else), checked against the SHA-256 GitHub
-// publishes for that asset, then run; Coucou quits and the installer starts it
+// publishes for that asset, then run; Bifrost quits and the installer starts it
 // again. Anything else (the portable exe, every Linux package) gets the
 // release page: people update those the way they installed them.
 //
@@ -50,7 +50,7 @@ pub const ASK_AGAIN: i64 = 24 * 3600;
 const FIRST_TICK: Duration = Duration::from_secs(30);
 /// How often the schedule is looked at; GitHub is only called when `should_check` says so.
 const TICK: Duration = Duration::from_secs(3600);
-/// An installer bigger than this is not Coucou's (0.5.0's .msi is 14 MB).
+/// An installer bigger than this is not Bifrost's (0.5.0's .msi is 14 MB).
 const MAX_INSTALLER: u64 = 512 * 1024 * 1024;
 
 // ── Releases ──────────────────────────────────────────────────────────────────
@@ -189,9 +189,9 @@ pub fn parse_digest(digest: &str) -> Option<String> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum InstallKind {
-    /// The per-user setup.exe (NSIS): %LOCALAPPDATA%\Coucou.
+    /// The per-user setup.exe (NSIS): %LOCALAPPDATA%\Bifrost.
     Setup,
-    /// The per-machine .msi (WiX): Program Files\Coucou.
+    /// The per-machine .msi (WiX): Program Files\Bifrost.
     Msi,
     /// Anything else — the portable exe, a build, Linux: the release page only.
     Manual,
@@ -203,8 +203,8 @@ fn win_path(p: &str) -> String {
 }
 
 /// The installer that put `exe` where it is, from its folder alone: Tauri's
-/// NSIS installer (per user) uses %LOCALAPPDATA%\Coucou, its MSI (per machine)
-/// Program Files\Coucou. `has_uninstaller` is whether NSIS's uninstall.exe sits
+/// NSIS installer (per user) uses %LOCALAPPDATA%\Bifrost, its MSI (per machine)
+/// Program Files\Bifrost. `has_uninstaller` is whether NSIS's uninstall.exe sits
 /// next to it, so a portable exe someone copied into that folder isn't taken
 /// for an installed one.
 #[cfg_attr(not(windows), allow(dead_code))]
@@ -212,11 +212,11 @@ pub fn install_kind(exe: &str, has_uninstaller: bool, local_app_data: Option<&st
     let exe = win_path(exe);
     let Some((dir, _)) = exe.rsplit_once('\\') else { return InstallKind::Manual };
     if let Some(local) = local_app_data.filter(|l| !l.trim().is_empty()) {
-        if dir == format!("{}\\coucou", win_path(local)) {
+        if dir == format!("{}\\bifrost", win_path(local)) {
             return if has_uninstaller { InstallKind::Setup } else { InstallKind::Manual };
         }
     }
-    if program_files.iter().filter(|p| !p.trim().is_empty()).any(|p| dir == format!("{}\\coucou", win_path(p))) {
+    if program_files.iter().filter(|p| !p.trim().is_empty()).any(|p| dir == format!("{}\\bifrost", win_path(p))) {
         return InstallKind::Msi;
     }
     InstallKind::Manual
@@ -226,8 +226,8 @@ pub fn install_kind(exe: &str, has_uninstaller: bool, local_app_data: Option<&st
 /// workflow publishes, nothing else.
 pub fn asset_name(kind: InstallKind, version: &str) -> Option<String> {
     match kind {
-        InstallKind::Setup => Some(format!("Coucou-Windows-{version}-setup.exe")),
-        InstallKind::Msi => Some(format!("Coucou-Windows-{version}.msi")),
+        InstallKind::Setup => Some(format!("Bifrost-Windows-{version}-setup.exe")),
+        InstallKind::Msi => Some(format!("Bifrost-Windows-{version}.msi")),
         InstallKind::Manual => None,
     }
 }
@@ -240,7 +240,7 @@ pub fn pick_asset(release: &Release, kind: InstallKind) -> Option<&Asset> {
 /// What runs the downloaded installer. The setup.exe with Tauri's own update
 /// flags: `/P` passive (a progress bar, no questions), `/UPDATE` (no "reinstall
 /// or uninstall?" step, the old uninstaller never runs, shortcuts are left as
-/// they are), `/R` (start Coucou again once done). The MSI through msiexec,
+/// they are), `/R` (start Bifrost again once done). The MSI through msiexec,
 /// passive, with Tauri's `AUTOLAUNCHAPP` to start it again; being per machine
 /// it asks for admin rights, as installing it by hand does.
 pub fn installer_command(kind: InstallKind, file: &Path, system_root: Option<&str>) -> Option<(PathBuf, Vec<String>)> {
@@ -273,7 +273,7 @@ pub fn should_ask(asked_at: Option<i64>, now: i64) -> bool {
     due(asked_at, now, ASK_AGAIN)
 }
 
-/// Whether Mochi says "Coucou X is out": newer than what runs, and not shown
+/// Whether Mochi says "Bifrost X is out": newer than what runs, and not shown
 /// or put off for that version in the last day.
 pub fn should_announce(version: &str, current: &str, snoozed_version: Option<&str>, snoozed_at: Option<i64>, now: i64) -> bool {
     if !is_newer(version, current) {
@@ -288,7 +288,7 @@ pub fn should_announce(version: &str, current: &str, snoozed_version: Option<&st
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 struct Prefs {
-    /// None: not asked yet. true: Coucou may look at GitHub. false: never on its own.
+    /// None: not asked yet. true: Bifrost may look at GitHub. false: never on its own.
     consent: Option<bool>,
     last_check: Option<i64>,
     snoozed_version: Option<String>,
@@ -378,7 +378,7 @@ fn load_prefs() -> Prefs {
 fn save_prefs(prefs: &Prefs) {
     let path = prefs_path();
     let Some(dir) = path.parent() else { return };
-    let temp = path.with_extension(format!("json.coucou-{}", std::process::id()));
+    let temp = path.with_extension(format!("json.bifrost-desktop-{}", std::process::id()));
     let written = crate::platform::ensure_private_dir(dir)
         .and_then(|()| serde_json::to_vec(prefs).map_err(std::io::Error::other))
         .and_then(|json| std::fs::write(&temp, json))
@@ -430,7 +430,7 @@ pub fn status() -> Status {
     }
 }
 
-/// Tells both windows, and the tray's "Update Coucou to X…".
+/// Tells both windows, and the tray's "Update Bifrost to X…".
 fn changed(app: &AppHandle) {
     let status = status();
     crate::tray::set_update(app, status.latest.as_ref().map(|l| l.version.as_str()));
@@ -514,7 +514,7 @@ fn github_client(timeout: Duration) -> Result<reqwest::Client, String> {
     reqwest::Client::builder()
         .connect_timeout(Duration::from_secs(15))
         .timeout(timeout)
-        .user_agent("Coucou")
+        .user_agent("Bifrost")
         .redirect(policy)
         .build()
         .map_err(|e| e.to_string())
@@ -586,12 +586,12 @@ pub async fn check(app: &AppHandle, manual: bool) {
 
 // ── Install (Windows) ─────────────────────────────────────────────────────────
 
-/// Old downloads left in the temp folder by an update that ran: Coucou quits
+/// Old downloads left in the temp folder by an update that ran: Bifrost quits
 /// before the installer is done with its file, so they go at the next launch.
 fn remove_old_downloads() {
     let Ok(entries) = std::fs::read_dir(std::env::temp_dir()) else { return };
     for entry in entries.flatten() {
-        if entry.file_name().to_string_lossy().starts_with("coucou-update-") {
+        if entry.file_name().to_string_lossy().starts_with("bifrost-desktop-update-") {
             let _ = std::fs::remove_dir_all(entry.path());
         }
     }
@@ -620,7 +620,7 @@ pub fn install(app: &AppHandle) {
             Ok(()) => {
                 crate::log::line(format!("update: running the {kind:?} installer for {}, quitting", release.version));
                 set_phase(&app, Phase::Installing);
-                // Long enough for the card to say so; the installer closes a Coucou still open.
+                // Long enough for the card to say so; the installer closes a Bifrost still open.
                 tokio::time::sleep(Duration::from_millis(1200)).await;
                 app.exit(0);
             }
@@ -643,7 +643,7 @@ async fn run(app: &AppHandle, release: &Release, kind: InstallKind) -> Result<()
         return Err(t("The download isn't the file GitHub published for this version, so nothing was installed."));
     }
     let nonce = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.subsec_nanos()).unwrap_or(0);
-    let dir = std::env::temp_dir().join(format!("coucou-update-{}-{nonce}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("bifrost-desktop-update-{}-{nonce}", std::process::id()));
     std::fs::create_dir_all(&dir).map_err(|_| t("The download failed. Try again, or get the new version on GitHub."))?;
     let path = dir.join(&asset.name);
 
@@ -816,28 +816,28 @@ mod tests {
             { "tag_name": "v0.9.0", "draft": false, "prerelease": false,
               "html_url": "https://github.com/Louis-CFM/coucou/releases/tag/v0.9.0",
               "body": "## What's new\n\n- **WhatsApp in one click** — Mac",
-              "assets": [{ "name": "Coucou.zip", "size": 34228988,
-                "browser_download_url": "https://github.com/Louis-CFM/coucou/releases/download/v0.9.0/Coucou.zip",
+              "assets": [{ "name": "Bifrost.zip", "size": 34228988,
+                "browser_download_url": "https://github.com/Louis-CFM/coucou/releases/download/v0.9.0/Bifrost.zip",
                 "digest": "sha256:24175a765704082c8b2e751f8b5ccb76b1eb3440ff2fd1e9c4cbe780c2193baa" }] },
             { "tag_name": "windows-v0.5.0", "draft": false, "prerelease": false,
               "html_url": "https://github.com/Louis-CFM/coucou/releases/tag/windows-v0.5.0",
-              "body": "Coucou for Windows 0.5.0 — Mochi at the top of your screen.\n\n## What's new\n\n- **Flow dictation** on Windows — hold right Ctrl\n- Other things",
+              "body": "Bifrost for Windows 0.5.0 — Mochi at the top of your screen.\n\n## What's new\n\n- **Flow dictation** on Windows — hold right Ctrl\n- Other things",
               "assets": [
-                { "name": "Coucou-Windows-0.5.0-setup.exe", "size": 10950620,
-                  "browser_download_url": "https://github.com/Louis-CFM/coucou/releases/download/windows-v0.5.0/Coucou-Windows-0.5.0-setup.exe",
+                { "name": "Bifrost-Windows-0.5.0-setup.exe", "size": 10950620,
+                  "browser_download_url": "https://github.com/Louis-CFM/coucou/releases/download/windows-v0.5.0/Bifrost-Windows-0.5.0-setup.exe",
                   "digest": "sha256:e8234a092e8fe1bf6eed0395e6db13052be8fe47413949c2b7fa368467342337" },
-                { "name": "Coucou-Windows-0.5.0.msi", "size": 14086144,
-                  "browser_download_url": "https://github.com/Louis-CFM/coucou/releases/download/windows-v0.5.0/Coucou-Windows-0.5.0.msi",
+                { "name": "Bifrost-Windows-0.5.0.msi", "size": 14086144,
+                  "browser_download_url": "https://github.com/Louis-CFM/coucou/releases/download/windows-v0.5.0/Bifrost-Windows-0.5.0.msi",
                   "digest": "sha256:79bced83c414722e84d47e99005a37910147624dc5e4edf55aa66ff6462cd09f" }] },
             { "tag_name": "windows-latest", "draft": false, "prerelease": false,
               "html_url": "https://github.com/Louis-CFM/coucou/releases/tag/windows-latest",
-              "assets": [{ "name": "Coucou-Windows-setup.exe", "size": 10950620,
-                "browser_download_url": "https://github.com/Louis-CFM/coucou/releases/download/windows-latest/Coucou-Windows-setup.exe",
+              "assets": [{ "name": "Bifrost-Windows-setup.exe", "size": 10950620,
+                "browser_download_url": "https://github.com/Louis-CFM/coucou/releases/download/windows-latest/Bifrost-Windows-setup.exe",
                 "digest": "sha256:e8234a092e8fe1bf6eed0395e6db13052be8fe47413949c2b7fa368467342337" }] },
             { "tag_name": "linux-v0.5.0", "draft": false, "prerelease": false,
-              "html_url": "https://github.com/Louis-CFM/coucou/releases/tag/linux-v0.5.0", "body": "Coucou for Linux 0.5.0",
-              "assets": [{ "name": "Coucou-Linux-0.5.0-x86_64.AppImage", "size": 107960824,
-                "browser_download_url": "https://github.com/Louis-CFM/coucou/releases/download/linux-v0.5.0/Coucou-Linux-0.5.0-x86_64.AppImage",
+              "html_url": "https://github.com/Louis-CFM/coucou/releases/tag/linux-v0.5.0", "body": "Bifrost for Linux 0.5.0",
+              "assets": [{ "name": "Bifrost-Linux-0.5.0-x86_64.AppImage", "size": 107960824,
+                "browser_download_url": "https://github.com/Louis-CFM/coucou/releases/download/linux-v0.5.0/Bifrost-Linux-0.5.0-x86_64.AppImage",
                 "digest": "sha256:b59e0a8e432b782ea029cc825d37675033e7ff4069d70d376c1d268495a242af" }] },
             { "tag_name": "linux-latest", "draft": false, "prerelease": false,
               "html_url": "https://github.com/Louis-CFM/coucou/releases/tag/linux-latest", "assets": [] },
@@ -926,33 +926,33 @@ mod tests {
         let local = Some(r"C:\Users\Ana\AppData\Local");
         let pf = vec![r"C:\Program Files".to_string(), r"C:\Program Files (x86)".to_string()];
         let kind = |exe: &str, uninst: bool| install_kind(exe, uninst, local, &pf);
-        assert_eq!(kind(r"C:\Users\Ana\AppData\Local\Coucou\coucou.exe", true), InstallKind::Setup);
-        assert_eq!(kind(r"c:\users\ana\appdata\local\COUCOU\Coucou.exe", true), InstallKind::Setup);
+        assert_eq!(kind(r"C:\Users\Ana\AppData\Local\Bifrost\bifrost-desktop.exe", true), InstallKind::Setup);
+        assert_eq!(kind(r"c:\users\ana\appdata\local\BIFROST\Bifrost.exe", true), InstallKind::Setup);
         // A portable exe copied there: no NSIS uninstaller next to it.
-        assert_eq!(kind(r"C:\Users\Ana\AppData\Local\Coucou\coucou.exe", false), InstallKind::Manual);
-        assert_eq!(kind(r"C:\Program Files\Coucou\coucou.exe", false), InstallKind::Msi);
-        assert_eq!(kind(r"C:\Program Files (x86)\Coucou\coucou.exe", false), InstallKind::Msi);
+        assert_eq!(kind(r"C:\Users\Ana\AppData\Local\Bifrost\bifrost-desktop.exe", false), InstallKind::Manual);
+        assert_eq!(kind(r"C:\Program Files\Bifrost\bifrost-desktop.exe", false), InstallKind::Msi);
+        assert_eq!(kind(r"C:\Program Files (x86)\Bifrost\bifrost-desktop.exe", false), InstallKind::Msi);
         // The portable exe, a build, a folder that only looks alike.
-        assert_eq!(kind(r"C:\Users\Ana\Downloads\coucou.exe", true), InstallKind::Manual);
-        assert_eq!(kind(r"C:\dev\coucou\windows\target\release\coucou.exe", false), InstallKind::Manual);
-        assert_eq!(kind(r"C:\Program Files\Coucou\bin\coucou.exe", false), InstallKind::Manual);
-        assert_eq!(kind(r"C:\Users\Ana\AppData\Local\Coucou\bin\coucou-hook.exe", true), InstallKind::Manual);
-        assert_eq!(kind("coucou.exe", true), InstallKind::Manual);
-        assert_eq!(install_kind(r"C:\Program Files\Coucou\coucou.exe", false, None, &[]), InstallKind::Manual);
-        assert_eq!(install_kind("/opt/Coucou/coucou", false, Some(""), &[String::new()]), InstallKind::Manual);
+        assert_eq!(kind(r"C:\Users\Ana\Downloads\bifrost-desktop.exe", true), InstallKind::Manual);
+        assert_eq!(kind(r"C:\dev\bifrost-desktop\windows\target\release\bifrost-desktop.exe", false), InstallKind::Manual);
+        assert_eq!(kind(r"C:\Program Files\Bifrost\bin\bifrost-desktop.exe", false), InstallKind::Manual);
+        assert_eq!(kind(r"C:\Users\Ana\AppData\Local\Bifrost\bin\bifrost-hook.exe", true), InstallKind::Manual);
+        assert_eq!(kind("bifrost-desktop.exe", true), InstallKind::Manual);
+        assert_eq!(install_kind(r"C:\Program Files\Bifrost\bifrost-desktop.exe", false, None, &[]), InstallKind::Manual);
+        assert_eq!(install_kind("/opt/Bifrost/bifrost-desktop", false, Some(""), &[String::new()]), InstallKind::Manual);
     }
 
     #[test]
     fn the_asset_is_the_exact_installer_for_the_kind() {
         let w = latest(&fixture(), "windows-v").unwrap();
-        assert_eq!(pick_asset(&w, InstallKind::Setup).unwrap().name, "Coucou-Windows-0.5.0-setup.exe");
-        assert_eq!(pick_asset(&w, InstallKind::Msi).unwrap().name, "Coucou-Windows-0.5.0.msi");
+        assert_eq!(pick_asset(&w, InstallKind::Setup).unwrap().name, "Bifrost-Windows-0.5.0-setup.exe");
+        assert_eq!(pick_asset(&w, InstallKind::Msi).unwrap().name, "Bifrost-Windows-0.5.0.msi");
         assert_eq!(pick_asset(&w, InstallKind::Manual), None);
         // A look-alike name, or one served from elsewhere, is never picked.
         let mut odd = w.clone();
         odd.assets = vec![
-            Asset { name: "Coucou-Windows-setup.exe".into(), url: w.assets[0].url.clone(), size: 1, digest: None },
-            Asset { name: "Coucou-Windows-0.5.0.msi".into(), url: "https://evil.example.com/x.msi".into(), size: 1, digest: None },
+            Asset { name: "Bifrost-Windows-setup.exe".into(), url: w.assets[0].url.clone(), size: 1, digest: None },
+            Asset { name: "Bifrost-Windows-0.5.0.msi".into(), url: "https://evil.example.com/x.msi".into(), size: 1, digest: None },
         ];
         assert_eq!(pick_asset(&odd, InstallKind::Setup), None);
         assert_eq!(pick_asset(&odd, InstallKind::Msi), None);
@@ -972,14 +972,14 @@ mod tests {
 
     #[test]
     fn installers_run_with_tauris_update_flags() {
-        let file = Path::new(r"C:\Temp\coucou-update-1\Coucou-Windows-0.6.0-setup.exe");
+        let file = Path::new(r"C:\Temp\bifrost-desktop-update-1\Bifrost-Windows-0.6.0-setup.exe");
         let (program, args) = installer_command(InstallKind::Setup, file, Some(r"C:\Windows")).unwrap();
         assert_eq!(program, file);
         assert_eq!(args, ["/P", "/UPDATE", "/R"]);
-        let msi = Path::new(r"C:\Temp\coucou-update-1\Coucou-Windows-0.6.0.msi");
+        let msi = Path::new(r"C:\Temp\bifrost-desktop-update-1\Bifrost-Windows-0.6.0.msi");
         let (program, args) = installer_command(InstallKind::Msi, msi, Some(r"C:\Windows\")).unwrap();
         assert_eq!(program, PathBuf::from(r"C:\Windows\System32\msiexec.exe"));
-        assert_eq!(args, ["/i", r"C:\Temp\coucou-update-1\Coucou-Windows-0.6.0.msi", "/passive", "AUTOLAUNCHAPP=True"]);
+        assert_eq!(args, ["/i", r"C:\Temp\bifrost-desktop-update-1\Bifrost-Windows-0.6.0.msi", "/passive", "AUTOLAUNCHAPP=True"]);
         assert_eq!(installer_command(InstallKind::Msi, msi, None).unwrap().0, PathBuf::from("msiexec.exe"));
         assert_eq!(installer_command(InstallKind::Manual, file, None), None);
     }

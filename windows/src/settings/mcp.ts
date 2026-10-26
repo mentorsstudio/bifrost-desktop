@@ -1,5 +1,5 @@
 // Settings → Chat → "Servidores MCP" (Paulo build): the agents the chat talks
-// to without API keys, how the chat reaches one of them, and Coucou's own MCP
+// to without API keys, how the chat reaches one of them, and Bifrost's own MCP
 // server that lets Grok Bot, Hermes… drive Mochi.
 
 import {
@@ -318,7 +318,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
     );
   }
 
-  // ── Coucou's own server ─────────────────────────────────────────────────
+  // ── Bifrost's own server ─────────────────────────────────────────────────
   function drawOwn() {
     clear(ownBody);
     if (!status) return;
@@ -331,7 +331,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
       clear(msg);
       try {
         status = await Bridge.mcpSetServer(on.checked, Number(port.value) || 47821);
-        msg.append(notice("ok", "Salvo — vale a partir do próximo início do Coucou."));
+        msg.append(notice("ok", "Salvo — vale a partir do próximo início do Bifrost."));
       } catch (err) {
         msg.append(notice("err", String(err).replace(/^Error:\s*/, "")));
       }
@@ -362,7 +362,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
       notice("hint", "Agentes que o chat do Mochi usa sem chave de API: Hermes, Alethe, Orca, Freya…"), serversBody),
     h("section", {}, h("h2", {}, h("span", { text: "Chat via MCP" })),
       notice("hint", "Como a mensagem chega ao agente. Para o Hermes: modo Tarefa, hermes_task_start / prompt, status hermes_task_status / job_id."), chatBody),
-    h("section", {}, h("h2", {}, h("span", { text: "Servidor MCP do Coucou" })),
+    h("section", {}, h("h2", {}, h("span", { text: "Servidor MCP do Bifrost" })),
       notice("hint", "Deixa outros agentes (Grok Bot, Hermes…) mostrarem avisos, pedirem aprovação e abrirem sessões no Mochi."), ownBody),
   ];
 }

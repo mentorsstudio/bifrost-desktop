@@ -46,10 +46,10 @@ jobs:
         run: npm test
 
       - name: Build the hook relay
-        run: cargo build --release -p coucou-hook
+        run: cargo build --release -p bifrost-hook
 
       - name: Rust tests
-        run: cargo test -p coucou --lib
+        run: cargo test -p bifrost-desktop --lib
 
       - name: Build and pack the installer
         shell: pwsh
@@ -59,10 +59,10 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Coucou-Paulo-MCP-Windows
+          name: Bifrost-Paulo-MCP-Windows
           path: |
             windows/release/*.exe
             windows/release/*.msi
-            windows/target/release/coucou.exe
-            windows/target/release/coucou-hook.exe
+            windows/target/release/bifrost-desktop.exe
+            windows/target/release/bifrost-hook.exe
           retention-days: 14
