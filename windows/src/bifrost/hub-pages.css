@@ -123,3 +123,8 @@
 /* Integrações: os dois cartões do topo dividem a largura. */
 .hub-page[data-page="integrations"] #settings-root { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: 760px) { .hub-page[data-page="integrations"] #settings-root { grid-template-columns: 1fr; } }
+
+/* Fase 20: com o cabeçalho enxuto das subpáginas, a runa d'água (120 px, top 150)
+   caía no vão entre os cartões e aparecia como um quadradinho escuro na borda
+   direita (Dicionário). Ela fica só no Ditado, onde o cabeçalho é alto. */
+.hub-page:not([data-page="dictation"])::before { content: none; }

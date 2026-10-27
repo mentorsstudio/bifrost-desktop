@@ -24,3 +24,7 @@ test("Ajustes mostra Conversor em Geral e Personagens em Temas", () => {
   assert.match(m, /general: \(\) => \[generalSection\(\), fileeSection\(\)\]/);
   assert.match(m, /themes: \(\) => \[themesSection\(\), charactersSection\(\)\]/);
 });
+
+test("a runa d'água não aparece no vão dos cartões das subpáginas", () => {
+  assert.match(src("bifrost/hub-pages.css"), /\.hub-page:not\(\[data-page="dictation"\]\)::before \{ content: none; \}/);
+});
