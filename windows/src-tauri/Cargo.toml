@@ -119,6 +119,8 @@ windows = { version = "0.61", features = [
   # Conversor: o item sob o cursor (UI Automation) e "Escolher arquivos…".
   "Win32_UI_Accessibility",
   "Win32_UI_Controls_Dialogs",
+  # O ícone do arquivo no miolo do anel (SHGetFileInfoW).
+  "Win32_Storage_FileSystem",
 ] }
 # The clipboard for Flow dictation, kept out of the clipboard history. MIT/Apache-2.0.
 arboard = { version = "3.6", default-features = false }

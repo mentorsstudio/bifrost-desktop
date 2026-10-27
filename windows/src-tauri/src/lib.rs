@@ -1081,6 +1081,7 @@ pub fn run() {
             convert::convert_pick_files,
             gesture::filee_menu_action,
             gesture::filee_menu_close,
+            gesture::filee_menu_radius,
             gesture::filee_menu_demo,
             gesture::convert_take_pending,
             boot,

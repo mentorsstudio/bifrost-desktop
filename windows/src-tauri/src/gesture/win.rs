@@ -415,3 +415,79 @@ pub fn pick_files() -> Vec<String> {
         _ => parts[1..].iter().map(|f| format!(r"{}\{}", parts[0].trim_end_matches('\\'), f)).collect(),
     }
 }
+
+/// O ícone grande (32 px, ou 48 com DPI alto) do arquivo, como o Explorer o
+/// desenha, em PNG. SHGetFileInfoW + GetIconInfo + GetDIBits (BGRA → RGBA).
+pub fn file_icon_png(path: &str) -> Option<Vec<u8>> {
+    use windows::core::PCWSTR;
+    use windows::Win32::Graphics::Gdi::{
+        DeleteObject, GetDC, GetDIBits, GetObjectW, ReleaseDC, BITMAP, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS, HGDIOBJ,
+    };
+    use windows::Win32::Storage::FileSystem::FILE_FLAGS_AND_ATTRIBUTES;
+    use windows::Win32::UI::Shell::{SHGetFileInfoW, SHFILEINFOW, SHGFI_ICON, SHGFI_LARGEICON};
+    use windows::Win32::UI::WindowsAndMessaging::{DestroyIcon, GetIconInfo, ICONINFO};
+
+    let wide: Vec<u16> = path.encode_utf16().chain(std::iter::once(0)).collect();
+    let mut info = SHFILEINFOW::default();
+    unsafe {
+        let ok = SHGetFileInfoW(
+            PCWSTR(wide.as_ptr()),
+            FILE_FLAGS_AND_ATTRIBUTES(0),
+            Some(&mut info),
+            std::mem::size_of::<SHFILEINFOW>() as u32,
+            SHGFI_ICON | SHGFI_LARGEICON,
+        );
+        if ok == 0 || info.hIcon.is_invalid() {
+            return None;
+        }
+        let hicon = info.hIcon;
+        let mut ii = ICONINFO::default();
+        let res = (|| {
+            GetIconInfo(hicon, &mut ii).ok()?;
+            let mut bm = BITMAP::default();
+            if GetObjectW(HGDIOBJ(ii.hbmColor.0), std::mem::size_of::<BITMAP>() as i32, Some(&mut bm as *mut _ as *mut _)) == 0 {
+                return None;
+            }
+            let (w, h) = (bm.bmWidth, bm.bmHeight);
+            if w <= 0 || h <= 0 || w > 256 || h > 256 {
+                return None;
+            }
+            let mut bi = BITMAPINFO::default();
+            bi.bmiHeader = BITMAPINFOHEADER {
+                biSize: std::mem::size_of::<BITMAPINFOHEADER>() as u32,
+                biWidth: w,
+                biHeight: -h,
+                biPlanes: 1,
+                biBitCount: 32,
+                biCompression: BI_RGB.0,
+                ..Default::default()
+            };
+            let mut px = vec![0u8; (w * h * 4) as usize];
+            let dc = GetDC(None);
+            let n = GetDIBits(dc, ii.hbmColor, 0, h as u32, Some(px.as_mut_ptr() as *mut _), &mut bi, DIB_RGB_COLORS);
+            ReleaseDC(None, dc);
+            if n == 0 {
+                return None;
+            }
+            let has_alpha = px.chunks(4).any(|c| c[3] != 0);
+            for c in px.chunks_mut(4) {
+                c.swap(0, 2);
+                if !has_alpha {
+                    c[3] = 255;
+                }
+            }
+            let img = image::RgbaImage::from_raw(w as u32, h as u32, px)?;
+            let mut out = std::io::Cursor::new(Vec::new());
+            img.write_to(&mut out, image::ImageFormat::Png).ok()?;
+            Some(out.into_inner())
+        })();
+        if !ii.hbmColor.is_invalid() {
+            let _ = DeleteObject(HGDIOBJ(ii.hbmColor.0));
+        }
+        if !ii.hbmMask.is_invalid() {
+            let _ = DeleteObject(HGDIOBJ(ii.hbmMask.0));
+        }
+        let _ = DestroyIcon(hicon);
+        res
+    }
+}

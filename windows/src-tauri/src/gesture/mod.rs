@@ -17,12 +17,14 @@ use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, WebviewUrl, WebviewWi
 use crate::convert::{self, jobs::JobSpec, prefs::FileePrefs};
 
 pub const MENU_LABEL: &str = "filee-menu";
-/// Tamanho da janela do corvo + balão (px lógicos).
-pub const MENU_W: f64 = 480.0;
-pub const MENU_H: f64 = 420.0;
-/// Onde o cursor fica dentro da janela: o corvo pousa logo abaixo-à-esquerda.
-const ANCHOR_X: f64 = 64.0;
-const ANCHOR_Y: f64 = MENU_H - 72.0;
+/// Janela quadrada do anel (px lógicos) — igual a RING.size em src/filee/ring.ts.
+pub const MENU_W: f64 = 460.0;
+pub const MENU_H: f64 = 460.0;
+/// Raio (px lógicos) que conta como "dentro do anel"; a página ajusta quando o
+/// segundo arco abre (filee_menu_radius).
+static RADIUS: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(140);
+/// Cada abertura ganha um número, para um "esconder depois" velho não fechar o novo.
+static OPEN_GEN: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
 static APP: OnceLock<AppHandle> = OnceLock::new();
 /// Arquivos dos menus vindos do Explorador ("Bifrost ›"), esperando o hub.
@@ -141,12 +143,9 @@ pub fn pick_files() -> Vec<String> {
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 struct OpenPayload {
-    /// Ponto do cursor dentro da janela (px CSS).
-    anchor_x: f64,
-    anchor_y: f64,
-    /// O balão abre para a esquerda / para baixo perto das bordas.
-    flip_x: bool,
-    flip_y: bool,
+    /// Ponto do cursor dentro da janela (px CSS); o anel fica no centro da janela.
+    cursor_x: f64,
+    cursor_y: f64,
 }
 
 #[derive(Serialize, Clone)]
@@ -154,6 +153,8 @@ struct OpenPayload {
 struct PlanPayload {
     plan: Option<convert::Plan>,
     error: Option<String>,
+    /// Ícone do Windows do arquivo (data:image/png;base64,…), se houver.
+    icon: Option<String>,
 }
 
 /// Retângulo atual da janela (px físicos) para o "clique fora".
@@ -167,34 +168,20 @@ pub(crate) fn open_at(x: i32, y: i32, resolve: impl FnOnce() -> Result<Vec<Strin
         Some(m) => (m.scale_factor(), Some((m.position().x, m.position().y, m.size().width as i32, m.size().height as i32))),
         None => (1.0, None),
     };
-    let w = (MENU_W * scale) as i32;
-    let h = (MENU_H * scale) as i32;
-    let (mut ax, mut ay) = ((ANCHOR_X * scale) as i32, (ANCHOR_Y * scale) as i32);
-    let (mut flip_x, mut flip_y) = (false, false);
-    if let Some((mx, my, mw, mh)) = mon {
-        if x - ax + w > mx + mw {
-            flip_x = true;
-            ax = w - ax;
-        }
-        if y - ay < my {
-            flip_y = true;
-            ay = h - ay;
-        }
-        let _ = mh;
-    }
-    let left = x - ax;
-    let top = y - ay;
-    *RECT.lock().unwrap_or_else(|e| e.into_inner()) = Some((left, top, w, h));
-    let _ = win.set_size(tauri::PhysicalSize::new(w as u32, h as u32));
+    let size = (MENU_W * scale) as i32;
+    let (left, top) = logic::place_ring(x, y, size, mon);
+    OPEN_GEN.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+    *RECT.lock().unwrap_or_else(|e| e.into_inner()) = Some((left, top, size, size));
+    let _ = win.set_size(tauri::PhysicalSize::new(size as u32, size as u32));
     let _ = win.set_position(PhysicalPosition::new(left, top));
-    let _ = win.emit("filee-menu-open", OpenPayload { anchor_x: ax as f64 / scale, anchor_y: ay as f64 / scale, flip_x, flip_y });
+    let _ = win.emit("filee-menu-open", OpenPayload { cursor_x: (x - left) as f64 / scale, cursor_y: (y - top) as f64 / scale });
     let _ = win.show();
     let _ = win.set_always_on_top(true);
     std::thread::spawn(move || {
         let payload = match resolve() {
-            Ok(paths) if !paths.is_empty() => PlanPayload { plan: Some(convert::plan(&paths)), error: None },
-            Ok(_) => PlanPayload { plan: None, error: Some("Passe o mouse sobre um arquivo (ou selecione alguns) e tente de novo.".into()) },
-            Err(e) => PlanPayload { plan: None, error: Some(e) },
+            Ok(paths) if !paths.is_empty() => PlanPayload { icon: file_icon(&paths[0]), plan: Some(convert::plan(&paths)), error: None },
+            Ok(_) => PlanPayload { plan: None, icon: None, error: Some("Passe o mouse sobre um arquivo (ou selecione alguns) e tente de novo.".into()) },
+            Err(e) => PlanPayload { plan: None, icon: None, error: Some(e) },
         };
         crate::log::line(format!("filee: gesto com {} arquivo(s)", payload.plan.as_ref().map(|p| p.files.len()).unwrap_or(0)));
         if let Some(win) = menu() {
@@ -217,26 +204,61 @@ pub(crate) fn release_at(x: i32, y: i32) {
     let _ = win.emit("filee-menu-release", P { x: (x - l) as f64 / scale, y: (y - t) as f64 / scale });
 }
 
-/// Clique com o menu aberto: fora da janela, fecha. True se fechou.
+/// Clique com o menu aberto: fora do círculo do anel (não do retângulo), fecha.
+/// True se fechou.
 #[allow(dead_code)]
 pub(crate) fn click_outside(x: i32, y: i32) -> bool {
+    let r = RADIUS.load(std::sync::atomic::Ordering::Relaxed) as f64;
+    let scale = menu().and_then(|w| w.scale_factor().ok()).unwrap_or(1.0);
     let inside = RECT
         .lock()
         .unwrap_or_else(|e| e.into_inner())
-        .map(|(l, t, w, h)| x >= l && x < l + w && y >= t && y < t + h)
+        .map(|rect| logic::inside_ring(x, y, rect, r * scale))
         .unwrap_or(false);
     if !inside {
-        hide();
+        retract();
     }
     !inside
 }
 
 #[allow(dead_code)]
 pub(crate) fn escape() {
+    retract();
+}
+
+/// Fecha com a animação: o gancho solta na hora, a página recolhe o anel em
+/// ordem inversa e chama filee_menu_close; se não chamar, escondemos depois.
+fn retract() {
+    *RECT.lock().unwrap_or_else(|e| e.into_inner()) = None;
+    #[cfg(windows)]
+    win::closed();
+    let gen = OPEN_GEN.load(std::sync::atomic::Ordering::SeqCst);
     if let Some(win) = menu() {
         let _ = win.emit("filee-menu-escape", ());
     }
-    hide();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(700));
+        if OPEN_GEN.load(std::sync::atomic::Ordering::SeqCst) == gen {
+            if let Some(win) = menu() {
+                let _ = win.hide();
+            }
+        }
+    });
+}
+
+/// O ícone do arquivo como o Explorer mostra (só no Windows).
+fn file_icon(path: &str) -> Option<String> {
+    #[cfg(windows)]
+    {
+        use base64::Engine;
+        let png = win::file_icon_png(path)?;
+        return Some(format!("data:image/png;base64,{}", base64::engine::general_purpose::STANDARD.encode(png)));
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = path;
+        None
+    }
 }
 
 fn hide() {
@@ -272,12 +294,10 @@ pub fn filee_menu_action(app: AppHandle, action: String, paths: Vec<String>, pro
     }
     match action.as_str() {
         "ask" => {
-            hide();
             ask(&app, paths, prompt);
             Ok(None)
         }
         "open-converter" => {
-            hide();
             handle_args(&app, &[String::from("--filee")].into_iter().chain(paths).collect::<Vec<_>>());
             Ok(None)
         }
@@ -288,6 +308,12 @@ pub fn filee_menu_action(app: AppHandle, action: String, paths: Vec<String>, pro
 #[tauri::command]
 pub fn filee_menu_close() {
     hide();
+}
+
+/// A página diz o raio do anel (px lógicos) para o clique-fora pelo círculo.
+#[tauri::command]
+pub fn filee_menu_radius(radius: f64) {
+    RADIUS.store(radius.clamp(40.0, 230.0) as u32, std::sync::atomic::Ordering::Relaxed);
 }
 
 /// O hub pega os arquivos que chegaram antes de a página existir.

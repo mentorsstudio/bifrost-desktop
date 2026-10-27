@@ -150,6 +150,25 @@ impl Machine {
     }
 }
 
+/// Onde fica a janela quadrada do anel (px físicos): centrada no cursor, mas
+/// empurrada para dentro do monitor, para o anel nunca sair da tela.
+pub fn place_ring(x: i32, y: i32, size: i32, mon: Option<(i32, i32, i32, i32)>) -> (i32, i32) {
+    let (mut l, mut t) = (x - size / 2, y - size / 2);
+    if let Some((mx, my, mw, mh)) = mon {
+        l = l.clamp(mx, (mx + mw - size).max(mx));
+        t = t.clamp(my, (my + mh - size).max(my));
+    }
+    (l, t)
+}
+
+/// O clique cai dentro do anel? (círculo de raio r em volta do centro da janela)
+pub fn inside_ring(x: i32, y: i32, rect: (i32, i32, i32, i32), r: f64) -> bool {
+    let (l, t, w, h) = rect;
+    let (cx, cy) = (l as f64 + w as f64 / 2.0, t as f64 + h as f64 / 2.0);
+    let (dx, dy) = (x as f64 - cx, y as f64 - cy);
+    dx * dx + dy * dy <= r * r
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -217,5 +236,24 @@ mod tests {
         m.closed(); // Esc com o botão ainda apertado
         assert_eq!(m.right_up(0, 0).0, Out::Swallow);
         assert_eq!(m.right_up(0, 0).0, Out::Pass);
+    }
+
+    #[test]
+    fn anel_fica_na_tela() {
+        let mon = Some((0, 0, 1920, 1080));
+        assert_eq!(place_ring(960, 540, 460, mon), (730, 310));
+        assert_eq!(place_ring(5, 5, 460, mon), (0, 0));
+        assert_eq!(place_ring(1915, 1075, 460, mon), (1460, 620));
+        // segundo monitor à esquerda, 150%
+        assert_eq!(place_ring(-2, 300, 690, Some((-2880, 0, 2880, 1620))), (-690, 0));
+    }
+
+    #[test]
+    fn clique_pelo_circulo() {
+        let rect = (100, 100, 460, 460);
+        assert!(inside_ring(330, 330, rect, 150.0));
+        assert!(inside_ring(330 + 140, 330, rect, 150.0));
+        // canto do quadrado: dentro do retângulo, fora do anel
+        assert!(!inside_ring(110, 110, rect, 150.0));
     }
 }
