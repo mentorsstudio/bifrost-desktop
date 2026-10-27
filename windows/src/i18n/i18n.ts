@@ -142,9 +142,23 @@ function pickPlural(forms: Plural, lang: Language, count: number): string | unde
 }
 
 /** The raw translation of `key` in `lang`, or undefined. */
+/** Glossário do Bifrost em pt-BR: a tabela do Mac diz "notch"; aqui é a ilha. */
+export function bifrostGlossary(text: string): string {
+  return text
+    .replace(/abaixo do notch/g, "abaixo da ilha")
+    .replace(/\bno notch\b/g, "na ilha")
+    .replace(/\bdo notch\b/g, "da ilha")
+    .replace(/\bpelo notch\b/g, "pela ilha")
+    .replace(/\bo notch\b/g, "a ilha")
+    .replace(/\bO notch\b/g, "A ilha")
+    .replace(/\bnotch\b/g, "ilha");
+}
+
 export function lookup(key: string, lang: Language = current): string | Plural | undefined {
   if (lang === "en") return undefined;
-  return TABLE[key]?.[lang];
+  const v = TABLE[key]?.[lang];
+  if (lang === "pt-BR" && typeof v === "string" && v.includes("otch")) return bifrostGlossary(v);
+  return v;
 }
 
 /**

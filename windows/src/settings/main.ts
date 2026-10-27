@@ -204,11 +204,11 @@ function claudeSection(status: HookStatus): HTMLElement {
       }),
       h("div", { class: "row" },
         h("label", { text: "settings.json" }),
-        h("span", { class: "path", text: status.settingsPath }),
+        h("span", { class: "path", text: status.settingsPath || "~/.claude/settings.json" }),
       ),
       h("div", { class: "row" },
         h("label", { text: t("Relay") }),
-        h("span", { class: "path", text: status.hookPath }),
+        h("span", { class: "path", text: status.hookPath || t("not installed") }),
         statusDot(status.hookReady),
       ),
     );
@@ -233,6 +233,7 @@ function claudeSection(status: HookStatus): HTMLElement {
       install.title = t("The relay isn't installed yet.");
     }
     actions.append(install);
+    if (!status.hookReady) actions.append(h("span", { class: "hint inline", text: t("The relay isn't installed yet.") }));
     if (status.installed) {
       actions.append(h("button", {
         class: "danger",
