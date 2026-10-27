@@ -20,6 +20,8 @@ export const THEMES = ["bifrost", "asgard", "muspelheim", "niflheim", "yggdrasil
 export const PAGES = ["dictation", "notes", "insights", "dictionary", "snippets", "styles", "flowsettings",
   "general", "themes", "pills", "agents", "chat", "voice", "integrations", "phone", "shortcuts"];
 export const ISLAND = ["idle", "home", "home-last", "home-session", "home-empty", "quick", "notification", "approval", "approval-pair", "chat", "chat-picker", "upload"];
+// Fase 19: cada tema roda a ilha e a pílula com um personagem diferente.
+export const CHARS = ["theme", "classic", "snow", "ember", "moss", "dusk", "gold", "storm"];
 const SCALES = [1, 1.25, 1.5];
 const HUB_W = [{ w: 900, h: 700 }, { w: 1400, h: 900 }];
 const ISL_W = [{ w: 860, h: 520 }, { w: 1100, h: 560 }];
@@ -57,8 +59,10 @@ async function main() {
       await ctx.close();
     }
     const vp = ISL_W[size];
-    const scenes = [...ISLAND.map((s) => [`ilha:${s}`, `/dev/screens.html?shot=${s}&theme=${theme}`]),
-      ["bandeja", `/traymenu.html?theme=${theme}`], ["pilula", `/dev/pill.html?theme=${theme}`]];
+    const ch = CHARS[(THEMES.indexOf(theme) + scale * 4) % CHARS.length | 0];
+    const q = `theme=${theme}&character=${ch}`;
+    const scenes = [...ISLAND.map((s) => [`ilha:${s}`, `/dev/screens.html?shot=${s}&${q}`]),
+      ["bandeja", `/traymenu.html?${q}`], ["pilula", `/dev/pill.html?${q}`]];
     for (const [scene, url] of scenes) {
       const ctx = await browser.newContext({ viewport: { width: vp.w, height: vp.h }, deviceScaleFactor: scale, reducedMotion: "reduce" });
       const page = await ctx.newPage();
