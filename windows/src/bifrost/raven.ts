@@ -9,6 +9,7 @@
 // aurora, e emblemas em forma de runa.
 
 import { Curves, type Curve } from "./motion";
+import { SLEEP_RUNE } from "./runes";
 import { Sound } from "../core/sound";
 import type { BotEmoteName, BotStateName } from "../core/layout";
 import { drawOutfitBehind, drawOutfitFront, setRavenPainter, type RavenHead } from "./outfits";
@@ -867,7 +868,7 @@ export class RavenEngine {
         case "star": x.fillStyle = GOLD_A; star(x, sz, sz * 0.45); x.fill(); break;
         case "spark": x.strokeStyle = "#5EF2C9"; x.lineWidth = sz * 0.25; x.beginPath(); x.moveTo(-sz, 0); x.lineTo(sz, 0); x.moveTo(0, -sz); x.lineTo(0, sz); x.stroke(); break;
         case "sweat": x.fillStyle = "#8FD3FF"; x.beginPath(); x.ellipse(0, 0, sz * 0.45, sz * 0.7, 0, 0, Math.PI * 2); x.fill(); break;
-        case "z": x.rotate(-(s.spin + s.age)); x.fillStyle = "#AFC0E8"; x.font = `600 ${sz * 2.2}px "Palatino Linotype", Georgia, serif`; x.fillText("z", 0, 0); break;
+        case "z": x.rotate(-(s.spin + s.age)); x.fillStyle = "#AFC0E8"; x.font = `600 ${sz * 2.2}px "Bifrost Runic", "Palatino Linotype", Georgia, serif`; x.fillText(SLEEP_RUNE, 0, 0); break;
       }
       x.restore();
     }

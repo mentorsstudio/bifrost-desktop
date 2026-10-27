@@ -5,6 +5,7 @@
 // a janela não desenha nada quando está escondida.
 
 import type { BotStateName } from "../core/layout";
+import { toRunes } from "../bifrost/runes";
 import type { Outfit } from "../huginn/wardrobe";
 import { Mascot, type MascotState } from "../bifrost/mascots";
 
@@ -80,7 +81,7 @@ export function hero(page: string, title: string, subtitle: string | null, actio
   copy.className = "copy bf-hero-copy";
   const kicker = document.createElement("div");
   kicker.className = "bf-hero-kicker";
-  kicker.textContent = "ᚺ ᚢ ᚷ ᛁ ᚾ ᚾ  ·  ᛗ ᚢ ᚾ ᛁ ᚾ ᚾ";
+  kicker.textContent = `${toRunes("huginn", " ")}  ·  ${toRunes("muninn", " ")}`;
   const h1 = document.createElement("h1");
   h1.textContent = title;
   copy.append(kicker, h1);
