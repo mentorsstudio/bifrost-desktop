@@ -19,7 +19,10 @@
 
   --bg: var(--fy-bg); --card: var(--fy-surface); --card-flat: var(--fy-bg); --tab-on: var(--fy-raised);
   --hairline: rgba(65, 106, 89, .45); --ink: var(--fy-text); --ink-2: #F0EADB; --dim: var(--fy-muted);
-  --amber: #C9DCCF; --hub-accent: var(--fy-salvia); --hub-on-accent: var(--fy-on-accent);
+  --amber: #C9DCCF;
+  /* Fase 17: sinal funcional — o manual Freya não define cor de erro; tons de aviso dessaturados. */
+  --fy-error: #D08A7E; --fy-error-text: #E6B6AC; --fy-limit: #C8B67E;
+  --red: var(--fy-error); --red-text: var(--fy-error-text); --hub-red: var(--fy-error); --bf-blood: var(--fy-error); --hub-accent: var(--fy-salvia); --hub-on-accent: var(--fy-on-accent);
   --hub-panel: var(--fy-bg); --hub-card: var(--fy-surface); --hub-field: var(--fy-raised); --hub-line: rgba(65, 106, 89, .55);
   --bf-night: var(--fy-bg); --bf-fjord: var(--fy-surface); --bf-fjord-2: var(--fy-raised);
   --bf-iron: var(--fy-raised); --bf-iron-2: var(--fy-border); --bf-wood: var(--fy-raised);
@@ -82,3 +85,9 @@ code, pre, kbd, .code, .mono { font-family: var(--mono) !important; }
 @media (prefers-reduced-motion: reduce) {
   .bf-bridge, #island::after, .hub-side::after, .bf-hero::after, .bf-ai-card.found::after, .bf-card.on::after, .capsule::after, .bf-aurora-line { animation: none !important; }
 }
+
+/* Fase 17: erros voltam a aparecer em toda parte. */
+.error, .err, .is-error, .danger, .bf-tray-item.danger:hover, .hub-error, .field-error, .toast.error, .status.error, [data-tone="error"] { color: var(--fy-error-text) !important; }
+.bf-tray-item.danger:hover { background: rgba(208, 138, 126, .14) !important; }
+.view.on > .card.wash[style*="208, 138, 126"] { border-color: rgba(208, 138, 126, .7) !important;
+  background: radial-gradient(360px 140px at 100% 60%, rgba(208, 138, 126, .22), transparent 70%), linear-gradient(180deg, #1D3C34, #142D28) !important; }

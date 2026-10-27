@@ -657,3 +657,11 @@ Fonte: Freya Branding v1 (`/workspace/freya-branding/kit`). Bifrost não usa o l
 - **Corvos**: silhueta nova (ovo alto, asas em lâmina, bico curto, mesmas âncoras dos adornos); Huginn é Pinheiro com peito Sálvia e olhos Marfim; Muninn é Sálvia com peito Marfim e olhos Pinheiro. Sem ouro nos pés/bico.
 - **Movimento**: `--m-bouncy`/`--bf-ease-raven` sem mola; `locomotion.ts` com `CALM = 0.55` (amassar, quique, inclinação no chão) e ritmos mais lentos.
 - **Herança removida**: cores de projetos do autor original em `layout.ts` (PROJECT_COLORS) e cores de estado/brilho trocadas pela paleta. Sons já eram próprios (`scripts/gen-sounds.py`). Crédito MIT ao Coucou mantido.
+
+### 10.17 Fase 17 — Corvos legíveis, contraste e estados distintos
+
+- **Contraste do Huginn:** contorno Marfim (rgba(240,234,219,.62), 1,5 px) e brilho interno Sálvia; Muninn ganha contorno escuro sutil. Legível sobre #10231F, #142D28 e wallpaper.
+- **Silhueta de corvo:** bico maior e definido, cauda em leque de duas pontas atrás dos pés, três pontas de pena por asa, crista no Huginn, lua Marfim no Muninn. Formas continuam arredondadas, simétricas e sem colisões.
+- **Estados distintos:** selos quadrados arredondados com glifo próprio — thinking=órbita, searching=lupa, approval=!, question=▶, error=ᚾ pulsante, finished=check, ratelimit=ampulheta que gira — e tinta contida no corpo.
+- **Erro:** o manual Freya não define cor semântica de erro. Adotados tons funcionais dessaturados: `--fy-error #D08A7E`, `--fy-error-text #E6B6AC`, `--fy-limit #C8B67E`; --red/--hub-red/--bf-blood apontam para eles (cards, textos, hover de perigo da bandeja, wash dos cards).
+- **Animações CSS dos corvos SVG suavizadas:** respiração 5,2 s ±0,8 px; flap, tilt, lean, fly-in, shake e pop com amplitude menor; hop toca uma vez. reduced-motion continua desligando tudo.

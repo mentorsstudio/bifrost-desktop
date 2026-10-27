@@ -20,7 +20,7 @@ import type { Outfit } from "../huginn/wardrobe";
 export type EyeShape =
   | "pill" | "wide" | "dot" | "line" | "flat" | "happy" | "closed"
   | "spiral" | "heart" | "star" | "tired" | "wink" | "cup";
-export type BadgeKind = "dots" | "bang" | "question" | "dot" | "arrow";
+export type BadgeKind = "dots" | "bang" | "question" | "dot" | "arrow" | "orbit" | "scan" | "check" | "cross" | "hourglass";
 export interface Badge { kind: BadgeKind; color: RGB }
 export type RGB = readonly [number, number, number];
 /** [alvo, duração ms, curva] */
@@ -59,22 +59,26 @@ const MUNINN_HALO = "rgba(145, 181, 160,0.85)";
 const GOLD_A = "#F0EADB";
 const GOLD_B = "#91B5A0";
 
+// Fase 17: cada estado com tom próprio dentro da família Freya; erro e limite usam
+// tons de aviso dessaturados (o manual Freya não define cor semântica de erro).
+export const ERROR_TONE = "#D08A7E";
+export const LIMIT_TONE = "#C8B67E";
 const TONE = {
-  idle: hex("#F0EADB"), working: hex("#C9DCCF"), thinking: hex("#F0EADB"), searching: hex("#91B5A0"),
-  approval: hex("#C9DCCF"), question: hex("#91B5A0"), error: hex("#91B5A0"), finished: hex("#91B5A0"),
-  ratelimit: hex("#91B5A0"), sleeping: hex("#91B5A0"), dizzy: hex("#91B5A0"),
+  idle: hex("#F0EADB"), working: hex("#C9DCCF"), thinking: hex("#F0EADB"), searching: hex("#A9C6B4"),
+  approval: hex("#F0EADB"), question: hex("#91B5A0"), error: hex(ERROR_TONE), finished: hex("#9FD3B1"),
+  ratelimit: hex(LIMIT_TONE), sleeping: hex("#6E8F7E"), dizzy: hex("#C9DCCF"),
 };
 const calm = { hop: false, scan: false, breathe: false, snore: false, sweat: false, gaze: null, lean: 0 };
 export const BOT_STATES: Record<BotStateName, Mood> = {
   idle: { ...calm, color: TONE.idle, tint: 0, eye: "pill", badge: null },
   working: { ...calm, color: TONE.working, tint: 0.72, eye: "pill", badge: { kind: "dots", color: TONE.working } },
-  thinking: { ...calm, color: TONE.thinking, tint: 0.72, eye: "pill", badge: { kind: "dots", color: TONE.thinking }, gaze: [0.55, 0.55] },
-  searching: { ...calm, color: TONE.searching, tint: 0.72, eye: "pill", badge: { kind: "dots", color: TONE.searching }, scan: true },
+  thinking: { ...calm, color: TONE.thinking, tint: 0.72, eye: "pill", badge: { kind: "orbit", color: TONE.thinking }, gaze: [0.55, 0.55] },
+  searching: { ...calm, color: TONE.searching, tint: 0.72, eye: "pill", badge: { kind: "scan", color: TONE.searching }, scan: true },
   approval: { ...calm, color: TONE.approval, tint: 0.78, eye: "wide", badge: { kind: "bang", color: TONE.approval }, hop: true },
   question: { ...calm, color: TONE.question, tint: 0.75, eye: "pill", badge: { kind: "question", color: TONE.question }, lean: 0.17 },
-  error: { ...calm, color: TONE.error, tint: 0.78, eye: "flat", badge: { kind: "dot", color: TONE.error } },
-  finished: { ...calm, color: TONE.finished, tint: 0.35, eye: "happy", badge: { kind: "dot", color: TONE.finished } },
-  ratelimit: { ...calm, color: TONE.ratelimit, tint: 0.72, eye: "tired", badge: { kind: "dot", color: TONE.ratelimit }, sweat: true },
+  error: { ...calm, color: TONE.error, tint: 0.78, eye: "flat", badge: { kind: "cross", color: TONE.error } },
+  finished: { ...calm, color: TONE.finished, tint: 0.35, eye: "happy", badge: { kind: "check", color: TONE.finished } },
+  ratelimit: { ...calm, color: TONE.ratelimit, tint: 0.72, eye: "tired", badge: { kind: "hourglass", color: TONE.ratelimit }, sweat: true },
   sleeping: { ...calm, color: TONE.sleeping, tint: 0.32, eye: "closed", badge: null, breathe: true, snore: true },
   dizzy: { ...calm, color: TONE.dizzy, tint: 0.7, eye: "spiral", badge: null },
 };
@@ -705,8 +709,9 @@ export class RavenEngine {
     }
     x.lineJoin = "round";
     // Sem contorno preto: só um aro de luz finíssimo, para o corvo não "colar" no fundo.
-    x.lineWidth = 0.9;
-    x.strokeStyle = "rgba(145, 181, 160,0.16)";
+    // Fase 17: aro de luz Marfim (Huginn) / Pinheiro (Muninn) para ler em qualquer fundo.
+    x.lineWidth = muninn ? 1.1 : 1.5;
+    x.strokeStyle = muninn ? "rgba(20, 45, 40,0.45)" : "rgba(240, 234, 219,0.62)";
     const H = RAVEN.head;
     const footLift = (s: number) => (s < 0 ? P.footL : P.footR) + P.tuck * 3.2;
     const head: RavenHead = { x: 60 + gx * 0.4, y: H.cy + gy * 0.4 + this.physDy * 2, r: H.r, chestY: 82, bodyR: 28, footX: 60 + RAVEN.feet.dx, footY: RAVEN.feet.y - footLift(1), spread: Math.min(1, P.wing / 1.5) };
@@ -714,6 +719,9 @@ export class RavenEngine {
     const st = { presence: this.outfitPresence, morph: 0 };
     if (dressed) drawOutfitBehind(x, this.outfit, head, st);
     if (!this.isMini) {
+      // Cauda: só as pontas aparecem abaixo do corpo, por trás dos pés.
+      const tail = new Path2D(RAVEN.tail);
+      x.fillStyle = css(dark); x.fill(tail); x.stroke(tail);
       x.fillStyle = GOLD_B;
       for (const s of [-1, 1]) { x.beginPath(); x.ellipse(60 + s * RAVEN.feet.dx * (1 - 0.25 * P.tuck), RAVEN.feet.y - footLift(s), 4.2 * (1 - 0.35 * P.tuck), 2.2, 0, 0, Math.PI * 2); x.fill(); }
     }
@@ -739,6 +747,13 @@ export class RavenEngine {
         x.strokeStyle = muninn ? "rgba(207, 214, 234,0.5)" : "rgba(145, 181, 160,0.5)";
         x.lineWidth = 1.3; x.lineCap = "round";
         x.beginPath(); x.moveTo(60 + side * 26.6, 70); x.bezierCurveTo(60 + side * 29.4, 76, 60 + side * 29.6, 83, 60 + side * 28, 88.6); x.stroke();
+        // Fase 17: pontas de pena na base da asa (três traços curtos).
+        x.strokeStyle = muninn ? "rgba(20, 45, 40,0.4)" : "rgba(240, 234, 219,0.42)";
+        x.lineWidth = 1;
+        for (const [ox, oy] of [[-3.2, 89], [-1, 91.6], [1.6, 93.2]] as const) {
+          const bx = 60 + side * (30 + ox);
+          x.beginPath(); x.moveTo(bx, oy - 3.2); x.lineTo(bx + side * 0.6, oy); x.stroke();
+        }
       }
       x.restore();
     };
@@ -746,6 +761,7 @@ export class RavenEngine {
       for (const side of [-1, 1] as const) wingAt(side, wingAngle(side, P.feather), P.wingLen * 0.94, css(mix(dark, lit, 0.25)), false);
     }
     const body = new Path2D(RAVEN.body);
+    if (!muninn && !this.isMini) { x.save(); x.shadowColor = "rgba(145, 181, 160,0.55)"; x.shadowBlur = R * 0.18; x.fillStyle = feather(20, 103); x.fill(body); x.restore(); }
     x.fillStyle = feather(20, 103); x.fill(body); x.stroke(body);
     // Peito: aurora (Huginn) ou prata (Muninn), e o brilho macio do alto da cabeça.
     const belly = new Path2D(RAVEN.belly);
@@ -928,9 +944,10 @@ export class RavenEngine {
     const r = R * 0.27 * s;
     x.save();
     x.translate(bx, by);
+    // Fase 17: quadrado arredondado (ícone Freya), nunca círculo.
     x.beginPath();
-    x.arc(0, 0, r, 0, Math.PI * 2);
-    x.fillStyle = "rgba(10, 16, 36,0.92)";
+    x.roundRect(-r, -r, r * 2, r * 2, r * 0.42);
+    x.fillStyle = "rgba(16, 35, 31,0.94)";
     x.fill();
     x.lineWidth = Math.max(1, R * 0.05);
     x.strokeStyle = css(b.color, 0.95);
@@ -956,6 +973,32 @@ export class RavenEngine {
       case "dot":
         x.beginPath(); x.arc(0, 0, r * 0.32, 0, Math.PI * 2); x.fill();
         break;
+      case "orbit": { // pensando: um ponto dá a volta devagar
+        const a = t * 2.4;
+        x.globalAlpha *= 0.35; x.beginPath(); x.arc(0, 0, r * 0.45, 0, Math.PI * 2); x.stroke(); x.globalAlpha /= 0.35;
+        x.beginPath(); x.arc(Math.cos(a) * r * 0.45, Math.sin(a) * r * 0.45, r * 0.16, 0, Math.PI * 2); x.fill();
+        break;
+      }
+      case "scan": { // procurando: lupa que varre de um lado a outro
+        const dx = Math.sin(t * 2.2) * r * 0.18;
+        x.beginPath(); x.arc(dx - r * 0.08, -r * 0.08, r * 0.3, 0, Math.PI * 2); x.stroke();
+        x.beginPath(); x.moveTo(dx + r * 0.14, r * 0.14); x.lineTo(dx + r * 0.42, r * 0.42); x.stroke();
+        break;
+      }
+      case "check": // terminou: visto
+        x.beginPath(); x.moveTo(-r * 0.4, 0); x.lineTo(-r * 0.1, r * 0.3); x.lineTo(r * 0.42, -r * 0.32); x.stroke();
+        break;
+      case "cross": { // erro: ᚾ (naudiz) — traço com a barra torta; pulsa de leve
+        const k = 1 + 0.06 * Math.sin(t * 5);
+        x.scale(k, k);
+        x.beginPath(); x.moveTo(-r * 0.05, -r * 0.5); x.lineTo(-r * 0.05, r * 0.5); x.moveTo(-r * 0.35, -r * 0.18); x.lineTo(r * 0.3, r * 0.18); x.stroke();
+        break;
+      }
+      case "hourglass": { // limite: ampulheta que vira devagar
+        x.rotate(Math.floor(t / 2.4) % 2 ? Math.PI : 0);
+        x.beginPath(); x.moveTo(-r * 0.32, -r * 0.42); x.lineTo(r * 0.32, -r * 0.42); x.lineTo(-r * 0.32, r * 0.42); x.lineTo(r * 0.32, r * 0.42); x.closePath(); x.stroke();
+        break;
+      }
       case "arrow": // ᛏ (tiwaz): a seta da atualização
         x.beginPath(); x.moveTo(0, r * 0.5); x.lineTo(0, -r * 0.5); x.moveTo(-r * 0.35, -r * 0.1); x.lineTo(0, -r * 0.5); x.lineTo(r * 0.35, -r * 0.1); x.stroke();
         break;

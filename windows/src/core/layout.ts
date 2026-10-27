@@ -185,7 +185,7 @@ export function botGlowColor(s: BotStateName): string {
     case "approval":
       return "#C9DCCF";
     case "error":
-      return "#F0EADB";
+      return "#D08A7E";
     case "finished":
       return "#91B5A0";
     case "ratelimit":
@@ -231,7 +231,7 @@ export type Wash = "red" | "green" | "pink" | "amber" | "cyan" | "indigo" | "sof
 export function washRGBA(wash: Wash): string {
   switch (wash) {
     case "red":
-      return "rgba(240,234,219,0.4)";
+      return "rgba(208, 138, 126, 0.5)";
     case "green":
       return "rgba(145,181,160,0.5)";
     case "pink":
