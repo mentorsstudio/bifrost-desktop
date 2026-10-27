@@ -17,6 +17,7 @@ import type { BotEmoteName, BotStateName } from "../core/layout";
 import { drawOutfitBehind, drawOutfitFront, setRavenPainter, type RavenHead } from "./outfits";
 import type { Outfit } from "../huginn/wardrobe";
 import { currentTheme, onThemeChange, type RavenLook } from "../theme/themes";
+import { ravenTheme } from "../theme/characters";
 
 export type EyeShape =
   | "pill" | "wide" | "dot" | "line" | "flat" | "happy" | "closed"
@@ -53,7 +54,8 @@ interface Pal { hl: { lit: RGB; dark: RGB }; mn: { lit: RGB; dark: RGB }; H: Rav
 let palFor = "";
 let PAL: Pal;
 function pal(): Pal {
-  const t = currentTheme();
+  // Fase 19: o personagem escolhido (Ajustes → Temas → Personagens) vale por cima do tema.
+  const t = ravenTheme();
   if (palFor !== t.id) {
     PAL = { hl: { lit: hex(t.huginn.lit), dark: hex(t.huginn.dark) }, mn: { lit: hex(t.muninn.lit), dark: hex(t.muninn.dark) }, H: t.huginn, M: t.muninn };
     palFor = t.id;

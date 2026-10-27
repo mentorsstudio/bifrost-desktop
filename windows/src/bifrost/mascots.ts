@@ -4,7 +4,8 @@
 
 import { reducedMotion } from "./motion";
 import { RAVEN } from "./raven-shape";
-import { currentTheme, onThemeChange, type RavenLook, type RavenMark, type Theme } from "../theme/themes";
+import { type RavenLook, type RavenMark, type Theme } from "../theme/themes";
+import { onRavenLookChange, ravenTheme } from "../theme/characters";
 
 export type MascotName = "huginn" | "muninn";
 export type MascotState = "idle" | "blink" | "flyIn" | "flyOut" | "thinking" | "listening" | "success" | "error" | "sleeping";
@@ -16,7 +17,7 @@ export const MASCOT_STATES: readonly MascotState[] = ["idle", "blink", "flyIn", 
 // Huginn (pensamento) mantém a crista; Muninn (memória) a lua. O tema soma a sua marca
 // (coroa, brasa, geada, folha, elmo, raio) — simétrica, na testa, sem tocar olhos e bico.
 export interface MascotPalette { body: string; lit: string; wing: string; belly: [string, string]; eye: string; accent: string; rune: string; label: string }
-export function palette(name: MascotName, theme: Theme = currentTheme()): MascotPalette {
+export function palette(name: MascotName, theme: Theme = ravenTheme()): MascotPalette {
   const L = name === "huginn" ? theme.huginn : theme.muninn;
   return { body: L.dark, lit: L.lit, wing: L.wing, belly: L.belly, eye: L.eye, accent: L.quill, rune: L.rune, label: name === "huginn" ? "Huginn" : "Muninn" };
 }
@@ -34,11 +35,12 @@ export function markSvg(m: RavenMark, L: RavenLook, huginn: boolean): string {
   }
 }
 
-export function mascotSvg(name: MascotName, T: Theme = currentTheme()): string {
+let svgSeq = 0;
+export function mascotSvg(name: MascotName, T: Theme = ravenTheme()): string {
   const p = palette(name, T);
   const huginn = name === "huginn";
   const L = huginn ? T.huginn : T.muninn;
-  const uid = `${name}-${T.id}`;
+  const uid = `${name}-${T.id}-${++svgSeq}`;
   // Fase 17: aro de luz para ler em qualquer fundo; pontas de pena nas asas.
   const rim = L.rim;
   const tipsInk = L.tips;
@@ -94,7 +96,7 @@ export function mascotSvg(name: MascotName, T: Theme = currentTheme()): string {
 
 // Corvos vivos: quando o tema troca, cada um é redesenhado no lugar (o estado fica).
 const LIVE = new Set<WeakRef<Mascot>>();
-onThemeChange(() => {
+onRavenLookChange(() => {
   for (const r of LIVE) {
     const m = r.deref();
     if (!m || !m.el.isConnected) { if (!m) LIVE.delete(r); continue; }
