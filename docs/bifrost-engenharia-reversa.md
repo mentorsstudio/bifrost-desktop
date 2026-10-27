@@ -545,3 +545,11 @@ Credenciais no cofre do sistema (`secrets.rs`): `mcp-token:<nome>` (Hermes VPS e
 - **Runas**: `runes.ts` (z → ᛉ). **Links**: versões/resumo → mentorsstudio/bifrost-desktop.
 - **Hub**: sem crossfade de duas páginas; keyframes só transform/opacity; content-visibility; contador após a entrada. Trace: 59,1 fps, p95 19,9 ms (antes 54,9 / 24,7).
 - Varredura: 0 textos visíveis com Coucou/Mochi (restam só ids internos de evento/protocolo), 0 literais em inglês conhecidos fora de t(), 0 arquivos com nome herdado.
+
+### 10.7 Fase 7 (26–27/10/2026)
+
+- **Adornos** refeitos para o corvo redondo (`outfits.ts`): manto só atrás do corpo, gola fina sob o bico, lanterna além da asa, contornos suaves.
+- **Agentes sem hooks** (`src-tauri/src/agents_scan.rs`, comandos `agents_detect`, `agents_focus`, `git_branch`): `claude.exe`/`codex.exe`/`gemini.exe` com a janela do terminal/editor ancestral; janelas de VS Code, Cursor, Antigravity e Windsurf com a pasta do título; modelos carregados do Ollama (`/api/ps`). Limite: CLIs instaladas via npm rodam como `node.exe` e não são reconhecidas pelo nome.
+- **Painel**: linhas tracejadas para os achados, "Instalar hooks" num clique para Codex/Gemini (prévia + aplicação com fingerprint), tempo que anda a cada 5 s. **Cartão da esquerda** (`session-card.ts`): contexto (pasta · branch · tempo) sob o ticker; parado, a última sessão lembrada (localStorage).
+- **Hub**: glossário pt-BR em `lookup` (notch → ilha); caminho padrão quando vazio; botão desativado legível com motivo.
+- **Ilha**: `kit.ts`, `header.ts`, `pill-chip.ts`, `quick-settings.ts` (próprios, com testes).
