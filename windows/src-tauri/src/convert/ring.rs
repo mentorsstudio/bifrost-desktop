@@ -450,4 +450,28 @@ mod tests {
             }
         }
     }
+
+    /// Gera os dados das páginas de captura (dev/filee-rings.js): `cargo test dump_rings -- --ignored`.
+    #[test]
+    #[ignore]
+    fn dump_rings() {
+        let pc = |t: Tool| matches!(t, Tool::Ffmpeg | Tool::Pdfium);
+        let cases: Vec<(&str, Vec<String>)> = vec![
+            ("png", e(&["png"])),
+            ("pdf", e(&["pdf"])),
+            ("pdfs", e(&["pdf", "pdf", "pdf"])),
+            ("docx", e(&["docx"])),
+            ("mp4", e(&["mp4"])),
+            ("mp3", e(&["mp3"])),
+            ("zip", e(&["zip"])),
+            ("diff", e(&["diff"])),
+            ("mixed", e(&["png", "pdf"])),
+        ];
+        let mut out = String::from("// Gerado por convert::ring::tests::dump_rings (Rust). Não edite à mão.\nwindow.__FILEE_RINGS__ = {\n");
+        for (k, v) in cases {
+            out.push_str(&format!("  {k}: {},\n", serde_json::to_string(&ring_for(&v, &pc)).unwrap()));
+        }
+        out.push_str("};\n");
+        std::fs::write(std::env::var("RING_OUT").unwrap_or("/tmp/filee-rings.js".into()), out).unwrap();
+    }
 }

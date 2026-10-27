@@ -1,78 +1,113 @@
-// A geometria do anel do gesto (o "rondó"): onde fica cada botão e qual botão
-// está sob um ponto. Tudo em px CSS, relativo ao centro do anel. Sem DOM, para
-// os testes. O acerto é pelo círculo e pela fatia, nunca pelo retângulo.
+// A geometria do anel do gesto (fatias de rosca, como o menu do Filee — MIT,
+// © 2026 Myeonggu Kim / KnifeLemon — reescrita do zero). Ângulos em graus,
+// no sentido horário a partir das 12h; a fatia i fica centrada em i·span, então
+// a primeira está no topo. Tudo em px CSS relativo ao centro. Sem DOM, testada.
 
-/** Tamanho da janela do anel (quadrada) e as faixas. */
-export const RING = {
-  size: 460,
-  core: 46,        // raio do miolo (ícone do arquivo)
-  itemR: 102,      // raio onde ficam os centros dos botões
-  item: 54,        // diâmetro de cada botão
-  subR: 174,       // raio do segundo arco (sub-opções)
-  sub: 44,         // diâmetro dos botões do segundo arco
-  subStep: 25,     // graus entre os botões do segundo arco
+export const DONUT = {
+  size: 460,        // janela quadrada
+  outer: 162,       // raio externo das fatias
+  inner: 66,        // raio do miolo (furo)
+  gap: 3,           // vão constante entre fatias (px)
+  corner: 10,       // arredondamento dos cantos
+  pop: 7,           // quanto a fatia sob o mouse sai para fora
+  subInner: 172,    // segundo anel (grupo): raio interno
+  subOuter: 220,    // e externo
+  subOverhang: 0.25,
+  minSubWidth: 46,  // largura mínima de uma fatia do segundo anel (no meio)
+  maxSlices: 12,
 } as const;
 
-/** Limites das faixas de acerto (a fatia vale até a metade do caminho). */
-export const BAND = {
-  innerMin: RING.core + 4,
-  innerMax: (RING.itemR + RING.item / 2 + RING.subR - RING.sub / 2) / 2,
-  outerMax: RING.subR + RING.sub / 2 + 10,
-} as const;
+const RAD = Math.PI / 180;
 
-const DEG = Math.PI / 180;
-
-/** Ângulos (graus, 0 = direita, sentido horário, -90 = topo) dos n botões. O
- *  topo fica livre para o corvo pousar no anel: n botões em n+1 vagas. */
-export function ringAngles(n: number): number[] {
-  const slots = n + 1;
-  const step = 360 / slots;
-  return Array.from({ length: n }, (_, i) => -90 + step * (i + 1));
+export function span(count: number): number {
+  return count <= 0 ? 360 : 360 / count;
 }
 
-/** Os ângulos do segundo arco, centrado no botão-pai. */
-export function subAngles(parent: number, n: number): number[] {
-  const start = parent - (RING.subStep * (n - 1)) / 2;
-  return Array.from({ length: n }, (_, i) => start + RING.subStep * i);
+export function midAngle(index: number, count: number): number {
+  return index * span(count);
 }
 
-export function polar(angle: number, r: number): { x: number; y: number } {
-  return { x: Math.cos(angle * DEG) * r, y: Math.sin(angle * DEG) * r };
+/** Ponto (x, y) para um ângulo horário a partir das 12h. */
+export function pointAt(angle: number, r: number): { x: number; y: number } {
+  return { x: r * Math.sin(angle * RAD), y: -r * Math.cos(angle * RAD) };
 }
 
-/** Diferença angular mínima (0..180). */
-function gap(a: number, b: number): number {
-  const d = Math.abs((((a - b) % 360) + 540) % 360 - 180);
-  return d;
+/** Ângulo (0..360) de (dx, dy). */
+export function angleOf(dx: number, dy: number): number {
+  const a = Math.atan2(dx, -dy) / RAD;
+  return a < 0 ? a + 360 : a;
 }
 
-export type Hit = { kind: "core" } | { kind: "item"; index: number } | { kind: "sub"; index: number } | null;
+export function indexAt(angle: number, count: number): number {
+  if (count <= 0) return -1;
+  const s = span(count);
+  return Math.floor((angle + s / 2) / s) % count;
+}
 
-/** O que está sob (dx, dy) — relativo ao centro. `items` e `subs` são os ângulos
- *  desenhados (subs vazio se o segundo arco estiver fechado). */
-export function hitTest(dx: number, dy: number, items: number[], subs: number[] = []): Hit {
-  const r = Math.hypot(dx, dy);
-  if (r < BAND.innerMin) return { kind: "core" };
-  const a = Math.atan2(dy, dx) / DEG;
-  const nearest = (list: number[], half: number) => {
-    let best = -1, bestGap = Infinity;
-    list.forEach((x, i) => { const g = gap(a, x); if (g < bestGap) { bestGap = g; best = i; } });
-    return bestGap <= half ? best : -1;
-  };
-  if (r <= BAND.innerMax) {
-    if (!items.length) return null;
-    const half = items.length > 1 ? 360 / (items.length + 1) / 2 + 2 : 40;
-    const i = nearest(items, half);
-    return i < 0 ? null : { kind: "item", index: i };
+/** Largura angular de cada fatia do segundo anel de um grupo. */
+export function subSpan(parentSpan: number, count: number): number {
+  if (count <= 0) return 0;
+  const mid = (DONUT.subInner + DONUT.subOuter) / 2;
+  let s = (parentSpan * (1 + 2 * DONUT.subOverhang)) / count;
+  s = Math.max(s, (DONUT.minSubWidth / mid) / RAD);
+  return Math.min(s, 360 / count);
+}
+
+export function subMid(parentMid: number, sub: number, count: number, sSpan: number): number {
+  return parentMid + (sub - (count - 1) / 2) * sSpan;
+}
+
+export type Hit =
+  | { kind: "center" }
+  | { kind: "slice"; index: number }
+  | { kind: "sub"; index: number }
+  | { kind: "outside" };
+
+/** O que está sob (dx, dy): o furo (cancelar), uma fatia, uma fatia do segundo anel, ou fora. */
+export function hitTest(dx: number, dy: number, count: number, sub?: { parent: number; count: number }): Hit {
+  const d = Math.hypot(dx, dy);
+  if (d < DONUT.inner) return { kind: "center" };
+  if (d <= DONUT.outer + DONUT.pop && count > 0) return { kind: "slice", index: indexAt(angleOf(dx, dy), count) };
+  if (sub && sub.count > 0 && d >= DONUT.subInner - 4 && d <= DONUT.subOuter + DONUT.pop) {
+    const pm = midAngle(sub.parent, count);
+    const ss = subSpan(span(count), sub.count);
+    let delta = angleOf(dx, dy) - pm;
+    delta = ((delta + 540) % 360) - 180;
+    const i = Math.floor(delta / ss + sub.count / 2);
+    if (i >= 0 && i < sub.count) return { kind: "sub", index: i };
   }
-  if (r <= BAND.outerMax && subs.length) {
-    const i = nearest(subs, RING.subStep / 2);
-    return i < 0 ? null : { kind: "sub", index: i };
-  }
-  return null;
+  return { kind: "outside" };
 }
 
-/** Raio que conta como "dentro" (para o clique-fora no Rust). */
+/** Raio que conta como "dentro" para o clique-fora (no Rust). */
 export function hitRadius(subOpen: boolean): number {
-  return subOpen ? BAND.outerMax : BAND.innerMax;
+  return (subOpen ? DONUT.subOuter : DONUT.outer) + DONUT.pop;
+}
+
+function f(n: number) {
+  return Math.round(n * 100) / 100;
+}
+
+/** Contorno SVG de uma fatia com vão constante. Os cantos arredondados saem de
+ *  um contorno encolhido de `corner` e traçado com essa espessura e junção
+ *  redonda: a forma fica dentro da fatia "seca" e o vão não muda. */
+export function wedge(inner: number, outer: number, mid: number, sp: number, gap: number = DONUT.gap, corner: number = DONUT.corner): { d: string; stroke: number } {
+  const r = Math.max(0, Math.min(corner, (outer - inner) / 2 - 1));
+  const ri = inner + r, ro = outer - r;
+  const half = (rad: number) => Math.max(0.05, sp / 2 - ((gap / 2 + r) / rad) / RAD);
+  const ho = half(ro), hi = half(ri);
+  const a = pointAt(mid - ho, ro), b = pointAt(mid + ho, ro);
+  const c = pointAt(mid + hi, ri), e = pointAt(mid - hi, ri);
+  const largeO = ho * 2 > 180 ? 1 : 0, largeI = hi * 2 > 180 ? 1 : 0;
+  const d = `M${f(a.x)} ${f(a.y)}A${f(ro)} ${f(ro)} 0 ${largeO} 1 ${f(b.x)} ${f(b.y)}L${f(c.x)} ${f(c.y)}A${f(ri)} ${f(ri)} 0 ${largeI} 0 ${f(e.x)} ${f(e.y)}Z`;
+  return { d, stroke: r * 2 };
+}
+
+/** Onde vai o rótulo de uma fatia e quanto cabe na largura. */
+export function labelBox(index: number, count: number): { x: number; y: number; width: number } {
+  const r = DONUT.inner + (DONUT.outer - DONUT.inner) * 0.6;
+  const m = midAngle(index, count);
+  const p = pointAt(m, r);
+  const chord = count <= 1 ? 140 : 2 * r * Math.sin((span(count) / 2) * RAD) - DONUT.gap - 8;
+  return { ...p, width: Math.max(44, Math.min(110, chord)) };
 }

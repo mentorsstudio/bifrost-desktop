@@ -1,9 +1,11 @@
 // O anel do gesto (fileemenu.html): Ctrl + segurar o botão direito sobre um
-// arquivo. O ícone do arquivo fica no miolo; as ações surgem uma atrás da outra
-// em volta, e o Huginn pousa no topo do anel com um balãozinho que diz o nome
-// do botão sob o mouse. "Converter para…" e "Enviar para a IA" abrem um segundo
-// arco por fora. Soltar o botão sobre um item roda; Esc ou clique fora fecha
-// (o anel recolhe na ordem inversa). O acerto é pela fatia (ring.ts).
+// arquivo abre uma rosca de fatias em volta do cursor, como o menu do Filee
+// (MIT, © 2026 Myeonggu Kim / KnifeLemon), reescrita do zero na identidade do
+// Bifrost. As fatias vêm do Rust (convert/ring.rs): primeiro as conversões
+// diretas do tipo do arquivo, depois as nossas. No miolo, o ícone do arquivo,
+// a contagem e a dica ("Solte aqui para cancelar", "Solte → PNG"). Soltar no
+// miolo ou fora cancela; soltar numa fatia roda. "Enviar para a IA" é um grupo:
+// abre um segundo anel por fora. O Huginn fica pequeno, pousado na borda.
 
 import "../theme/runic.css";
 import "../theme/motion.css";
@@ -14,53 +16,51 @@ import "../bifrost/contextmenu";
 import "./menu.css";
 import { Mascot } from "../bifrost/mascots";
 import { reducedMotion } from "../bifrost/motion";
-import {
-  CATEGORY_RUNE, Convert, QUICK_PROMPTS, baseName, on,
-  type ItemReport, type Plan,
-} from "./api";
-import { RING, hitRadius, hitTest, polar, ringAngles, subAngles, type Hit } from "./ring";
+import { CATEGORY_RUNE, Convert, QUICK_PROMPTS, baseName, on, type ItemReport, type Plan, type RingSlice } from "./api";
+import { DONUT, hitRadius, hitTest, labelBox, midAngle, pointAt, span, subMid, subSpan, wedge, type Hit } from "./ring";
 
 interface PlanPayload { plan: Plan | null; error: string | null; icon?: string | null }
 
-export type Slice = { id: string; label: string; rune: string; sub?: "convert" | "ask"; hint?: string; disabled?: boolean; run?: () => void };
-
 const STAGGER = 35;
-/** Rótulos curtos para os botões pequenos do segundo arco (o nome inteiro vai no miolo). */
-const SHORT: Record<string, string> = { "O que é isso?": "O quê?", Resumir: "Resumo", Explicar: "Explica", "Extrair dados": "Dados", Traduzir: "Traduz" };
-const POP = 260;
+const POP_MS = 300;
+const SVG = "http://www.w3.org/2000/svg";
 
 const root = document.getElementById("fm-root")!;
-const ring = el("div", "fm-ring");
-const track = el("div", "fm-track");
-const core = el("div", "fm-core");
-const coreIcon = el("div", "fm-core-icon");
+const stage = el("div", "fm-stage");
+const svg = document.createElementNS(SVG, "svg");
+svg.setAttribute("class", "fm-svg");
+svg.setAttribute("viewBox", `${-DONUT.size / 2} ${-DONUT.size / 2} ${DONUT.size} ${DONUT.size}`);
+const slicesG = document.createElementNS(SVG, "g");
+const subG = document.createElementNS(SVG, "g");
+subG.setAttribute("class", "fm-sub-g");
+svg.append(subG, slicesG);
+const labels = el("div", "fm-labels");
+const subLabels = el("div", "fm-labels fm-sub-labels");
+const hub = el("div", "fm-hub");
+const hubIcon = el("div", "fm-hub-icon");
 const badge = el("span", "fm-badge");
-const coreLabel = el("div", "fm-core-label");
+const hubTitle = el("div", "fm-hub-title");
+const hubHint = el("div", "fm-hub-hint");
 const progress = el("div", "fm-progress");
-core.append(progress, coreIcon, badge, coreLabel);
+hub.append(progress, hubIcon, badge, hubTitle, hubHint);
 const perch = el("div", "fm-perch");
 const ravenBox = el("div", "fm-raven");
 const raven = new Mascot("huginn", ravenBox);
-const bubble = el("div", "fm-bubble");
-perch.append(ravenBox, bubble);
-const slicesBox = el("div", "fm-slices");
-const subBox = el("div", "fm-subs");
-ring.append(track, subBox, slicesBox, core, perch);
-root.append(ring);
+perch.append(ravenBox);
+stage.append(svg, labels, subLabels, hub, perch);
+root.append(stage);
 
 let plan: Plan | null = null;
 let icon: string | null = null;
 let job: number | null = null;
-let slices: Slice[] = [];
-let angles: number[] = [];
-let subs: Slice[] = [];
-let subA: number[] = [];
+let slices: RingSlice[] = [];
 let subOf = -1;
-let hover: Hit = null;
-let closeTimer = 0;
-let subTimer = 0;
+let hover: Hit = { kind: "center" };
 let closing = false;
 let busy = false;
+let doneOutput: string | null = null;
+let closeTimer = 0;
+let subTimer = 0;
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: string): HTMLElementTagNameMap[K] {
   const e = document.createElement(tag);
@@ -69,196 +69,213 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: s
   return e;
 }
 
-/** O centro do anel na janela (o Rust já empurrou a janela para dentro da tela). */
 function center() {
   return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-}
-
-/** O nome do botão sob o mouse: no balãozinho do Huginn ou, com o segundo arco
- *  aberto (que passa por cima do corvo), no miolo, sob o ícone. */
-function say(text: string) {
-  const inCore = subOf >= 0;
-  bubble.textContent = inCore ? "" : text;
-  bubble.classList.toggle("on", !inCore && !!text);
-  core.classList.toggle("speaking", inCore);
-  coreLabel.textContent = inCore ? text : fileLabel();
-}
-
-function fileLabel(): string {
-  const files = plan?.files ?? [];
-  return files.length > 1 ? `${files.length} arquivos` : files[0]?.name ?? "";
-}
-
-function target(id: string) {
-  return plan?.targets.find((t) => t.id === id);
-}
-
-function tool(id: string, rune: string, label: string): Slice | null {
-  const t = target(id);
-  if (!t) return null;
-  return { id, label, rune, disabled: !t.ready, hint: t.ready ? undefined : `Precisa do ${t.needsLabel}`, run: () => void runAction(id) };
-}
-
-export function mainSlices(p: Plan | null): Slice[] {
-  const files = p?.files ?? [];
-  const allPdf = files.length > 1 && files.every((f) => f.category === "pdf");
-  const out: (Slice | null)[] = [];
-  if (p?.targets.some((t) => t.group === "convert")) out.push({ id: "sub-convert", label: "Converter para…", rune: "ᚱ", sub: "convert" });
-  out.push(tool("compress", "ᚲ", "Comprimir"));
-  out.push(tool("resize", "ᛊ", "Redimensionar"));
-  if (allPdf) out.push(tool("merge-pdf", "ᛗ", "Juntar PDFs"));
-  out.push({ id: "sub-ask", label: "Enviar para a IA", rune: "ᚺ", sub: "ask" });
-  out.push({ id: "open-converter", label: "Abrir no Conversor", rune: "ᛟ", run: () => void Convert.menuAction("open-converter", paths()) });
-  return out.filter((x): x is Slice => !!x);
-}
-
-function subSlices(kind: "convert" | "ask"): Slice[] {
-  if (kind === "convert") {
-    return (plan?.targets ?? []).filter((t) => t.group === "convert").slice(0, 9).map((t) => ({
-      id: t.id, label: t.label, rune: t.label.length > 4 ? t.label.slice(0, 4) : t.label,
-      disabled: !t.ready, hint: t.ready ? `Converter para ${t.label}` : `Precisa do ${t.needsLabel}`, run: () => void runAction(t.id),
-    }));
-  }
-  const ask: Slice[] = QUICK_PROMPTS.map((q) => ({ id: `ask:${q.label}`, label: q.label, rune: SHORT[q.label] ?? q.label.slice(0, 5), run: () => void Convert.menuAction("ask", paths(), q.prompt) }));
-  ask.push({ id: "ask-open", label: "Só abrir o chat", rune: "Chat", run: () => void Convert.menuAction("ask", paths()) });
-  return ask;
 }
 
 function paths(): string[] {
   return plan?.files.map((f) => f.path) ?? [];
 }
 
-function button(s: Slice, angle: number, r: number, i: number, cls: string): HTMLElement {
-  const b = el("button", `${cls}${s.disabled ? " off" : ""}${s.sub ? " has-sub" : ""}`);
-  b.setAttribute("role", "menuitem");
-  b.setAttribute("aria-label", s.hint && s.disabled ? `${s.label} — ${s.hint}` : s.label);
-  b.dataset.act = s.id;
-  const p = polar(angle, r);
-  b.style.setProperty("--x", `${p.x}px`);
-  b.style.setProperty("--y", `${p.y}px`);
-  b.style.setProperty("--i", String(i));
-  b.append(el("span", "fm-glyph", s.rune));
-  if (cls === "fm-slice") b.append(el("span", "fm-cap", s.label));
-  return b;
+function hint(text: string, danger = false) {
+  hubHint.textContent = text;
+  hubHint.classList.toggle("danger", danger);
 }
 
-function drawCore() {
+function idleHint() {
+  hint("Solte aqui para cancelar", true);
+}
+
+function drawHub() {
   const files = plan?.files ?? [];
   const f = files[0];
-  coreIcon.replaceChildren();
+  hubIcon.replaceChildren();
   if (icon) {
     const img = el("img", "fm-file-img");
     img.src = icon;
     img.alt = "";
-    coreIcon.append(img);
+    hubIcon.append(img);
   } else {
-    coreIcon.append(el("span", `fm-file-rune c-${f?.category ?? "other"}`, CATEGORY_RUNE[f?.category ?? "other"]));
+    hubIcon.append(el("span", `fm-file-rune c-${f?.category ?? "other"}`, CATEGORY_RUNE[f?.category ?? "other"]));
   }
   badge.textContent = files.length > 1 ? String(files.length) : "";
   badge.classList.toggle("on", files.length > 1);
-  coreLabel.textContent = fileLabel();
+  hubTitle.textContent = plan?.ring?.title ?? (files.length > 1 ? `${files.length} arquivos` : f?.name ?? "");
 }
 
-function stagger(nodes: HTMLElement[], reverse = false) {
-  nodes.forEach((n, i) => {
-    const k = reverse ? nodes.length - 1 - i : i;
-    n.style.setProperty("--d", reducedMotion() ? "0ms" : `${k * STAGGER}ms`);
+function sliceNode(s: RingSlice, i: number, count: number, sub: boolean, parentMid = 0, sSpan = 0) {
+  const mid = sub ? subMid(parentMid, i, count, sSpan) : midAngle(i, count);
+  const sp = sub ? sSpan : span(count);
+  const w = sub ? wedge(DONUT.subInner, DONUT.subOuter, mid, sp, DONUT.gap, 8) : wedge(DONUT.inner, DONUT.outer, mid, sp);
+  const g = document.createElementNS(SVG, "g");
+  g.setAttribute("class", `fm-slice${s.enabled ? "" : " off"}${s.children.length ? " group" : ""}`);
+  const pop = pointAt(mid, DONUT.pop);
+  g.style.setProperty("--px", `${pop.x}px`);
+  g.style.setProperty("--py", `${pop.y}px`);
+  g.style.setProperty("--d", reducedMotion() ? "0ms" : `${i * STAGGER}ms`);
+  const path = document.createElementNS(SVG, "path");
+  path.setAttribute("d", w.d);
+  path.setAttribute("stroke-width", String(w.stroke));
+  g.append(path);
+  // Rótulo (HTML, para quebrar linha e cortar com reticências).
+  const r = sub ? (DONUT.subInner + DONUT.subOuter) / 2 : 0;
+  const box = sub
+    ? { ...pointAt(mid, r), width: Math.max(40, 2 * r * Math.sin((sp / 2) * Math.PI / 180) - 6) }
+    : labelBox(i, count);
+  const lab = el("div", `fm-label${s.enabled ? "" : " off"}${sub ? " small" : ""}`);
+  lab.style.left = `${box.x}px`;
+  lab.style.top = `${box.y}px`;
+  lab.style.width = `${box.width}px`;
+  lab.style.setProperty("--d", g.style.getPropertyValue("--d"));
+  lab.style.setProperty("--px", `${pop.x}px`);
+  lab.style.setProperty("--py", `${pop.y}px`);
+  lab.append(el("span", "fm-label-name", softHyphens(s.label)));
+  if (s.caption && !sub) lab.append(el("span", "fm-label-cap", s.caption));
+  return { g, lab };
+}
+
+/** Palavras longas ganham um hífen opcional no meio ("Redimen-sionar"). */
+export function softHyphens(label: string): string {
+  return label.split(" ").map((w) => (w.length > 10 ? `${w.slice(0, Math.ceil(w.length / 2) + 1)}\u00AD${w.slice(Math.ceil(w.length / 2) + 1)}` : w)).join(" ");
+}
+
+/** Diminui a letra até o nome caber (no máximo 2 linhas, sem partir palavra). */
+function fit(lab: HTMLElement) {
+  const name = lab.querySelector<HTMLElement>(".fm-label-name");
+  if (!name) return;
+  let size = parseFloat(getComputedStyle(name).fontSize) || 12;
+  while ((name.scrollWidth > name.clientWidth + 0.5 || name.scrollHeight > name.clientHeight + 0.5) && size > 8.5) {
+    size -= 0.5;
+    name.style.fontSize = `${size}px`;
+  }
+}
+
+function drawSlices() {
+  slicesG.replaceChildren();
+  labels.replaceChildren();
+  slices.forEach((s, i) => {
+    const { g, lab } = sliceNode(s, i, slices.length, false);
+    slicesG.append(g);
+    labels.append(lab);
   });
-}
-
-function openRing() {
-  closing = false;
-  busy = false;
-  root.classList.remove("closing", "busy");
-  slices = mainSlices(plan);
-  angles = ringAngles(slices.length);
-  slicesBox.replaceChildren(...slices.map((s, i) => button(s, angles[i], RING.itemR, i, "fm-slice")));
-  closeSub();
-  drawCore();
-  raven.set("listening");
-  say(plan && plan.files.length > 1 ? "O que faço com eles?" : "O que faço com ele?");
-  const nodes = [...slicesBox.children] as HTMLElement[];
-  stagger(nodes);
-  requestAnimationFrame(() => ring.classList.add("open"));
-  void Convert.menuRadius(hitRadius(false));
+  for (const l of labels.children) fit(l as HTMLElement);
 }
 
 function openSub(index: number) {
   const s = slices[index];
-  if (!s?.sub || subOf === index) return;
+  if (!s?.children.length || subOf === index || !s.enabled) return;
   subOf = index;
-  subs = subSlices(s.sub);
-  subA = subAngles(angles[index], subs.length);
-  subBox.replaceChildren(...subs.map((x, i) => button(x, subA[i], RING.subR, i, "fm-sub")));
-  stagger([...subBox.children] as HTMLElement[]);
-  for (const c of slicesBox.children) c.classList.remove("parent");
-  slicesBox.children[index]?.classList.add("parent");
-  requestAnimationFrame(() => subBox.classList.add("open"));
-  say(s.label);
+  const n = s.children.length;
+  const ss = subSpan(span(slices.length), n);
+  const pm = midAngle(index, slices.length);
+  subG.replaceChildren();
+  subLabels.replaceChildren();
+  s.children.forEach((c, i) => {
+    const { g, lab } = sliceNode(c, i, n, true, pm, ss);
+    subG.append(g);
+    subLabels.append(lab);
+  });
+  for (const l of subLabels.children) fit(l as HTMLElement);
+  slicesG.children[index]?.classList.add("parent");
+  root.classList.add("sub-open");
+  requestAnimationFrame(() => root.classList.add("sub-shown"));
   void Convert.menuRadius(hitRadius(true));
 }
 
 function closeSub() {
   subOf = -1;
-  subs = [];
-  subA = [];
-  subBox.classList.remove("open");
-  subBox.replaceChildren();
-  for (const c of slicesBox.children) c.classList.remove("parent");
-  core.classList.remove("speaking");
-  coreLabel.textContent = fileLabel();
+  subG.replaceChildren();
+  subLabels.replaceChildren();
+  root.classList.remove("sub-open", "sub-shown");
+  for (const c of slicesG.children) c.classList.remove("parent");
   void Convert.menuRadius(hitRadius(false));
 }
 
+function mark(h: Hit) {
+  for (const c of [...slicesG.children, ...subG.children, ...labels.children, ...subLabels.children]) c.classList.remove("on");
+  if (h.kind === "slice") {
+    slicesG.children[h.index]?.classList.add("on");
+    labels.children[h.index]?.classList.add("on");
+  } else if (h.kind === "sub") {
+    subG.children[h.index]?.classList.add("on");
+    subLabels.children[h.index]?.classList.add("on");
+  }
+  hub.classList.toggle("hot", h.kind === "center");
+}
+
 function setHover(h: Hit) {
-  const same = JSON.stringify(h) === JSON.stringify(hover);
+  if (closing || busy || !slices.length) return;
+  if (JSON.stringify(h) === JSON.stringify(hover)) return;
   hover = h;
-  if (same) return;
-  for (const c of root.querySelectorAll(".on")) if (c !== bubble && c !== badge) c.classList.remove("on");
+  mark(h);
   window.clearTimeout(subTimer);
-  if (h?.kind === "item") {
+  if (h.kind === "center") {
+    idleHint();
+  } else if (h.kind === "slice") {
     const s = slices[h.index];
-    slicesBox.children[h.index]?.classList.add("on");
-    say(s.disabled ? s.hint ?? s.label : s.label);
-    if (s.sub && subOf !== h.index) subTimer = window.setTimeout(() => openSub(h.index), 220);
-    else if (!s.sub && subOf >= 0) subTimer = window.setTimeout(closeSub, 380);
-  } else if (h?.kind === "sub") {
-    const s = subs[h.index];
-    subBox.children[h.index]?.classList.add("on");
-    say(s.hint ?? s.label);
-  } else if (!busy) {
-    say(plan && plan.files.length > 1 ? "O que faço com eles?" : "O que faço com ele?");
+    if (!s.enabled) hint(s.reason ?? "Não serve para estes arquivos");
+    else if (s.children.length) {
+      hint("Mova para fora para escolher");
+      if (subOf !== h.index) subTimer = window.setTimeout(() => openSub(h.index), 160);
+    } else hint(`Solte → ${s.label}`);
+    if (!s.children.length && subOf >= 0) subTimer = window.setTimeout(closeSub, 320);
+  } else if (h.kind === "sub") {
+    const p = slices[subOf];
+    const c = p?.children[h.index];
+    if (c) hint(`Solte → ${p.label} · ${c.label}`);
+  } else {
+    hint("Esc para fechar");
   }
 }
 
 function hitAt(x: number, y: number): Hit {
   const c = center();
-  return hitTest(x - c.x, y - c.y, angles, subA);
+  return hitTest(x - c.x, y - c.y, slices.length, subOf >= 0 ? { parent: subOf, count: slices[subOf].children.length } : undefined);
 }
 
 function activate(h: Hit) {
-  if (!h || closing || busy) return;
-  if (h.kind === "core") return;
-  if (h.kind === "item") {
-    const s = slices[h.index];
-    if (!s || s.disabled) return;
-    if (s.sub) { openSub(h.index); return; }
-    s.run?.();
-    if (s.id === "open-converter") retract();
+  if (closing) return;
+  if (busy) return;
+  if (doneOutput && h.kind === "center") {
+    void Convert.reveal(doneOutput);
+    retract();
     return;
   }
-  const s = subs[h.index];
-  if (!s || s.disabled) return;
-  s.run?.();
-  if (s.id.startsWith("ask")) retract();
+  if (h.kind === "center" || h.kind === "outside") {
+    retract();
+    return;
+  }
+  if (h.kind === "slice") {
+    const s = slices[h.index];
+    if (!s?.enabled) return;
+    if (s.children.length) { openSub(h.index); return; }
+    run(s);
+    return;
+  }
+  const c = slices[subOf]?.children[h.index];
+  if (c?.enabled) run(c);
 }
 
-async function runAction(action: string) {
+function run(s: RingSlice) {
+  if (s.action === "ask") {
+    const i = Number(s.id.split(":")[1] ?? -1);
+    void Convert.menuAction("ask", paths(), QUICK_PROMPTS[i]?.prompt);
+    retract();
+  } else if (s.action === "open-converter") {
+    void Convert.menuAction("open-converter", paths());
+    retract();
+  } else {
+    void runAction(s.action, s.label);
+  }
+}
+
+async function runAction(action: string, label: string) {
   busy = true;
+  closeSub();
   root.classList.add("busy");
   setProgress(0.04);
   raven.set("thinking");
-  say("Trabalhando nisso…");
+  hint(`${label}…`);
   try {
     job = await Convert.menuAction(action, paths());
   } catch (e) {
@@ -271,56 +288,70 @@ function setProgress(p: number) {
 }
 
 function message(text: string) {
+  busy = false;
   raven.set("error");
-  say(text);
+  hint(text, true);
   window.clearTimeout(closeTimer);
-  closeTimer = window.setTimeout(retract, 2600);
+  closeTimer = window.setTimeout(retract, 2800);
 }
 
-/** Recolhe o anel na ordem inversa e só então esconde a janela. */
+/** Recolhe as fatias na ordem inversa e só então esconde a janela. */
 export function retract() {
   if (closing) return;
   closing = true;
   window.clearTimeout(closeTimer);
   window.clearTimeout(subTimer);
-  const all = [...subBox.children, ...slicesBox.children] as HTMLElement[];
-  stagger(all, true);
+  const n = slices.length;
+  for (const nodes of [slicesG.children, labels.children]) {
+    [...nodes].forEach((g, i) => (g as HTMLElement).style.setProperty("--d", reducedMotion() ? "0ms" : `${(n - 1 - i) * 22}ms`));
+  }
   root.classList.add("closing");
-  ring.classList.remove("open", "shown");
-  subBox.classList.remove("open");
-  const wait = reducedMotion() ? 0 : all.length * STAGGER + POP;
+  root.classList.remove("open", "shown", "sub-shown");
+  const wait = reducedMotion() ? 0 : n * 22 + POP_MS;
   window.setTimeout(() => {
     job = null;
     void Convert.menuClose();
   }, wait);
 }
 
-void on<unknown>("filee-menu-open", () => {
+function reset() {
   plan = null;
   icon = null;
   job = null;
+  slices = [];
   closing = false;
   busy = false;
+  doneOutput = null;
+  hover = { kind: "center" };
   window.clearTimeout(closeTimer);
-  root.classList.remove("closing", "busy");
-  ring.classList.remove("open", "shown");
-  slicesBox.replaceChildren();
+  root.classList.remove("closing", "busy", "open", "done");
   closeSub();
-  slices = [];
-  angles = [];
-  coreIcon.replaceChildren(el("span", "fm-file-rune c-other", "ᛟ"));
-  coreLabel.textContent = "";
+  slicesG.replaceChildren();
+  labels.replaceChildren();
+  hubIcon.replaceChildren(el("span", "fm-file-rune c-other", "ᛟ"));
+  hubTitle.textContent = "";
   badge.classList.remove("on");
+}
+
+void on<unknown>("filee-menu-open", () => {
+  reset();
   raven.set(reducedMotion() ? "thinking" : "flyIn");
-  say("Deixa eu ver…");
-  requestAnimationFrame(() => ring.classList.add("shown"));
+  hint("Lendo…");
+  requestAnimationFrame(() => root.classList.add("shown"));
 });
 
 void on<PlanPayload>("filee-menu-plan", (p) => {
   if (!p.plan) { message(p.error ?? "Não achei um arquivo aqui."); return; }
   plan = p.plan;
   icon = p.icon ?? null;
-  openRing();
+  slices = p.plan.ring?.slices ?? [];
+  drawHub();
+  drawSlices();
+  raven.set("listening");
+  idleHint();
+  mark({ kind: "center" });
+  requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add("open")));
+  void Convert.menuRadius(hitRadius(false));
 });
 
 void on<{ x: number; y: number }>("filee-menu-release", ({ x, y }) => activate(hitAt(x, y)));
@@ -330,29 +361,21 @@ void on<ItemReport>("convert-item", (r) => {
   if (job == null || r.job !== job) return;
   setProgress(r.state === "done" ? 1 : r.progress);
   if (r.state === "done") {
-    raven.set("success");
-    const name = r.outputs.length > 1 ? `${r.outputs.length} arquivos` : baseName(r.outputs[0] ?? "");
-    say(`Pronto! ${name}`);
     busy = false;
-    root.classList.remove("busy");
-    slices = [{ id: "reveal", label: "Abrir pasta", rune: "ᛟ", run: () => { void Convert.reveal(r.outputs[0]); retract(); } }];
-    angles = [0];
-    slicesBox.replaceChildren(button(slices[0], 0, RING.itemR, 0, "fm-slice"));
+    raven.set("success");
+    doneOutput = r.outputs[0] ?? null;
+    root.classList.add("done");
+    hubTitle.textContent = "Pronto!";
+    const name = r.outputs.length > 1 ? `${r.outputs.length} arquivos` : baseName(r.outputs[0] ?? "");
+    hint(`${name} · clique para abrir a pasta`);
     closeTimer = window.setTimeout(retract, 4200);
   } else if (r.state === "failed") {
-    busy = false;
-    root.classList.remove("busy");
     message(r.error ?? "Não deu certo.");
   }
 });
 
 document.addEventListener("pointermove", (e) => setHover(hitAt(e.clientX, e.clientY)));
-document.addEventListener("pointerleave", () => setHover(null));
-document.addEventListener("click", (e) => {
-  const h = hitAt(e.clientX, e.clientY);
-  if (h === null && !closing) { retract(); return; }
-  activate(h);
-});
+document.addEventListener("click", (e) => activate(hitAt(e.clientX, e.clientY)));
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") retract(); });
 // Clique direito dentro do anel: nada de menu nativo.
 document.addEventListener("contextmenu", (e) => e.preventDefault());

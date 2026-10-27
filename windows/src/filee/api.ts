@@ -23,7 +23,9 @@ export type ToolId = "ffmpeg" | "pdfium" | "pandoc" | "libreoffice" | "magick" |
 export interface FileInfo { path: string; name: string; ext: string; category: Category; categoryLabel: string; size: number }
 export interface TargetInfo { id: string; label: string; group: "convert" | "tools"; needs: ToolId | null; ready: boolean; needsLabel: string | null }
 export interface ToolStatus { id: ToolId; label: string; path: string | null; downloadable: boolean; downloadMb: number; hint: string }
-export interface Plan { files: FileInfo[]; targets: TargetInfo[]; tools: ToolStatus[] }
+export interface RingSlice { id: string; action: string; label: string; caption: string | null; enabled: boolean; reason: string | null; needs: ToolId | null; children: RingSlice[] }
+export interface Ring { profile: string; title: string; slices: RingSlice[] }
+export interface Plan { files: FileInfo[]; targets: TargetInfo[]; tools: ToolStatus[]; ring?: Ring }
 export interface Options { quality?: number; maxSide?: number; percent?: number; outDir?: string; dpi?: number }
 export type ItemState = "queued" | "running" | "done" | "failed" | "cancelled";
 export interface ItemReport { job: number; index: number; name: string; state: ItemState; progress: number; outputs: string[]; error: string | null }
