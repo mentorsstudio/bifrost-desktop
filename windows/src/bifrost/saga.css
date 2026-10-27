@@ -28,3 +28,10 @@
 .bf-saga-picker { border-top: 1px solid rgba(226,181,90,.18); }
 @media (prefers-reduced-motion: reduce) { .bf-saga-you .bubble, .bf-saga-huginn { animation: none !important; } .bf-saga-send { transition: none; } }
 .bf-saga-prow .chat-input:focus { outline: none; }
+/* ── Novidades: pedra rúnica ─────────────────────────────────────────── */
+.bf-stone-card { border: 1px solid rgba(226,181,90,.3) !important; background: radial-gradient(400px 140px at 0% 0%, rgba(94,242,201,.1), transparent 70%), linear-gradient(180deg, #121c38, #080d1b) !important; }
+.bf-stone-title { font-family: var(--bf-heading-font) !important; letter-spacing: .08em; color: var(--bf-gold-2) !important; }
+.bf-stone-line { display: flex !important; align-items: center; gap: 8px; animation: bf-saga-in var(--bf-step) var(--bf-ease-raven) both; animation-delay: calc(var(--i) * 70ms); }
+.bf-stone-rune { flex: 0 0 auto; font: 700 13px var(--bf-rune-font); color: var(--bf-aurora-1); width: 14px; text-align: center; }
+.bf-stone-mark { border: 1px solid rgba(226,181,90,.25); border-left: 3px solid var(--bf-gold); }
+@media (prefers-reduced-motion: reduce) { .bf-stone-line { animation: none !important; } }

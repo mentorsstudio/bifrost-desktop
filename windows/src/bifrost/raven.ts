@@ -151,7 +151,7 @@ export class RavenEngine {
   lastTime = clock();
   private born = clock() - Math.random() * 5;
   private blinkAt = clock() + 1.5 + Math.random() * 2;
-  private wingBeat = 0;
+  wingBeat = 0;
   waveUntil = 0;
   waveStart = 0;
   private waveTicket = 0;

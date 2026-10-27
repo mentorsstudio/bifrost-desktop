@@ -8,6 +8,7 @@ import "../src/bifrost/saga.css";
 import "../src/traymenu/traymenu.css";
 import { renderTray } from "../src/traymenu/main";
 import { showMenu } from "../src/bifrost/contextmenu";
+import { Greeting, GREETING_W, GREETING_H } from "../src/huginn/greeting";
 import { Island } from "../src/island/island";
 import { registerHookHandlers } from "../src/island/hooks";
 import { State } from "../src/core/state";
@@ -22,7 +23,20 @@ State.settings = { ...State.settings, soundEnabled: false };
 const hook = (p: Record<string, unknown>) => window.__emit("hook", p);
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-if (shot === "tray") {
+if (shot === "greeting") {
+  const root = document.getElementById("root")!;
+  const c = document.createElement("canvas");
+  c.width = GREETING_W * 2; c.height = GREETING_H * 2;
+  c.style.cssText = `position:absolute;left:calc(50% - ${GREETING_W / 2}px);top:0;width:${GREETING_W}px;height:${GREETING_H}px;background:#000;border-radius:0 0 22px 22px`;
+  root.append(c);
+  const ctx = c.getContext("2d")!; ctx.scale(2, 2);
+  const g = new Greeting();
+  const go = () => g.start();
+  go(); setInterval(go, 6000);
+  Object.assign(window, { greeting: g });
+  const frame = () => { g.draw(ctx); requestAnimationFrame(frame); };
+  requestAnimationFrame(frame);
+} else if (shot === "tray") {
   const root = document.getElementById("root")!;
   root.style.cssText = "background:linear-gradient(160deg,#0c1a33,#14213f 60%,#22183a)";
   const bar = document.createElement("div");
