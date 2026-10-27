@@ -134,6 +134,7 @@ if (shot === "greeting") {
   State.loadIntegrationTasks();
   await wait(50);
   if (shot === "home-empty" || shot === "home-scan") { island.expand("overview"); }
+  else if (shot === "quick") { island.expand("settings"); }
   else {
   hook({ hook_event_name: "SessionStart", session_id: "s1", cwd: "C:\\Users\\paulo\\projetos\\bifrost-desktop" });
   hook({ hook_event_name: "UserPromptSubmit", session_id: "s1", prompt: "Revise o servidor MCP" });
