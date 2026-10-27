@@ -8,6 +8,7 @@ pub mod engines;
 pub mod formats;
 pub mod jobs;
 pub mod prefs;
+pub mod ring;
 pub mod tools;
 
 use std::collections::HashMap;
@@ -50,6 +51,8 @@ pub struct Plan {
     pub files: Vec<FileInfo>,
     pub targets: Vec<TargetInfo>,
     pub tools: Vec<tools::ToolStatus>,
+    /// O anel do gesto para estes arquivos (fatias no jeito do Filee).
+    pub ring: ring::Ring,
 }
 
 pub fn plan(paths: &[String]) -> Plan {
@@ -75,7 +78,9 @@ pub fn plan(paths: &[String]) -> Plan {
         .into_iter()
         .map(|t| TargetInfo { ready: t.needs.map(present).unwrap_or(true), needs_label: t.needs.map(Tool::label), target: t })
         .collect();
-    Plan { files, targets, tools: status }
+    let ring_exts: Vec<String> = files.iter().map(|f| if std::path::Path::new(&f.path).is_dir() { "folder".to_string() } else { f.ext.clone() }).collect();
+    let ring = ring::ring_for(&ring_exts, &present);
+    Plan { files, targets, tools: status, ring }
 }
 
 #[tauri::command]

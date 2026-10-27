@@ -46,6 +46,83 @@ fn single(input: &str, action: &str, opts: &Options, cancel: &std::sync::atomic:
     let cat = formats::category(&src);
     let out = |ext: &str| free_path_fs(&out_dir_for(input, opts), &stem(input), ext);
     let one = |p: PathBuf| Ok(vec![p.to_string_lossy().into_owned()]);
+    // ── Fatias do anel que não são "converter para" simples (como no Filee) ──
+    match action {
+        "half-size" => {
+            let img = load_image(input)?;
+            progress(0.4);
+            let r = resize(&img, &Options { percent: Some(50), max_side: None, ..opts.clone() });
+            let fmt = if matches!(src.as_str(), "svg" | "heic" | "avif") { "png".to_string() } else { src.clone() };
+            let p = free_path_fs(&out_dir_for(input, opts), &format!("{}_50", stem(input)), &fmt);
+            save_image(&r, &p, &fmt, opts.quality.unwrap_or(90), false)?;
+            return one(p);
+        }
+        "pdf-long-image" => {
+            let (pdf, tmp) = as_pdf(input, &src)?;
+            let r = long_image(&pdf, input, opts, progress);
+            if let Some(t) = tmp {
+                let _ = std::fs::remove_file(t);
+            }
+            return r.map(|p| vec![p]);
+        }
+        "mp4-720" | "mp4-hevc" | "mp3-128" | "extract-subtitles" => {
+            let (tag, fmt, args): (&str, &str, Vec<&str>) = match action {
+                "mp4-720" => ("_720p", "mp4", vec!["-vf", "scale=-2:'min(720,ih)'", "-c:v", "libx264", "-preset", "medium", "-crf", "23", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart"]),
+                "mp4-hevc" => ("_hevc", "mp4", vec!["-c:v", "libx265", "-crf", "26", "-preset", "medium", "-tag:v", "hvc1", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart"]),
+                "mp3-128" => ("_128k", "mp3", vec!["-vn", "-c:a", "libmp3lame", "-b:a", "128k"]),
+                _ => ("", "srt", vec!["-map", "0:s:0", "-c:s", "srt"]),
+            };
+            let p = free_path_fs(&out_dir_for(input, opts), &format!("{}{tag}", stem(input)), fmt);
+            let mut full = vec![input.to_string()];
+            full.extend(args.into_iter().map(String::from));
+            full.push(s(&p));
+            if let Err(e) = ffmpeg(&full, media_duration(input), cancel, progress) {
+                let _ = std::fs::remove_file(&p);
+                return Err(if action == "extract-subtitles" { "Este vídeo não tem legendas embutidas.".into() } else { e });
+            }
+            return one(p);
+        }
+        _ => {}
+    }
+    // Rotas de dois passos: documento → PDF (LibreOffice) → imagem (PDFium).
+    if matches!(cat, Category::Document | Category::Text) && matches!(action, "to:png" | "to:jpg" | "to:webp" | "to:tiff") {
+        let (pdf, tmp) = as_pdf(input, &src)?;
+        progress(0.3);
+        let r = pdf_to_images_named(&pdf, &stem(input), &action[3..], &Options { out_dir: Some(s(&out_dir_for(input, opts))), ..opts.clone() }, progress);
+        if let Some(t) = tmp {
+            let _ = std::fs::remove_file(t);
+        }
+        return r;
+    }
+    // PDF → Markdown (embutido) e PDF → Markdown → EPUB/HTML (Pandoc).
+    if cat == Category::Pdf && matches!(action, "to:md" | "to:epub" | "to:html") {
+        let text = extract_text(input)?;
+        let md = text_to_markdown(&text);
+        if action == "to:md" {
+            let p = out("md");
+            std::fs::write(&p, md).map_err(|e| e.to_string())?;
+            return one(p);
+        }
+        let tmp = std::env::temp_dir().join(format!("bifrost-route-{}-{}.md", std::process::id(), stem(input)));
+        std::fs::write(&tmp, md).map_err(|e| e.to_string())?;
+        let fmt = &action[3..];
+        let p = out(fmt);
+        let r = convert_document(&s(&tmp), "md", fmt, &p);
+        let _ = std::fs::remove_file(&tmp);
+        r?;
+        return one(p);
+    }
+    // Compactado → outro compactado (extrai e reempacota).
+    if cat == Category::Archive && matches!(action, "to:7z" | "to:tar" | "to:tgz") {
+        let fmt = &action[3..];
+        let dir = extract_archive(input, &Options { out_dir: Some(std::env::temp_dir().to_string_lossy().into_owned()), ..opts.clone() })?;
+        progress(0.5);
+        let p = out(fmt);
+        let r = pack_dir(Path::new(&dir), &p, fmt);
+        let _ = std::fs::remove_dir_all(&dir);
+        r?;
+        return one(p);
+    }
     match (cat, action) {
         (_, "text") => {
             let text = extract_text(input)?;
@@ -108,7 +185,7 @@ fn single(input: &str, action: &str, opts: &Options, cancel: &std::sync::atomic:
             one(p)
         }
         (Category::Pdf, "split-pdf") => split_pdf(input, opts, progress),
-        (Category::Pdf, "to:png" | "to:jpg") => pdf_to_images(input, &action[3..], opts, progress),
+        (Category::Pdf, "to:png" | "to:jpg" | "to:webp" | "to:tiff") => pdf_to_images(input, &action[3..], opts, progress),
         (Category::Pdf, "to:txt") => {
             let p = out("txt");
             std::fs::write(&p, extract_text(input)?).map_err(|e| e.to_string())?;
@@ -323,6 +400,126 @@ fn load_pdf(p: &str) -> R<Document> {
     Document::load(p).map_err(|e| format!("PDF ilegível ({}): {e}", super::jobs::file_name(p)))
 }
 
+/// O arquivo como PDF: ele mesmo, ou um PDF temporário feito pelo LibreOffice.
+fn as_pdf(input: &str, src: &str) -> R<(String, Option<PathBuf>)> {
+    if formats::category(src) == Category::Pdf {
+        return Ok((input.to_string(), None));
+    }
+    let t = std::env::temp_dir().join(format!("bifrost-route-{}-{}.pdf", std::process::id(), stem(input)));
+    convert_document(input, src, "pdf", &t)?;
+    Ok((s(&t), Some(t)))
+}
+
+/// "Imagem longa": todas as páginas, uma embaixo da outra, num PNG só.
+fn long_image(pdf: &str, original: &str, opts: &Options, progress: &mut dyn FnMut(f32)) -> R<String> {
+    use pdfium_render::prelude::*;
+    let pdfium = pdfium()?;
+    let doc = pdfium.load_pdf_from_file(pdf, None).map_err(|e| format!("PDF ilegível: {e}"))?;
+    let dpi = opts.dpi.unwrap_or(110).clamp(36, 300) as f32;
+    let n = doc.pages().len() as usize;
+    let mut pages = Vec::new();
+    for (i, page) in doc.pages().iter().enumerate() {
+        let w = (page.width().value / 72.0 * dpi) as i32;
+        let bmp = page.render_with_config(&PdfRenderConfig::new().set_target_width(w.max(16))).map_err(|e| e.to_string())?;
+        pages.push(bmp.as_image().map_err(|e| e.to_string())?.to_rgba8());
+        progress((i + 1) as f32 / n.max(1) as f32 * 0.8);
+    }
+    let img = stack_vertically(&pages)?;
+    let p = free_path_fs(&out_dir_for(original, opts), &format!("{}_long", stem(original)), "png");
+    img.save_with_format(&p, ImageFormat::Png).map_err(|e| e.to_string())?;
+    Ok(s(&p))
+}
+
+/// Empilha imagens (centralizadas, fundo branco). Pura, para os testes.
+pub fn stack_vertically(pages: &[image::RgbaImage]) -> R<image::RgbaImage> {
+    let w = pages.iter().map(|p| p.width()).max().ok_or("PDF sem páginas.")?;
+    let h: u64 = pages.iter().map(|p| p.height() as u64).sum();
+    if h > 120_000 {
+        return Err("PDF longo demais para uma imagem só.".into());
+    }
+    let mut out = image::RgbaImage::from_pixel(w, h as u32, image::Rgba([255, 255, 255, 255]));
+    let mut y = 0i64;
+    for p in pages {
+        image::imageops::overlay(&mut out, p, ((w - p.width()) / 2) as i64, y);
+        y += p.height() as i64;
+    }
+    Ok(out)
+}
+
+/// PDF → imagens com o nome do arquivo original (rota de dois passos).
+fn pdf_to_images_named(pdf: &str, base: &str, fmt: &str, opts: &Options, progress: &mut dyn FnMut(f32)) -> R<Vec<String>> {
+    let outs = pdf_to_images(pdf, fmt, opts, progress)?;
+    // O PDF temporário tem o mesmo "stem" que o original, então os nomes já batem.
+    let _ = base;
+    Ok(outs)
+}
+
+/// Texto puro → Markdown: parágrafos separados por linha em branco.
+pub fn text_to_markdown(text: &str) -> String {
+    let mut out = String::new();
+    for para in text.split("\n\n") {
+        let p = para.trim();
+        if p.is_empty() {
+            continue;
+        }
+        out.push_str(p);
+        out.push_str("\n\n");
+    }
+    out
+}
+
+/// Empacota uma pasta em 7z, TAR ou TAR.GZ.
+fn pack_dir(dir: &Path, out: &Path, fmt: &str) -> R<()> {
+    match fmt {
+        "7z" => sevenz_rust2::compress_to_path(dir, out).map_err(|e| e.to_string()),
+        "tar" | "tgz" => {
+            let f = std::fs::File::create(out).map_err(|e| e.to_string())?;
+            let res = if fmt == "tgz" {
+                let gz = flate2::write::GzEncoder::new(f, flate2::Compression::default());
+                let mut t = tar::Builder::new(gz);
+                t.append_dir_all(".", dir).map_err(|e| e.to_string())?;
+                t.into_inner().and_then(|g| g.finish()).map(|_| ()).map_err(|e| e.to_string())
+            } else {
+                let mut t = tar::Builder::new(f);
+                t.append_dir_all(".", dir).map_err(|e| e.to_string())?;
+                t.finish().map_err(|e| e.to_string())
+            };
+            res
+        }
+        _ => Err(format!("Formato de compactado desconhecido: {fmt}")),
+    }
+}
+
+/// A fila sabe rodar `action` para um arquivo `.ext`? (os testes do anel conferem
+/// que toda fatia habilitada cai num caminho real daqui).
+pub fn knows(action: &str, ext: &str) -> bool {
+    let c = if ext == "folder" { Category::Other } else { formats::category(ext) };
+    use Category::*;
+    match action {
+        "zip" | "merge-pdf" => true,
+        "half-size" => matches!(c, Image),
+        "pdf-long-image" => matches!(c, Pdf | Document),
+        "split-pdf" => c == Pdf,
+        "extract" => c == Archive,
+        "mp4-720" | "mp4-hevc" | "extract-subtitles" => c == Video,
+        "mp3-128" => matches!(c, Audio | Video),
+        "compress" => matches!(c, Image | Vector | Pdf | Audio | Video),
+        "resize" => matches!(c, Image | Vector | Video),
+        a => match a.strip_prefix("to:") {
+            None => false,
+            Some(f) => match c {
+                Image | Vector => matches!(f, "png" | "jpg" | "webp" | "bmp" | "tiff" | "gif" | "ico" | "pdf" | "avif"),
+                Pdf => matches!(f, "png" | "jpg" | "webp" | "tiff" | "txt" | "md" | "epub" | "html" | "docx" | "odt"),
+                Document | Text => matches!(f, "pdf" | "docx" | "odt" | "html" | "md" | "txt" | "epub" | "png" | "jpg" | "webp" | "tiff"),
+                Audio => matches!(f, "mp3" | "wav" | "m4a" | "ogg" | "flac" | "opus" | "aac"),
+                Video => matches!(f, "mp4" | "mkv" | "webm" | "mov" | "gif" | "avi" | "mp3" | "m4a" | "wav"),
+                Archive => matches!(f, "zip" | "7z" | "tar" | "tgz"),
+                Other => false,
+            },
+        },
+    }
+}
+
 /// Junta PDFs (e imagens, cada uma uma página) na ordem dada.
 pub fn merge_pdf(inputs: &[String], opts: &Options) -> R<String> {
     if inputs.is_empty() {
@@ -331,8 +528,15 @@ pub fn merge_pdf(inputs: &[String], opts: &Options) -> R<String> {
     let mut docs = Vec::new();
     let mut tmp = Vec::new();
     for (i, p) in inputs.iter().enumerate() {
-        if formats::category(&formats::ext_of(p)) == Category::Pdf {
+        let c = formats::category(&formats::ext_of(p));
+        if c == Category::Pdf {
             docs.push(load_pdf(p)?);
+        } else if matches!(c, Category::Document | Category::Text) {
+            // Documento → PDF (LibreOffice) → junta.
+            let t = std::env::temp_dir().join(format!("bifrost-merge-{}-{i}.pdf", std::process::id()));
+            convert_document(p, &formats::ext_of(p), "pdf", &t)?;
+            docs.push(load_pdf(&s(&t))?);
+            tmp.push(t);
         } else {
             let img = load_image(p)?;
             let t = std::env::temp_dir().join(format!("bifrost-merge-{}-{i}.pdf", std::process::id()));
@@ -754,6 +958,9 @@ pub fn media_args(fmt: &str, opts: &Options) -> Vec<String> {
         "wav" => vec!["-vn", "-c:a", "pcm_s16le"],
         "ogg" => vec!["-vn", "-c:a", "libvorbis", "-q:a", "5"],
         "flac" => vec!["-vn", "-c:a", "flac"],
+        "opus" => vec!["-vn", "-c:a", "libopus", "-b:a", "128k"],
+        "aac" => vec!["-vn", "-c:a", "aac", "-b:a", "192k"],
+        "avi" => vec!["-c:v", "mpeg4", "-q:v", "4", "-c:a", "libmp3lame", "-q:a", "3"],
         _ => vec![],
     };
     let mut out: Vec<String> = v.into_iter().map(String::from).collect();
@@ -1031,6 +1238,38 @@ mod tests {
         assert!(media_args("mp3", &Options::default()).contains(&"libmp3lame".to_string()));
         assert!(!media_args("mkv", &Options::default()).contains(&"+faststart".to_string()));
     }
+
+    #[test]
+    fn filee_ring_routes() {
+        let d = tmpdir("ring");
+        // Tamanho 50% mantém o formato e corta pela metade.
+        let png = sample_png(&d);
+        let out = run(&png, "half-size", Options::default()).unwrap();
+        assert!(out[0].ends_with("amostra_50.png"));
+        assert_eq!(image::image_dimensions(&out[0]).unwrap(), (32, 20));
+        // Imagem longa: páginas empilhadas.
+        let a = image::RgbaImage::from_pixel(10, 4, image::Rgba([0, 0, 0, 255]));
+        let b = image::RgbaImage::from_pixel(6, 3, image::Rgba([0, 0, 0, 255]));
+        let st = stack_vertically(&[a, b]).unwrap();
+        assert_eq!(st.dimensions(), (10, 7));
+        assert_eq!(st.get_pixel(0, 5).0, [255, 255, 255, 255]);
+        // Compactados: ZIP → 7z, TAR, TAR.GZ (e de volta).
+        let t = d.join("x.txt");
+        std::fs::write(&t, "corvos").unwrap();
+        let cancel = AtomicBool::new(false);
+        let mut p = |_f: f32| {};
+        let inputs = vec![s(&t)];
+        let z = execute(Work { inputs: &inputs, action: "zip", options: &Options::default(), cancel: &cancel, progress: &mut p }).unwrap();
+        for fmt in ["7z", "tar", "tgz"] {
+            let out = run(Path::new(&z[0]), &format!("to:{fmt}"), Options::default()).unwrap_or_else(|e| panic!("{fmt}: {e}"));
+            assert!(out[0].ends_with(fmt), "{fmt}");
+            let back = run(Path::new(&out[0]), "extract", Options::default()).unwrap();
+            assert_eq!(std::fs::read_to_string(Path::new(&back[0]).join("x.txt")).unwrap(), "corvos", "{fmt}");
+        }
+        assert_eq!(text_to_markdown("a\n\n\n\nb"), "a\n\nb\n\n");
+        let _ = std::fs::remove_dir_all(d);
+    }
+
 }
 
 #[cfg(test)]
@@ -1059,6 +1298,7 @@ mod online_tests {
         assert!(px.width() > 100);
         let _ = std::fs::remove_dir_all(d);
     }
+
 }
 
 #[cfg(test)]
@@ -1083,7 +1323,7 @@ mod media_tests {
             return;
         }
         let cancel = AtomicBool::new(false);
-        for action in ["to:webm", "to:mkv", "to:gif", "to:mp3", "to:wav", "to:m4a", "compress", "resize"] {
+        for action in ["to:webm", "to:mkv", "to:gif", "to:mp3", "to:wav", "to:m4a", "compress", "resize", "to:avi", "mp4-720", "mp4-hevc", "mp3-128"] {
             let mut last = 0.0f32;
             let mut p = |f: f32| last = f;
             let inputs = vec![clip.to_string_lossy().into_owned()];
