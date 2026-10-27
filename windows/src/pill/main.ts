@@ -1,10 +1,11 @@
-// Flow dictation's pill (pill.html). Port of FlowPillView (FlowPill.swift).
+
 //
 // What it shows comes whole from Rust in `pill-state` events; the nine dots
 // come in `pill-bands` about 30 times a second while you speak. The page tells
 // Rust where the pill and its bubble are (`pill_hot`), so the rest of the
 // window lets clicks through; it draws only while something moves.
 
+import "../theme/runic.css";
 import "./pill.css";
 import "../theme/bifrost.css";
 import "../bifrost/nordic.css";
