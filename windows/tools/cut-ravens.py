@@ -95,7 +95,10 @@ for who, cfg in CFG.items():
     headM &= ~(wingPix & (yy >= cut - 30))  # asas não vão com a cabeça
     layers = {}
     Hc = C.copy()
-    Hc[pupD] = sclera  # pupilas em camada própria
+    if who != "muninn":
+        Hc[pupD] = sclera  # pupilas em camada própria
+    # (Muninn: a pupila fica na própria cabeça — ela encosta no contorno e a máscara convexa
+    #  do branco cortava a pupila numa reta, que virava uma fresta clara ao mexer a cabeça.)
     # sobrancelha (Huginn): camada própria; por baixo, pena
     browInfo = None
     if cfg.get("brow"):
@@ -179,10 +182,20 @@ for who, cfg in CFG.items():
         shoulder = [float(xsTop.min() + 18), float(top + 26)]
     headA = A * headM
     if "beakLo" in layers: headA = np.maximum(headA, A * layers["beakLo"][1] * 0)  # (o bico vem por cima)
+    # forro: corpo+cabeça em repouso (sem a asa), só por DENTRO da silhueta (10 px para
+    # dentro) e só da faixa do pescoço para baixo. Vai por baixo de tudo: qualquer fresta
+    # entre peças mostra o próprio desenho, nunca o adesivo nem o fundo.
+    hA2 = headA
+    compA = hA2 + bA * (1 - hA2)
+    compC = (Hc * hA2[..., None] + Bc * (bA * (1 - hA2))[..., None]) / np.maximum(compA, 1e-3)[..., None]
+    uM = nd.binary_erosion(compA > 0.5, iterations=10) & (yy >= cut - 120)
+    uA = cv2.GaussianBlur(uM.astype(np.float32), (0, 0), 1.0) * uM
+    save(f"{who}-under", bleed(compC, uA), uA)
     save(f"{who}-base", bleed(Bc, bA), bA)
     save(f"{who}-head", bleed(Hc, headA), headA)
     Pc = np.zeros_like(C); Pc[:] = ink
-    save(f"{who}-pupils", Pc, pupA)
+    # pupila = os pixels originais (com o brilho), opaca na própria máscara: sem fresta
+    save(f"{who}-pupils", Pc, pupA if who != "muninn" else np.zeros_like(pupA))
     save(f"{who}-eyes", np.full_like(C, 255), eyeAll.astype(np.float32))
     if who == "muninn":
         # máscara da pálpebra: o olho com o contorno de fora inteiro (+3 px), por olho
@@ -210,6 +223,6 @@ for who, cfg in CFG.items():
         ein.append([round(float(xs.mean()), 1), round(float(ys.mean()), 1), float((xs.max() - xs.min()) / 2), float((ys.max() - ys.min()) / 2)])
     meta[who] = {"w": W, "h": H, "pivot": list(cfg["pivot"]), "eyes": ein, "brow": browInfo, "beakRoot": beakRoot, "shoulder": shoulder,
                  "lid": [int(v) for v in P["body"]], "ink": list(P["ink"]), "sticker": list(P["sticker"]), "stickerW": max(7.0, round(sw, 1)),
-                 "eyeFit": fits, "layers": ["base", "head", "pupils", "eyes"] + list(layers)}
+                 "eyeFit": fits, "layers": ["under", "base", "head", "pupils", "eyes"] + list(layers)}
     print(who, meta[who]["layers"], "adesivo", max(7.0, round(sw, 1)), "ombro", shoulder)
 open(os.path.join(OUT, "meta.ts"), "w").write("// GERADO por tools/cut-ravens.py (camadas recriadas da referência).\nexport const ART_META = " + json.dumps(meta) + " as const;\n")

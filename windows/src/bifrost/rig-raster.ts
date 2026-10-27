@@ -13,6 +13,8 @@ type Meta = { w: number; h: number; pivot: readonly number[]; eyes: readonly (re
 const META = ART_META as unknown as Record<Who, Meta>;
 
 const URLS: Record<string, string> = {
+  "huginn-under": new URL("./art/huginn-under.webp", import.meta.url).href,
+  "muninn-under": new URL("./art/muninn-under.webp", import.meta.url).href,
   "huginn-base": new URL("./art/huginn-base.webp", import.meta.url).href,
   "huginn-head": new URL("./art/huginn-head.webp", import.meta.url).href,
   "huginn-pupils": new URL("./art/huginn-pupils.webp", import.meta.url).href,
@@ -78,6 +80,7 @@ export function drawRaster(x: C2, who: Who, pose: RigPose, s: number, alpha = 1)
   // Base: corpo e pés plantados; a respiração estica o peito um tiquinho a partir dos pés.
   g.save(); g.translate(0, m.h); g.scale(1, 1 + pose.breath * 0.006); g.translate(0, -m.h);
   if (pose.lift) g.translate(0, -pose.lift * k);
+  g.drawImage(im("under"), 0, 0); // forro de dentro (tapa frestas entre peças)
   g.drawImage(im("base"), 0, 0);
   g.restore();
   // Cabeça + topete: inclina no pescoço (a gola serrilhada cobre a junta); ao falar, o Huginn balança.
@@ -97,14 +100,14 @@ export function drawRaster(x: C2, who: Who, pose: RigPose, s: number, alpha = 1)
   const e = sc(`${who}-eyes`, m.w, m.h), ge = e.getContext("2d")!;
   ge.globalCompositeOperation = "source-over"; ge.clearRect(0, 0, m.w, m.h);
   const small = Math.min(...m.eyes.map((q) => q[2]));
-  ge.drawImage(im("pupils"), pose.px * small * 0.3, pose.py * small * 0.25);
+  // Muninn não desliza a pupila: a pupila dela encosta no contorno do olho e qualquer
+  // deslocamento abria uma fresta branca (esclera) ao lado do olho esquerdo.
+  const gaze = who === "muninn" ? 0 : 1;
+  ge.drawImage(im("pupils"), pose.px * small * 0.3 * gaze, pose.py * small * 0.25 * gaze);
   const lid = Math.max(0, Math.min(1, pose.lid));
   if (who === "muninn") {
-    // Muninn: pupilas recortadas pelo olho; a pálpebra vai numa camada própria, recortada
-    // pelo olho um tico maior (sem franja branca), com UM traço de cílio curvo.
-    ge.globalCompositeOperation = "destination-in"; ge.drawImage(im("eyes"), 0, 0);
-    ge.globalCompositeOperation = "source-over";
-    g.drawImage(e, 0, 0);
+    // Muninn: olhos e pupilas são os pixels originais da própria cabeça (sem camada de
+    // pupila: nada a desalinhar). A pálpebra vem por cima, recortada pela máscara do olho.
     if (lid > 0.01 && m.eyeFit) {
       // Piscada de desenho: a pálpebra (cor da pena em volta) cobre o olho INTEIRO, inclusive
       // o contorno de fora (máscara recortada do desenho, +3 px). A borda de baixo é um arco
@@ -165,7 +168,10 @@ export function drawRaster(x: C2, who: Who, pose: RigPose, s: number, alpha = 1)
   if (m.shoulder) {
     const [sx, sy] = m.shoulder;
     const wa = -Math.max(-0.1, Math.min(RASTER_LIMITS.wing, pose.wingR * 0.25));
-    g.save(); g.translate(0, rise * 0.5); g.translate(sx, sy); g.rotate(wa); g.translate(-sx, -sy); g.drawImage(im("wing"), 0, 0); g.restore();
+    // a asa vai presa ao corpo (mesma respiração da base): o cordão e o ombro não se separam
+    g.save(); g.translate(0, m.h); g.scale(1, 1 + pose.breath * 0.006); g.translate(0, -m.h);
+    if (pose.lift) g.translate(0, -pose.lift * k);
+    g.translate(sx, sy); g.rotate(wa); g.translate(-sx, -sy); g.drawImage(im("wing"), 0, 0); g.restore();
   }
 
   // Reduz em meias etapas até perto do tamanho final (nítido em ícones pequenos).
