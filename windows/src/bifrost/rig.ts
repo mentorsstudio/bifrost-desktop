@@ -7,6 +7,9 @@
 // (inferior com língua, superior). Coordenadas: caixa de 100 unidades centrada
 // em (0,0), pés em y≈+47. Só transforms e Path2D — nada de 3D nem detalhe extra.
 
+import { drawRaster, rasterReady } from "./rig-raster";
+export { onRasterReady } from "./rig-raster";
+
 export type Who = "huginn" | "muninn";
 
 export interface RigPose {
@@ -33,7 +36,7 @@ export const REST_POSE: RigPose = { breath: 0, tilt: 0, px: 0, py: 0, lid: 0, br
 export interface RigPalette {
   body: string; head: string; crest: string; wing: string; wingDark: string;
   beak: string; beakDark: string; feet: string; ink: string; sticker: string;
-  beakHi?: string; medal: string; medalHi: string; cord: string; tongue: string; mouth: string; eye: string; pupil: string;
+  beakHi?: string; original?: boolean; medal: string; medalHi: string; cord: string; tongue: string; mouth: string; eye: string; pupil: string;
 }
 
 /** As cores da referência. */
@@ -41,12 +44,12 @@ export const REF_PALETTE: Record<Who, RigPalette> = {
   huginn: {
     body: "#232328", head: "#26262C", crest: "#2E3E6E", wing: "#353A50", wingDark: "#262A3A",
     beak: "#6E717C", beakDark: "#50535D", feet: "#4A4B55", ink: "#121217", sticker: "#C9CBD2",
-    medal: "#B47A45", medalHi: "#E0AE78", cord: "#121217", tongue: "#E07A86", mouth: "#3A1E24", eye: "#F4F2EC", pupil: "#121217", beakHi: "#9A9CA6",
+    medal: "#B47A45", medalHi: "#E0AE78", cord: "#121217", tongue: "#E07A86", mouth: "#3A1E24", eye: "#F4F2EC", pupil: "#121217", beakHi: "#9A9CA6", original: true,
   },
   muninn: {
     body: "#BDBEC4", head: "#C4C5CB", crest: "#D7D8DD", wing: "#3B3C44", wingDark: "#2C2D33",
     beak: "#5F626B", beakDark: "#474A52", feet: "#4A4B55", ink: "#17171C", sticker: "#C9CBD2",
-    medal: "#B47A45", medalHi: "#E0AE78", cord: "#17171C", tongue: "#E07A86", mouth: "#3A1E24", eye: "#F4F2EC", pupil: "#17171C", beakHi: "#8E9099",
+    medal: "#B47A45", medalHi: "#E0AE78", cord: "#17171C", tongue: "#E07A86", mouth: "#3A1E24", eye: "#F4F2EC", pupil: "#17171C", beakHi: "#8E9099", original: true,
   },
 };
 
@@ -100,6 +103,8 @@ export function signature(who: Who, t: number): RigPose {
 
 /** Desenha o corvo com centro em (0,0) e escala `s` px por unidade. `lod` simplifica abaixo de ~40 px. */
 export function drawRig(x: CanvasRenderingContext2D, who: Who, pose: RigPose, pal: RigPalette, s: number, opts: { alpha?: number; face?: number } = {}) {
+  // "Clássico" e "Seguir o tema": os desenhos originais da referência, animados.
+  if (pal.original && rasterReady(who)) { drawRaster(x, who, pose, s, opts.alpha ?? 1); return; }
   const px = s * 100;
   const lod = px < 44;
   const ink = Math.max(lod ? 2.6 : 2.2, (lod ? 1.3 : 1.05) / s * 0.9);
@@ -254,7 +259,7 @@ export function rigPalette(who: Who, characterId: string, look: { dark: string; 
   if (characterId === "theme") return { ...ref, crest: who === "huginn" ? mixHex(ref.crest, accent ?? ref.crest, 0.35) : ref.crest, medalHi: accent ?? ref.medalHi };
   if (characterId === "classic" || !look) return ref;
   const body = who === "huginn" ? look.dark : look.lit;
-  return { ...ref, body, head: body, wing: look.wing, wingDark: mixHex(look.wing, "#000000", 0.3), crest: look.markColor, beak: look.beak[1] ?? ref.beak, beakDark: mixHex(look.beak[1] ?? ref.beak, "#000000", 0.25), beakHi: mixHex(look.beak[1] ?? ref.beak, "#FFFFFF", 0.3) };
+  return { ...ref, body, head: body, wing: look.wing, wingDark: mixHex(look.wing, "#000000", 0.3), crest: look.markColor, beak: look.beak[1] ?? ref.beak, beakDark: mixHex(look.beak[1] ?? ref.beak, "#000000", 0.25), beakHi: mixHex(look.beak[1] ?? ref.beak, "#FFFFFF", 0.3), original: false };
 }
 function mixHex(a: string, b: string, t: number): string {
   const p = (h: string) => { const m = h.replace("#", ""); const n = m.length === 3 ? m.split("").map((c) => c + c).join("") : m.slice(0, 6); return [0, 2, 4].map((i) => parseInt(n.slice(i, i + 2), 16)); };

@@ -7,7 +7,7 @@ import { RAVEN } from "./raven-shape";
 import { type RavenLook, type RavenMark, type Theme } from "../theme/themes";
 import { CHARACTERS, currentCharacter, onRavenLookChange, ravenTheme } from "../theme/characters";
 import { currentTheme } from "../theme/themes";
-import { drawRig, rigPalette, REST_POSE, type RigPose } from "./rig";
+import { drawRig, rigPalette, onRasterReady, REST_POSE, type RigPose } from "./rig";
 
 export type MascotName = "huginn" | "muninn";
 export type MascotState = "idle" | "blink" | "flyIn" | "flyOut" | "thinking" | "listening" | "success" | "error" | "sleeping";
@@ -129,6 +129,7 @@ export class Mascot {
     this.el.append(this.canvas);
     host?.append(this.el);
     if (typeof ResizeObserver !== "undefined") new ResizeObserver(() => this.paint()).observe(this.el);
+    onRasterReady(() => this.paint());
     if (!theme) LIVE.add(new WeakRef(this));
     this.set("idle");
   }

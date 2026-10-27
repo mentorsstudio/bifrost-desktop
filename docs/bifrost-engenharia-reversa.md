@@ -879,3 +879,14 @@ Ferramentas baixadas ficam em `%LOCALAPPDATA%\Bifrost\tools`.
 - `RavenEngine` desenha o rig. A arte antiga só aparece com `RavenEngine.legacyArt`. A pose vem do motor: olhar, piscar, `beak`, `brow`, `wingBeat`, aceno e marcha. O laço-assinatura é o gesto ocioso mais sorteado da vida dos corvos.
 - `Mascot` (Ajustes, hub, anel) desenha o mesmo rig num canvas.
 - Personagens: "Clássico" (padrão) usa as cores da referência; "Seguir o tema" mantém o preto/prata e puxa o topete e o brilho do medalhão para o acento do tema; os outros estilos recolorem o rig e mantêm os contornos.
+
+### 10.24 Corvos originais animados (fantoche de recortes)
+
+A pedido do Paulo, os corvos do app passam a ser os PRÓPRIOS desenhos da referência
+(`bifrost-ref/corvos-novos-ref.png`), animados. `tools/cut-ravens.py` recorta cada corvo
+com alfa limpo (sem halo) em camadas WebP em `src/bifrost/art/` + `art/meta.ts` (pivôs, olhos):
+base (corpo+pés, fixa), cabeça+topete (pivô no pescoço, faixa de transição suave), pupilas,
+máscara dos olhos, sobrancelha direita do Huginn, bico inferior+língua e a asa direita do
+Muninn (o corpo sob ela é repintado com contorno e adesivo). `rig-raster.ts` compõe tudo
+num quadro em tamanho cheio e reduz em meias etapas (nítido em 24–32 px). O "Clássico" e
+"Seguir o tema" usam a arte original; os outros estilos seguem no rig vetorial recolorido.
