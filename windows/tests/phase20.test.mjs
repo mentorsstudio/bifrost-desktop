@@ -28,3 +28,29 @@ test("Ajustes mostra Conversor em Geral e Personagens em Temas", () => {
 test("a runa d'água não aparece no vão dos cartões das subpáginas", () => {
   assert.match(src("bifrost/hub-pages.css"), /\.hub-page:not\(\[data-page="dictation"\]\)::before \{ content: none; \}/);
 });
+
+test("conteúdo nunca depende da animação: janela 'oculta' leva as animações ao fim e a entrada tem prazo", () => {
+  assert.match(src("bifrost/hub.css"), /\.bf-hub-hidden \*[^{]*\{ animation-duration: 0s !important; animation-delay: 0s !important;/);
+  assert.doesNotMatch(src("bifrost/hub.css"), /bf-hub-hidden \* \{ animation-play-state: paused/);
+  const sh = src("hub/shell.ts");
+  assert.match(sh, /setTimeout\(\(\) => el\.classList\.remove\("m-rise"\), RISE_FALLBACK_MS\)/);
+  assert.match(sh, /watchWindowShown\(\);/);
+  assert.match(src("theme/motion.css"), /\.bf-hub-hidden \.m-rise[^{]*\{ animation: none !important; \}/);
+});
+
+test("uma forma só: células de grupos sem halo nem borda; raio da aba = raio do ink", () => {
+  const r = src("bifrost/realm.css");
+  assert.match(r, /\.hub-segmented > button::before[^{]*\{ display: none !important; \}/);
+  assert.match(r, /\.m-ink-hub \.hub-item \{ border-radius: 17px !important; \}/);
+  assert.match(r, /button:not\(\.hub-item\):not\(\.tab\):not\(\.hub-segmented > \*\)/);
+  assert.match(r, /appearance: none;/);
+});
+
+test("regra de colisão: pílula de status com respiro e reticências", () => {
+  const r = src("bifrost/realm.css");
+  assert.match(r, /\.hub-status \{ padding: 9px 16px 9px 14px;/);
+  assert.match(r, /\.hub-status \.hub-status-text \{[^}]*text-overflow: ellipsis/);
+  assert.match(src("hub/shell.ts"), /statusLine\.title = text;/);
+  const c = src("../tests/visual/checks.js".replace("../", "../")) ;
+  void c;
+});

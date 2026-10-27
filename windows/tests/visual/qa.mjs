@@ -72,6 +72,44 @@ async function main() {
       await ctx.close();
     }
   }
+  // Fase 20: o Conversor (hub) e o anel do gesto em cada estado, a 100/125/150 %.
+  for (const theme of FULL ? THEMES : ["bifrost", "ragnarok"]) for (const scale of SCALES) {
+    const ch = CHARS[(THEMES.indexOf(theme) + 1) % CHARS.length];
+    for (const vp of HUB_W) {
+      const ctx = await browser.newContext({ viewport: { width: vp.w, height: vp.h }, deviceScaleFactor: scale, reducedMotion: "reduce" });
+      const page = await ctx.newPage();
+      await page.goto(`${BASE}/dev/filee-hub.html?theme=${theme}&character=${ch}`);
+      await page.waitForTimeout(1300);
+      await page.evaluate(() => window.__emit?.("hub-page", "converter"));
+      await page.waitForTimeout(700);
+      add({ scene: "hub:converter", theme, scale, width: vp.w }, await page.evaluate(CHECKS));
+      await ctx.close();
+    }
+    const ctx = await browser.newContext({ viewport: { width: 460, height: 460 }, deviceScaleFactor: scale, reducedMotion: "reduce" });
+    const page = await ctx.newPage();
+    await page.goto(`${BASE}/dev/filee-menu.html?theme=${theme}&character=${ch}`);
+    await page.waitForTimeout(900);
+    const ring = async (state) => { await page.waitForTimeout(450); add({ scene: `anel:${state}`, theme, scale, width: 460 }, await page.evaluate(CHECKS)); };
+    const open = async (plan) => {
+      await page.evaluate(() => window.__emit("filee-menu-open", null)); await ring("abrindo");
+      await page.evaluate((k) => window.__emit("filee-menu-plan", { plan: window[k], error: null }), plan);
+    };
+    await open("__FILEE_PLAN__"); await ring("imagens");
+    const at = (sel) => page.evaluate((sel) => { const r = document.querySelector(sel)?.getBoundingClientRect(); return r ? { x: r.x + r.width / 2, y: r.y + r.height / 2 } : null; }, sel);
+    const first = await at(".fm-slice:not(.off)");
+    if (first) { await page.mouse.move(first.x, first.y); await ring("hover"); }
+    const sub = await at(".fm-slice.has-sub");
+    if (sub) { await page.evaluate((p) => window.__emit("filee-menu-release", p), sub); await ring("sub"); }
+    await open("__FILEE_PDFS__"); await ring("pdfs");
+    await page.evaluate(() => { window.__FIXTURES__.filee_menu_action = 7; });
+    const tool = await at('.fm-slice[data-act="merge-pdf"], .fm-slice:not(.has-sub):not(.off)');
+    if (tool) { await page.evaluate((p) => window.__emit("filee-menu-release", p), tool); await page.waitForTimeout(200);
+      await page.evaluate(() => window.__emit("convert-item", { job: 7, index: 0, name: "x", state: "running", progress: 0.5, outputs: [], error: null })); await ring("progresso");
+      await page.evaluate(() => window.__emit("convert-item", { job: 7, index: 0, name: "x", state: "done", progress: 1, outputs: ["C:\\Users\\paulo\\Documents\\contrato-unido.pdf"], error: null })); await ring("pronto"); }
+    await page.evaluate(() => window.__emit("filee-menu-open", null));
+    await page.evaluate(() => window.__emit("filee-menu-plan", { plan: null, error: "Não achei um arquivo aqui." })); await ring("erro");
+    await ctx.close();
+  }
   // Com movimento: a aba ativa abre o rótulo numa transição; o indicador tem de acabar igual a ela.
   {
     const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 }, deviceScaleFactor: 1, reducedMotion: "no-preference" });

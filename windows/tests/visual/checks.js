@@ -1,6 +1,6 @@
 // QA visual (fase 19): roda DENTRO da página (page.evaluate). Sem dependências.
 // Devolve uma lista de problemas { kind, what, detail }.
-// Tipos: overlap, clip, offscreen, tail, double.
+// Tipos: overlap, clip, offscreen, tail, double, collide, blank.
 (() => {
   const out = [];
   const vis = (el) => {
@@ -131,6 +131,91 @@
       out.push({ kind: "double", what: `indicador × ${name(on)}`, detail: `${Math.round(a.width)}x${Math.round(a.height)} vs ${Math.round(b.width)}x${Math.round(b.height)}` });
     const os = getComputedStyle(on);
     if (decorated(os) && os.backgroundImage !== "none") out.push({ kind: "double", what: `indicador + fundo próprio em ${name(on)}` });
+  }
+
+  // 5b (fase 20). Formas que só aparecem no hover/foco também contam: um halo
+  // ::before (mesmo com opacidade 0 agora) com raio diferente, ou qualquer halo
+  // dentro de um grupo com indicador (ink) — seriam duas formas ao passar o mouse.
+  for (const el of shapes) {
+    if (el.classList.contains("m-ink")) continue;
+    const s = getComputedStyle(el), r = el.getBoundingClientRect(), rad = Math.min(radius(s), r.height / 2);
+    const inInk = !!el.closest(".m-has-ink, .hub-segmented, .seg");
+    for (const pseudo of ["::before", "::after"]) {
+      const ps = getComputedStyle(el, pseudo);
+      if (ps.content === "none" || ps.content === "normal" || ps.display === "none" || !decorated(ps)) continue;
+      const pw = parseFloat(ps.width) || r.width;
+      if (pw < r.width * 0.8) continue;
+      if (inInk) out.push({ kind: "double", what: `${name(el)}${pseudo} (halo dentro de grupo)` });
+      else if (Math.abs(Math.min(radius(ps), r.height / 2) - rad) > 2) out.push({ kind: "double", what: `${name(el)}${pseudo} (hover)`, detail: `raio ${radius(ps)} vs ${rad}` });
+    }
+    // Célula com caixa própria (borda) dentro de um grupo que já tem contorno.
+    const g = el.parentElement;
+    if (g && inInk) {
+      const gs = getComputedStyle(g);
+      const gBorder = parseFloat(gs.borderTopWidth) > 0 && gs.borderTopStyle !== "none";
+      const eBorder = parseFloat(s.borderTopWidth) > 0 && s.borderTopStyle !== "none" && !/rgba\(\d+, \d+, \d+, 0\)/.test(s.borderTopColor);
+      if (gBorder && eBorder) out.push({ kind: "double", what: `${name(g)} > ${name(el)} (célula com borda própria)` });
+    }
+  }
+  // O indicador e a aba ativa: mesmo raio (senão o hover/fundo da aba desenha outra forma).
+  for (const ink of document.querySelectorAll(".m-ink")) {
+    if (ink.style.opacity !== "1") continue;
+    const on = ink.parentElement?.querySelector(".on, [aria-selected=true]");
+    if (!on || !vis(on)) continue;
+    const a = ink.getBoundingClientRect();
+    const ri = Math.min(radius(getComputedStyle(ink)), a.height / 2), ro = Math.min(radius(getComputedStyle(on)), a.height / 2);
+    if (Math.abs(ri - ro) > 2) out.push({ kind: "double", what: `indicador × ${name(on)} (raio)`, detail: `${ri} vs ${ro}` });
+  }
+
+  // 6 (fase 20). Colisão de texto: cada glifo longe ≥ 6 px da borda do contêiner
+  // decorado mais próximo e fora da curva dos cantos.
+  const boxOf = (el) => {
+    for (let p = el; p && p !== document.body; p = p.parentElement) {
+      const s = getComputedStyle(p);
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(p.tagName)) return null;
+      const hasBorder = parseFloat(s.borderTopWidth) > 0 && s.borderTopStyle !== "none";
+      const hasBg = s.backgroundColor !== "rgba(0, 0, 0, 0)" && s.backgroundColor !== "transparent" || s.backgroundImage !== "none";
+      if ((hasBorder || hasBg) && radius(s) >= 4) return { p, s };
+      if ((hasBorder || hasBg) && p.getBoundingClientRect().width > 400) return null; // painel grande: não é pílula
+    }
+    return null;
+  };
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    if (!n.textContent.trim()) continue;
+    const el = n.parentElement;
+    if (!el || !vis(el) || el.closest("[aria-hidden=true], .m-leaving, svg, .m-layer, canvas")) continue;
+    const box = boxOf(el);
+    if (!box) continue;
+    const br = box.p.getBoundingClientRect();
+    if (br.height > 64 || br.width < 12) continue; // só pílulas, chips e botões
+    const bl = parseFloat(box.s.borderLeftWidth) || 0, brw = parseFloat(box.s.borderRightWidth) || 0;
+    const L = br.left + bl, R = br.right - brw, T = br.top, B = br.bottom;
+    const rad = Math.min(radius(box.s), br.height / 2);
+    const range = document.createRange(); range.selectNodeContents(n);
+    const c = clipRect(el);
+    for (const g of range.getClientRects()) {
+      if (g.width < 1) continue;
+      const gl = Math.max(g.left, c.x1), gr = Math.min(g.right, c.x2);
+      if (gr - gl < 1) continue;
+      const top = Math.max(g.top, T), bot = Math.min(g.bottom, B);
+      const inset = (y) => { const dy = y < T + rad ? T + rad - y : y > B - rad ? y - (B - rad) : 0; return dy > 0 ? rad - Math.sqrt(Math.max(0, rad * rad - dy * dy)) : 0; };
+      const curve = Math.max(inset(top + 2), inset(bot - 2));
+      const gap = Math.min(gl - L, R - gr);
+      if (gap < 6 || gap < curve + 2) {
+        out.push({ kind: "collide", what: `${name(box.p)}`, detail: `texto a ${Math.round(gap)} px da borda (curva ${Math.round(curve)} px)` });
+        break;
+      }
+    }
+  }
+
+  // 7 (fase 20). Página aberta sem conteúdo visível abaixo do cabeçalho.
+  const page = [...document.querySelectorAll(".hub-page")].find((x) => !x.classList.contains("m-layer") && !x.classList.contains("m-leaving"));
+  if (page) {
+    const hero = page.querySelector(".bf-hero, .hub-hero");
+    const y = hero ? hero.getBoundingClientRect().bottom : page.getBoundingClientRect().top + 80;
+    const shown = [...page.querySelectorAll("*")].filter((e) => !e.children.length && (e.textContent || "").trim() && e.getBoundingClientRect().top >= y - 2 && vis(e));
+    if (!shown.length) out.push({ kind: "blank", what: `página ${page.dataset.page} vazia abaixo do cabeçalho` });
   }
   // Sem duplicatas.
   const seen = new Set();
