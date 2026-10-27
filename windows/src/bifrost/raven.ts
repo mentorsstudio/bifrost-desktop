@@ -374,8 +374,11 @@ export class RavenEngine {
     for (let i = 0; i < n; i++) {
       const z = kind === "z";
       this.sparks.push({
-        kind, x: (Math.random() - 0.5) * 0.9 + (z ? 0.55 : 0), y: -0.7 - Math.random() * 0.2,
-        vx: (Math.random() - 0.5) * 0.35 + (z ? 0.18 : 0), vy: -(0.45 + Math.random() * 0.35),
+        // Nascem ao lado da cabeça (|x| ≥ 0.6R) e se afastam: nunca cruzam o rosto.
+        ...(() => { const side = z ? 1 : (i % 2 === 0 ? 1 : -1); return {
+          x: side * (0.62 + Math.random() * 0.3), y: -0.85 - Math.random() * 0.25,
+          vx: side * (0.12 + Math.random() * 0.25), vy: -(0.4 + Math.random() * 0.3) }; })(),
+        kind,
         age: -i * 0.14, life: 1.3 + Math.random() * 0.5, spin: Math.random() * Math.PI * 2, size: 0.15 + Math.random() * 0.08,
       });
     }
