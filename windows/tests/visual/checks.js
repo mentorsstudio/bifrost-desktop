@@ -194,6 +194,15 @@
     const rad = Math.min(radius(box.s), br.height / 2);
     const range = document.createRange(); range.selectNodeContents(n);
     const c = clipRect(el);
+    // O próprio texto também recorta (overflow + reticências): vale a caixa de conteúdo dele.
+    const es = getComputedStyle(el);
+    if (es.overflowX !== "visible") {
+      const er = el.getBoundingClientRect();
+      c.x1 = Math.max(c.x1, er.left + parseFloat(es.paddingLeft) + parseFloat(es.borderLeftWidth));
+      c.x2 = Math.min(c.x2, er.right - parseFloat(es.paddingRight) - parseFloat(es.borderRightWidth));
+    }
+    // Ícone de 1–3 letras centralizado (avatar, tecla): basta não tocar a borda.
+    const tile = n.textContent.trim().length <= 3 && box.p.textContent.trim().length <= 3;
     for (const g of range.getClientRects()) {
       if (g.width < 1) continue;
       const gl = Math.max(g.left, c.x1), gr = Math.min(g.right, c.x2);
@@ -202,7 +211,8 @@
       const inset = (y) => { const dy = y < T + rad ? T + rad - y : y > B - rad ? y - (B - rad) : 0; return dy > 0 ? rad - Math.sqrt(Math.max(0, rad * rad - dy * dy)) : 0; };
       const curve = Math.max(inset(top + 2), inset(bot - 2));
       const gap = Math.min(gl - L, R - gr);
-      if (gap < 6 || gap < curve + 2) {
+      const need = tile ? 3 : 6;
+      if (gap < need || gap < curve + (tile ? 0.5 : 2)) {
         out.push({ kind: "collide", what: `${name(box.p)}`, detail: `texto a ${Math.round(gap)} px da borda (curva ${Math.round(curve)} px)` });
         break;
       }
