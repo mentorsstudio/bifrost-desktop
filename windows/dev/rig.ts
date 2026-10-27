@@ -8,7 +8,7 @@ if (bg) document.body.style.background = bg;
 function cv(size: number) { const c = document.createElement("canvas"); c.width = c.height = size * 2; c.style.width = c.style.height = size + "px"; root.append(c); return c.getContext("2d")!; }
 function paint(c: CanvasRenderingContext2D, size: number, who: Who, pose = REST_POSE) {
   c.setTransform(2, 0, 0, 2, 0, 0); c.clearRect(0, 0, size, size);
-  c.translate(size / 2, size / 2 + size * 0.02); drawRig(c, who, pose, REF_PALETTE[who], (size * 0.86) / 100);
+  c.translate(size / 2, size / 2 + size * 0.06); drawRig(c, who, pose, REF_PALETTE[who], (size * 0.8) / 112);
 }
 const loop = q.get("loop") as Who | null;
 if (loop) {

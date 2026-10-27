@@ -7,7 +7,7 @@ import "../src/theme/themes";
 import { BotEngine } from "../src/bifrost/raven";
 import { RavenLife, type IdleAct } from "../src/bifrost/raven-life";
 const P = 120, DW = P * 0.8, SIDE = (P - DW) / 2, DPR = 2;
-const STATES = ["olhar", "inclinar", "ajeitar asa", "pulinho", "andar", "voo curto", "cochilo", "pensando", "ouvindo", "falando", "sucesso", "erro", "hover", "clique"] as const;
+const STATES = ["assinatura", "olhar", "inclinar", "ajeitar asa", "pulinho", "andar", "voo curto", "cochilo", "pensando", "ouvindo", "falando", "sucesso", "erro", "hover", "clique"] as const;
 const root = document.getElementById("root")!;
 const W = window as unknown as { __clip: number; __clipWho: string[]; __frames: number };
 W.__clip = 0; W.__clipWho = []; W.__frames = 0;
@@ -18,11 +18,12 @@ for (const name of STATES) {
   const cv = document.createElement("canvas"); cv.width = cv.height = P * DPR;
   const l = document.createElement("div"); l.textContent = name; f.append(cv, l); root.append(f);
   const e = new BotEngine(); e.particleOverhang = 0; e.setState("idle", true);
+  e.identity = (new URLSearchParams(location.search).get("who") as "huginn" | "muninn") ?? "huginn";
   const life = new RavenLife(e, { desktop: true, ownSleep: true }); life.level = "normal";
   e.life = life;
   cells.push({ e, life, c: cv.getContext("2d", { willReadFrequently: true })!, name, t: -1 });
 }
-const ACT: Record<string, IdleAct> = { "olhar": "look", "inclinar": "tilt", "ajeitar asa": "preen", "pulinho": "hop", "andar": "walk", "voo curto": "fly" };
+const ACT: Record<string, IdleAct> = { "assinatura": "signature", "olhar": "look", "inclinar": "tilt", "ajeitar asa": "preen", "pulinho": "hop", "andar": "walk", "voo curto": "fly" };
 function cue(x: Cell) {
   const { e, life } = x;
   life.level = "normal";
@@ -41,7 +42,7 @@ function frame(now: number) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   W.__frames++;
   for (const x of cells) {
-    if (x.t < 0 || now - x.t > 2600) { x.t = now; cue(x); }
+    if (x.t < 0 || now - x.t > (x.name === "assinatura" ? 6100 : 2600)) { x.t = now; cue(x); }
     if (x.name === "falando" && Math.random() < 0.25) x.life.signal({ kind: "chunk" });
     if (x.name === "ouvindo") x.life.signal({ kind: "level", value: 0.5 + 0.5 * Math.sin(now / 140) });
     x.life.level = "normal";

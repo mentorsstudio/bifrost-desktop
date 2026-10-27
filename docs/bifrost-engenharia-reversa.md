@@ -866,3 +866,16 @@ Ferramentas baixadas ficam em `%LOCALAPPDATA%\Bifrost\tools`.
 - **Ajuste:** Temas → "Vida dos corvos": Desligado / Calmo / Normal (padrão) / Animado, guardado em `localStorage` (`bifrost.ravenLife`). Movimento reduzido desliga tudo.
 - **Custo:** os laços de quadro existentes continuam mandando (a ilha e a pílula param quando nada se mexe; a vida agenda um único `setTimeout` para o próximo gesto). O corvo da área de trabalho fica a 30 qps acordado e cai para 4 qps dormindo.
 - **QA:** `dev/life.html` (14 estados × personagens). `qa.mjs` falha com `raven-clip` se algum pixel encostar na borda da janela de 120 px.
+
+### 10.23 Corvos novos (rig 2D) e laços-assinatura
+
+- `src/bifrost/rig.ts` desenha os novos Huginn (preto, topete azul-marinho espetado) e Muninn (prata, topete fofo, bico aberto com língua), fiéis a `bifrost-ref/corvos-novos-ref.png`.
+  - Traço: contorno escuro grosso e adesivo cinza por fora.
+  - Camadas: pés, asas articuladas no ombro, corpo, cabeça, topete, cordão e medalhão de bronze, olhos (branco, pupila e pálpebra), sobrancelhas, bico inferior (com língua) e bico superior.
+  - Abaixo de 44 px usa um LOD sem adesivo nem brilhos e com traço proporcionalmente mais grosso.
+- `signature(who, t)` traz os laços de 6 s, contínuos e com os pés plantados:
+  - **Huginn:** respira, pisca em 1,5–2 s, as pupilas olham de lado em 2–3 s, inclina e ergue UMA sobrancelha em 3–4 s, segura até 5 s e volta.
+  - **Muninn:** pisca em 1–1,5 s, inclina curioso em 1,5–2,5 s, ergue UMA asa em 2,5–3 s, acena duas vezes em 3–4 s, baixa em 4–5 s e volta.
+- `RavenEngine` desenha o rig. A arte antiga só aparece com `RavenEngine.legacyArt`. A pose vem do motor: olhar, piscar, `beak`, `brow`, `wingBeat`, aceno e marcha. O laço-assinatura é o gesto ocioso mais sorteado da vida dos corvos.
+- `Mascot` (Ajustes, hub, anel) desenha o mesmo rig num canvas.
+- Personagens: "Clássico" (padrão) usa as cores da referência; "Seguir o tema" mantém o preto/prata e puxa o topete e o brilho do medalhão para o acento do tema; os outros estilos recolorem o rig e mantêm os contornos.

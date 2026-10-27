@@ -124,13 +124,13 @@ async function main() {
     await ctx.close();
   }
   // Vida dos corvos: nenhuma pose (voo incluído) encosta na borda da janela de 120 px.
-  for (const ch of CHARS) {
-    const ctx = await browser.newContext({ viewport: { width: 1000, height: 330 }, deviceScaleFactor: 1, reducedMotion: "no-preference" });
+  for (const sc of [1, 1.25, 1.5]) for (const who of ["huginn", "muninn"]) for (const ch of sc === 1 ? CHARS : ["classic"]) {
+    const ctx = await browser.newContext({ viewport: { width: 1140, height: 330 }, deviceScaleFactor: sc, reducedMotion: "no-preference" });
     const page = await ctx.newPage();
-    await page.goto(`${BASE}/dev/life.html?character=${ch}`);
-    await page.waitForTimeout(FULL ? 8000 : 5500);
+    await page.goto(`${BASE}/dev/life.html?character=${ch}&who=${who}`);
+    await page.waitForTimeout(6500);
     const r = await page.evaluate(() => ({ clip: window.__clip, who: window.__clipWho }));
-    add({ scene: "corvo:vida", theme: ch, scale: 1, width: 120 }, r.clip ? r.who.map((w) => ({ kind: "raven-clip", what: w, detail: `${r.clip} quadro(s)` })) : []);
+    add({ scene: `corvo:vida:${who}`, theme: ch, scale: sc, width: 120 }, r.clip ? r.who.map((w) => ({ kind: "raven-clip", what: w, detail: `${r.clip} quadro(s)` })) : []);
     await ctx.close();
   }
   await browser.close();

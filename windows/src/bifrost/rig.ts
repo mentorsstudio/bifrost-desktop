@@ -180,7 +180,7 @@ export function drawRig(x: CanvasRenderingContext2D, who: Who, pose: RigPose, pa
   // Sobrancelhas: o humor do Huginn (um lado sobe: "entendi").
   const brow = (ex: number, ey: number, rx: number, raise: number, side: -1 | 1) => {
     const base = who === "huginn" ? 2.2 : -0.6; // o Huginn começa de cenho meio franzido
-    const y0 = ey - 10.5 - raise * 3.2;
+    const y0 = ey - 10.5 - raise * 4.6;
     x.strokeStyle = pal.ink; x.lineWidth = lod ? 2.4 : 2;
     x.beginPath();
     x.moveTo(ex - rx * 0.8, y0 + (side === -1 ? 0 : base * (1 - raise)));
