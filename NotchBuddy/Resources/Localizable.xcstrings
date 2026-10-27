@@ -14512,7 +14512,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Token"
+            "value" : "Token de acesso"
           }
         },
         "ru" : {
@@ -21223,7 +21223,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Abrir o Notetaker →"
+            "value" : "Abrir o Escriba →"
           }
         },
         "ru" : {
@@ -21312,7 +21312,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O Notetaker"
+            "value" : "O Escriba"
           }
         },
         "ru" : {
@@ -21846,7 +21846,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Notetaker"
+            "value" : "Escriba"
           }
         },
         "ru" : {
@@ -23003,7 +23003,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Notch"
+            "value" : "Ilha"
           }
         },
         "ru" : {
@@ -39089,7 +39089,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Demo"
+            "value" : "Demonstração"
           }
         },
         "ru" : {
@@ -40069,7 +40069,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Emails"
+            "value" : "E-mails"
           }
         },
         "ru" : {
@@ -43582,7 +43582,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Workflows"
+            "value" : "Fluxos"
           }
         },
         "ru" : {
@@ -67308,7 +67308,7 @@
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Notebook"
+            "value" : "Caderno"
           }
         },
         "ru" : {

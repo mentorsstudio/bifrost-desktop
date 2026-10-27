@@ -28,3 +28,47 @@
 @media (prefers-reduced-motion: reduce) { .bf-hero-tree { animation: none; } }
 .bf-hero { height: auto !important; }
 .bf-hero .copy { padding: 0 !important; max-width: none !important; gap: 4px !important; }
+
+/* ── Painel entalhado (substitui o cartão com partículas) ─────────────── */
+.bf-panel { position: relative; border-radius: 14px; overflow: hidden;
+  border: 1px solid rgba(226,181,90,.22) !important;
+  background:
+    linear-gradient(90deg, transparent, color-mix(in srgb, var(--panel-accent) 70%, transparent), transparent) top / 100% 2px no-repeat,
+    radial-gradient(420px 140px at 100% 0%, color-mix(in srgb, var(--panel-accent) 14%, transparent), transparent 70%),
+    radial-gradient(380px 160px at 0% 110%, rgba(94,242,201,.07), transparent 70%),
+    linear-gradient(180deg, #111b36, #0a1022) !important; }
+.bf-panel .inner { position: relative; z-index: 1; }
+.bf-panel-knot { position: absolute; width: 18px; height: 18px; pointer-events: none; opacity: .55;
+  border: 2px solid var(--bf-gold); border-radius: 50%; clip-path: inset(0 50% 50% 0); }
+.bf-panel-knot.tl { left: 6px; top: 6px; }
+.bf-panel-knot.tr { right: 6px; top: 6px; transform: scaleX(-1); }
+.bf-panel-knot.bl { left: 6px; bottom: 6px; transform: scaleY(-1); }
+.bf-panel-knot.br { right: 6px; bottom: 6px; transform: scale(-1); }
+.bf-empty .bf-mascot { width: 72px; height: 72px; }
+.bf-empty .bf-raven-shadow { opacity: .6; }
+.bf-brand-raven .bf-mascot { width: 30px; height: 30px; }
+.bf-brand-raven .bf-fx { display: none; }
+.bf-hub-hidden * { animation-play-state: paused !important; }
+
+/* ── Páginas do hub: layout nórdico comum ──────────────────────────────── */
+.hub-page { gap: 18px !important; }
+.hub-card { position: relative; border-radius: 14px !important; border: 1px solid rgba(226,181,90,.2) !important;
+  background: radial-gradient(380px 140px at 100% 0%, rgba(106,168,255,.08), transparent 70%), linear-gradient(180deg, #101a34, #0a1022) !important; }
+.hub-card::before { content: ""; position: absolute; left: 16px; right: 16px; top: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(226,181,90,.55), transparent); }
+.hub-label, .hub-history-head > :first-child { font-family: var(--bf-heading-font) !important; letter-spacing: .22em !important; color: var(--bf-gold) !important; }
+.hub-label::before, .hub-history-head > :first-child::before { content: "ᛜ "; font-family: var(--bf-rune-font); color: var(--bf-aurora-1); letter-spacing: 0; }
+.hub-row, .hub-list-row, .hub-entry { border-color: rgba(226,181,90,.12) !important; transition: background var(--bf-tap); }
+.hub-list-row:hover, .hub-entry:hover { background: rgba(94,242,201,.05); }
+.hub-big-number { font-family: var(--bf-heading-font) !important; color: var(--bf-gold-2) !important; }
+.hub-stat { border-left: 2px solid rgba(94,242,201,.35); padding-left: 10px; }
+.hub-chip, .hub-tag { border: 1px solid rgba(226,181,90,.3) !important; background: rgba(7,11,22,.6) !important; }
+.hub-input, .hub-select, .hub-textarea { background: rgba(7,11,22,.75) !important; border: 1px solid rgba(147,161,198,.25) !important; border-radius: 9px !important; }
+.hub-input:focus, .hub-select:focus, .hub-textarea:focus { border-color: rgba(94,242,201,.6) !important; outline: none; box-shadow: 0 0 0 3px rgba(94,242,201,.12); }
+.hub-keycap { font-family: var(--bf-heading-font); border: 1px solid rgba(226,181,90,.45) !important; background: linear-gradient(180deg, #2b1d12, #150e08) !important; color: var(--bf-gold-2) !important; }
+.hub-bars > * { background: linear-gradient(180deg, var(--bf-aurora-1), var(--bf-aurora-2)) !important; }
+.hub-segmented { border: 1px solid rgba(226,181,90,.25) !important; }
+.hub-columns { gap: 18px !important; }
+.hub-page > * { animation: bf-skin-page var(--bf-step) var(--bf-ease-fjord) both; }
+.hub-page > *:nth-child(2) { animation-delay: 40ms; } .hub-page > *:nth-child(3) { animation-delay: 80ms; } .hub-page > *:nth-child(n+4) { animation-delay: 120ms; }
+@media (prefers-reduced-motion: reduce) { .hub-page > * { animation: none !important; } }

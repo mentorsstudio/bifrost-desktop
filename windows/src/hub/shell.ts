@@ -9,7 +9,7 @@ import { h, clear } from "../views/dom";
 import { t } from "../i18n/i18n";
 import { onEvent } from "../core/bridge";
 import { FlowBridge, type FlowPrefs, type FlowStatus, type ModelsStatus } from "../core/flow";
-import { hero, liveMochi, setWindowShown } from "./hero";
+import { hero, liveRaven, setWindowShown } from "./hero";
 import { icon, keyLabel } from "./ui";
 
 export type PageId =
@@ -162,9 +162,9 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
 
   // ── The sidebar ──
   const side = h("nav", { class: "hub-side" });
-  const logo = h("canvas", {});
+  const logo = h("span", { class: "bf-brand-raven" });
   side.append(h("div", { class: "hub-brand" }, logo, h("span", { text: "Bifrost" })));
-  liveMochi(logo as HTMLCanvasElement);
+  liveRaven(logo);
   const group = (title: string, pages: PageDef[]) => {
     side.append(h("div", { class: "hub-group", text: title }));
     for (const p of pages) {

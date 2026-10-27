@@ -1,403 +1,32 @@
-// The coloured band on top of each page of the Bifrost window: a deep black
-// with the page's colour breathing in a corner, particles that drift all the
-// time and move away from the pointer, and the page's little Huginns walking on
-// its floor — they hop, look around, wave, and react when poked. Also the
-// glowing cards and the Huginns of empty pages. Port of FlowHubMochis.swift.
-//
-// One animation loop draws every live canvas; it stops when none is left or
-// the window is hidden, so a hidden window costs nothing, and skips the ones
-// scrolled out of sight.
+// Bifrost — as peças visuais do hub, escritas do zero: a faixa de cada página
+// (Yggdrasil + galho dos corvos), o painel entalhado que segura o conteúdo
+// (no lugar do antigo cartão com partículas) e o estado vazio com um corvo SVG.
+// Nada aqui usa canvas nem laço de quadros: só DOM, SVG e CSS (hub.css), então
+// a janela não desenha nada quando está escondida.
 
-import { BotEngine, hexToRGB } from "../bifrost/raven";
-import { Mascot } from "../bifrost/mascots";
-import { onScreen, shouldAnimate } from "./frames";
-import type { BotEmoteName, BotStateName } from "../core/layout";
+import type { BotStateName } from "../core/layout";
 import type { Outfit } from "../huginn/wardrobe";
+import { Mascot, type MascotState } from "../bifrost/mascots";
 
-interface Animated {
-  el: HTMLCanvasElement;
-  draw(dt: number, t: number): void;
-  /** Pages are built before they are put in the window: dropped only once gone. */
-  shown?: boolean;
-  born?: number;
-}
-
-const live = new Set<Animated>();
-let frame: number | null = null;
-let last = performance.now();
-const start = performance.now();
-/** The Bifrost window is on screen, as Rust last said (`setWindowShown`). */
-let windowShown = true;
-
-function running(): boolean {
-  return shouldAnimate(live.size, document.visibilityState, windowShown);
-}
-
-function loop(now: number) {
-  frame = null;
-  const dt = Math.min(0.05, (now - last) / 1000);
-  last = now;
-  const t = (now - start) / 1000;
-  for (const a of live) {
-    if (!a.el.isConnected) {
-      // Built but not shown yet: wait for it (a few seconds at most).
-      if (a.shown || now - (a.born ??= now) > 5000) live.delete(a);
-      continue;
-    }
-    a.shown = true;
-    if (onScreen(a.el.getBoundingClientRect(), window.innerWidth, window.innerHeight)) a.draw(dt, t);
-  }
-  if (running()) frame = requestAnimationFrame(loop);
-}
-
-function wake() {
-  if (frame === null && running()) {
-    last = performance.now();
-    frame = requestAnimationFrame(loop);
-  }
-}
-
-document.addEventListener("visibilitychange", wake);
-
-/** The window was shown or hidden (the `hub-visible` event): hidden, the loop
- *  stops at once; shown, it starts again. */
+/** A janela do hub está à vista? Sem canvases, só pausa as animações CSS. */
 export function setWindowShown(shown: boolean) {
-  windowShown = shown;
-  if (!shown && frame !== null) {
-    cancelAnimationFrame(frame);
-    frame = null;
-  }
-  wake();
+  document.documentElement.classList.toggle("bf-hub-hidden", !shown);
 }
-
-function add(a: Animated) {
-  live.add(a);
-  wake();
-}
-
-function fit(canvas: HTMLCanvasElement): { w: number; h: number; ctx: CanvasRenderingContext2D | null } {
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
-  const w = canvas.clientWidth;
-  const h = canvas.clientHeight;
-  if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
-    canvas.width = Math.round(w * dpr);
-    canvas.height = Math.round(h * dpr);
-  }
-  const ctx = canvas.getContext("2d");
-  ctx?.setTransform(dpr, 0, 0, dpr, 0, 0);
-  return { w, h, ctx };
-}
-
-/** "r,g,b" of each colour, read once: the particles ask every frame. */
-const channels = new Map<string, string>();
 
 function rgba(hex: string, alpha: number): string {
-  let rgb = channels.get(hex);
-  if (rgb === undefined) {
-    const [r, g, b] = hexToRGB(hex);
-    rgb = `${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)}`;
-    channels.set(hex, rgb);
-  }
-  return `rgba(${rgb},${Math.max(0, Math.min(1, alpha))})`;
+  const n = parseInt(hex.replace("#", ""), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
 }
 
-// ── The backdrop ──────────────────────────────────────────────────────────────
-
-interface Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  r: number;
-  depth: number;
-  phase: number;
-  white: boolean;
-}
-
-/** The deep black, the colour and the particles, on `canvas`; `pointerFrom` is
- *  the element whose pointer pushes the particles. */
-export function backdrop(canvas: HTMLCanvasElement, color: string, pointerFrom: HTMLElement, radius = 18) {
-  let particles: Particle[] = [];
-  let pointer: { x: number; y: number } | null = null;
-  let strength = 0;
-  pointerFrom.addEventListener("pointermove", (e) => {
-    const r = canvas.getBoundingClientRect();
-    pointer = { x: e.clientX - r.left, y: e.clientY - r.top };
-  });
-  pointerFrom.addEventListener("pointerleave", () => (pointer = null));
-
-  const seed = (w: number, h: number) => {
-    const count = Math.round(Math.min(90, Math.max(24, (w * h) / 2600)));
-    particles = Array.from({ length: count }, () => ({
-      x: Math.random() * w,
-      y: Math.random() * h,
-      vx: (Math.random() - 0.5) * 6,
-      vy: -2 - Math.random() * 6,
-      r: 0.5 + Math.random() * 1.4,
-      depth: 0.35 + Math.random() * 0.65,
-      phase: Math.random() * Math.PI * 2,
-      white: Math.random() < 0.35,
-    }));
-  };
-
-  add({
-    el: canvas,
-    draw(dt, t) {
-      const { w, h, ctx } = fit(canvas);
-      if (!ctx || w === 0) return;
-      if (particles.length === 0) seed(w, h);
-      strength += ((pointer ? 1 : 0) - strength) * Math.min(1, dt * 4);
-      ctx.clearRect(0, 0, w, h);
-      ctx.save();
-      ctx.beginPath();
-      ctx.roundRect(0, 0, w, h, radius);
-      ctx.clip();
-      const night = ctx.createLinearGradient(0, 0, 0, h);
-      night.addColorStop(0, "#0d1430");
-      night.addColorStop(1, "#05070f");
-      ctx.fillStyle = night;
-      ctx.fillRect(0, 0, w, h);
-      // Aurora: three soft ribbons that drift — the Bifrost over the page.
-      ctx.save();
-      ctx.globalCompositeOperation = "lighter";
-      for (const [i, c] of (["79,227,193", "90,169,255", "157,123,255"] as const).entries()) {
-        const g = ctx.createLinearGradient(0, 0, w, 0);
-        g.addColorStop(0, `rgba(${c},0)`);
-        g.addColorStop(0.5, `rgba(${c},0.10)`);
-        g.addColorStop(1, `rgba(${c},0)`);
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        const base = h * (0.28 + i * 0.12);
-        ctx.moveTo(0, base);
-        for (let x = 0; x <= w; x += 12) ctx.lineTo(x, base + Math.sin(x / 90 + t * 0.35 + i * 1.7) * h * 0.08);
-        for (let x = w; x >= 0; x -= 12) ctx.lineTo(x, base + h * 0.16 + Math.sin(x / 70 + t * 0.3 + i) * h * 0.06);
-        ctx.closePath();
-        ctx.fill();
-      }
-      ctx.restore();
-      const lin = ctx.createLinearGradient(w, 0, w * 0.35, h);
-      lin.addColorStop(0, rgba(color, 0.1));
-      lin.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = lin;
-      ctx.fillRect(0, 0, w, h);
-      const breath = 0.85 + 0.15 * Math.sin(t * 0.9);
-      const rad = ctx.createRadialGradient(w * 0.92, -h * 0.15, 0, w * 0.92, -h * 0.15, Math.max(w, h) * 0.55 * breath);
-      rad.addColorStop(0, rgba(color, 0.3 * breath));
-      rad.addColorStop(0.5, rgba(color, 0.08));
-      rad.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = rad;
-      ctx.fillRect(0, 0, w, h);
-
-      for (const p of particles) {
-        // Drift, always; the pointer pushes them away.
-        p.x += p.vx * dt * p.depth;
-        p.y += p.vy * dt * p.depth;
-        let alpha = (0.22 + 0.5 * (0.5 + 0.5 * Math.sin(t * (1.2 + p.depth) + p.phase))) * p.depth;
-        let r = p.r;
-        if (pointer && strength > 0.01) {
-          const dx = p.x - pointer.x;
-          const dy = p.y - pointer.y;
-          const d = Math.hypot(dx, dy);
-          if (d < 140 && d > 0.1) {
-            const push = (1 - d / 140) * 90 * strength * dt;
-            p.x += (dx / d) * push;
-            p.y += (dy / d) * push;
-          }
-          if (d < 200) {
-            const near = (1 - d / 200) * strength;
-            alpha += near * 0.6;
-            r *= 1 + near * 0.8;
-          }
-        }
-        if (p.y < -4) p.y = h + 4;
-        if (p.y > h + 4) p.y = -4;
-        if (p.x < -4) p.x = w + 4;
-        if (p.x > w + 4) p.x = -4;
-        const tint = p.white ? "#FFFFFF" : color;
-        if (r > 1.1) {
-          ctx.fillStyle = rgba(tint, Math.min(1, alpha) * 0.12);
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, r * 2.6, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        ctx.fillStyle = rgba(tint, Math.min(1, alpha));
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    },
-  });
-}
-
-// ── The Huginns ────────────────────────────────────────────────────────────────
-
-export interface MochiSpec {
-  color: string;
-  /** Body width in CSS pixels. */
-  size: number;
-  /** Where he starts along the floor, 0…1. */
-  start: number;
-  outfit?: Outfit;
-  state?: BotStateName;
-  /** False: he stays where he is (working, thinking, asleep). */
-  roams?: boolean;
-}
-
-const EMOTES: BotEmoteName[] = ["love", "happy", "wink", "proud", "surprised"];
-
-class Walker {
-  engine = new BotEngine();
-  x = 0;
-  target = 0;
-  dir = 1;
-  hop = 0;
-  hopV = 0;
-  pause = 1 + Math.random() * 2;
-  nextEvent = 2 + Math.random() * 4;
-  waving = 0;
-
-  constructor(public spec: MochiSpec) {
-    this.engine.bodyColor = hexToRGB(spec.color);
-    this.engine.setState(spec.state ?? "idle", true);
-    if (spec.outfit && spec.outfit !== "none") this.engine.setOutfit(spec.outfit, false);
-  }
-}
-
-/** The page's Huginns on the band's floor, in the right part of `canvas`. */
-export function troupe(canvas: HTMLCanvasElement, cast: MochiSpec[], width: number) {
-  const walkers = cast.map((spec) => new Walker(spec));
-  let pointer: { x: number; y: number } | null = null;
-  let placed = false;
-  canvas.addEventListener("pointermove", (e) => {
-    const r = canvas.getBoundingClientRect();
-    pointer = { x: e.clientX - r.left, y: e.clientY - r.top };
-  });
-  canvas.addEventListener("pointerleave", () => (pointer = null));
-  canvas.addEventListener("click", (e) => {
-    const r = canvas.getBoundingClientRect();
-    const px = e.clientX - r.left;
-    for (const w of walkers) {
-      if (Math.abs(px - w.x) < w.spec.size * 0.4) {
-        w.engine.slap();
-        w.hopV = 260;
-      }
-    }
-  });
-
-  add({
-    el: canvas,
-    draw(dt, t) {
-      const { w: cw, h: ch, ctx } = fit(canvas);
-      if (!ctx || cw === 0) return;
-      const left = Math.max(0, cw - width - 18);
-      const right = cw - 18;
-      if (!placed) {
-        placed = true;
-        for (const w of walkers) {
-          w.x = left + w.spec.size / 2 + (right - left - w.spec.size) * w.spec.start;
-          w.target = w.x;
-        }
-      }
-      ctx.clearRect(0, 0, cw, ch);
-      for (const w of walkers) {
-        const s = w.spec.size;
-        const lo = left + s / 2;
-        const hi = right - s / 2;
-        if (w.spec.roams !== false) {
-          if (Math.abs(w.target - w.x) < 1) {
-            w.pause -= dt;
-            if (w.pause <= 0) {
-              w.target = lo + Math.random() * Math.max(1, hi - lo);
-              w.pause = 1.5 + Math.random() * 3.5;
-            }
-          } else {
-            const step = Math.sign(w.target - w.x) * Math.min(Math.abs(w.target - w.x), 28 * dt);
-            w.x += step;
-            w.dir = Math.sign(step) || w.dir;
-            // A little bounce in the walk.
-            if (w.hop === 0 && w.hopV === 0) w.hopV = 70;
-          }
-        }
-        w.nextEvent -= dt;
-        if (w.nextEvent <= 0) {
-          w.nextEvent = 4 + Math.random() * 6;
-          const roll = Math.random();
-          if (roll < 0.35) w.hopV = 200;
-          else if (roll < 0.6) w.engine.triggerEmote(EMOTES[Math.floor(Math.random() * EMOTES.length)]);
-          else if (roll < 0.75) w.engine.greet();
-        }
-        // Hops: a simple ballistic jump.
-        if (w.hopV !== 0 || w.hop > 0) {
-          w.hopV -= 900 * dt;
-          w.hop = Math.max(0, w.hop + w.hopV * dt);
-          if (w.hop === 0 && w.hopV < 0) {
-            w.hopV = 0;
-            w.engine.squash();
-          }
-        }
-        // Eyes: the pointer when it is over the band, else where they walk.
-        if (pointer) {
-          w.engine.lookX = Math.max(-1, Math.min(1, (pointer.x - w.x) / 160));
-          w.engine.lookY = Math.max(-1, Math.min(1, (pointer.y - (ch - s * 0.6)) / 120));
-        } else {
-          w.engine.lookX = w.dir * 0.5;
-          w.engine.lookY = 0.1 + 0.1 * Math.sin(t + w.spec.start * 7);
-        }
-        w.engine.update(dt);
-        // `size` is the drawing's square, as on the Mac; the body is about 0.68 of it.
-        const box = s;
-        const floor = ch - 8;
-        ctx.save();
-        ctx.translate(w.x - box / 2, floor - box * 0.78 - w.hop);
-        // A soft shadow on the floor.
-        ctx.fillStyle = `rgba(0,0,0,${0.35 * (1 - Math.min(1, w.hop / 60))})`;
-        ctx.beginPath();
-        ctx.ellipse(box / 2, box * 0.78 + w.hop - 1, s * 0.3, s * 0.05, 0, 0, Math.PI * 2);
-        ctx.fill();
-        w.engine.draw(ctx, box, box);
-        ctx.restore();
-      }
-    },
-  });
-}
-
-/** One Huginn alone (the sidebar's logo, an empty page). */
-export function liveMochi(canvas: HTMLCanvasElement, color = "#F5F6F8", state: BotStateName = "idle") {
-  const engine = new BotEngine();
-  engine.bodyColor = hexToRGB(color);
-  engine.setState(state, true);
-  canvas.addEventListener("click", () => engine.slap());
-  let mouse: { x: number; y: number } | null = null;
-  window.addEventListener("pointermove", (e) => {
-    const r = canvas.getBoundingClientRect();
-    mouse = { x: e.clientX - (r.left + r.width / 2), y: e.clientY - (r.top + r.height / 2) };
-  });
-  add({
-    el: canvas,
-    draw(dt) {
-      const { w, h, ctx } = fit(canvas);
-      if (!ctx || w === 0) return;
-      if (mouse) {
-        engine.lookX = Math.max(-1, Math.min(1, mouse.x / 300));
-        engine.lookY = Math.max(-1, Math.min(1, mouse.y / 300));
-      }
-      engine.update(dt);
-      ctx.clearRect(0, 0, w, h);
-      engine.draw(ctx, w, h);
-    },
-  });
-  return engine;
-}
-
-// ── Page themes ───────────────────────────────────────────────────────────────
+/** Quem pousa na faixa de cada página (cor de destaque, tamanho, quando chega). */
+export interface RavenSpec { color: string; size: number; start: number; outfit?: Outfit; state?: BotStateName; roams?: boolean }
 
 export interface Theme {
   color: string;
-  cast: MochiSpec[];
+  cast: RavenSpec[];
 }
 
-const m = (color: string, size: number, start: number, extra: Partial<MochiSpec> = {}): MochiSpec => ({
+const m = (color: string, size: number, start: number, extra: Partial<RavenSpec> = {}): RavenSpec => ({
   color, size, start, ...extra,
 });
 
@@ -485,28 +114,51 @@ export function hero(page: string, title: string, subtitle: string | null, actio
   return el;
 }
 
-/** A card in a colour: the band's black and particles behind `content`. */
+/** Do estado do motor para o estado do corvo SVG. */
+function svgState(state: BotStateName): MascotState {
+  switch (state) {
+    case "sleeping": return "sleeping";
+    case "working": case "thinking": case "searching": return "thinking";
+    case "finished": return "success";
+    case "error": return "error";
+    case "question": case "approval": return "listening";
+    default: return "idle";
+  }
+}
+
+/** Painel entalhado: borda de ferro, cantos de nó em ouro, aurora no alto. */
 export function glowCard(color: string, ...content: (HTMLElement | string)[]): HTMLElement {
   const el = document.createElement("div");
-  el.className = "hub-glow";
-  el.style.setProperty("--glow-line", rgba(color, 0.18));
-  const canvas = document.createElement("canvas");
+  el.className = "hub-glow bf-panel";
+  el.style.setProperty("--panel-accent", color);
+  el.style.setProperty("--glow-line", rgba(color, 0.28));
+  for (const c of ["tl", "tr", "bl", "br"]) {
+    const k = document.createElement("i");
+    k.className = `bf-panel-knot ${c}`;
+    el.append(k);
+  }
   const inner = document.createElement("div");
   inner.className = "inner";
   inner.append(...content);
-  el.append(canvas, inner);
-  backdrop(canvas, color, el, 14);
+  el.append(inner);
   return el;
 }
 
-/** An empty page: a Huginn asleep, and a line. */
-export function emptyState(text: string, state: BotStateName = "sleeping", color = "#F5F6F8"): HTMLElement {
+/** Página vazia: um corvo (dormindo, pensando…) e uma linha. */
+export function emptyState(text: string, state: BotStateName = "sleeping", _color = "#F5F6F8"): HTMLElement {
   const el = document.createElement("div");
-  el.className = "hub-empty";
-  const canvas = document.createElement("canvas");
+  el.className = "hub-empty bf-empty";
+  const raven = new Mascot(state === "idle" ? "muninn" : "huginn");
+  raven.set(svgState(state));
   const p = document.createElement("div");
   p.textContent = text;
-  el.append(canvas, p);
-  liveMochi(canvas, color, state);
+  el.append(raven.el, p);
   return el;
+}
+
+/** O Huginn da marca, na barra lateral. */
+export function liveRaven(host: HTMLElement, state: BotStateName = "idle"): Mascot {
+  const raven = new Mascot("huginn", host);
+  raven.set(svgState(state));
+  return raven;
 }
