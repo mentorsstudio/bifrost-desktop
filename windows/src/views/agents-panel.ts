@@ -147,6 +147,8 @@ export function agentsPanel(a: ViewActions): AgentsPanel {
       if (found.length === 0 && !scanning && el.isConnected) void scan();
       list.replaceChildren(...sessions.map((s) => row(s, a, now)), ...extra.map((d) => detectedRow(d, a, now, hooked, () => { key = ""; panel.sync(); })));
       el.classList.toggle("is-empty", sessions.length + extra.length === 0);
+      // Três ou mais: linhas de uma só altura, para todas caberem sem rolar (Ollama incluído).
+      el.classList.toggle("dense", sessions.length + extra.length >= 3);
     },
   };
   return panel;
