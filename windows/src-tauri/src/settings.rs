@@ -517,7 +517,8 @@ mod tests {
   "mcpChat": { "server": "vps", "mode": "tool", "tool": "chat", "argument": "message", "extraArgs": { "a": 1 }, "statusTool": "s", "idArgument": "id", "timeoutSecs": 60, "includeHistory": false },
   "mcpServerEnabled": false,
   "mcpServerPort": 50000,
-  "mcpKnown": []
+  "mcpKnown": [],
+  "mcpSources": {}
 }"##;
 
     fn custom() -> Value {
@@ -1041,6 +1042,7 @@ mod tests {
                 "mcpServerEnabled",
                 "mcpServerPort",
                 "mcpKnown",
+                "mcpSources",
             ]
         );
         let _ = std::fs::remove_dir_all(&dir);
