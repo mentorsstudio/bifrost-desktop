@@ -122,6 +122,8 @@ pub struct PlayerState {
     pub repeat: bool,
     /// 0…100.
     pub volume: i32,
+    /// Quem toca: "spotify" ou "ytmusic" (YouTube Music no navegador ou PWA).
+    pub source: String,
 }
 
 impl Default for PlayerState {
@@ -136,6 +138,7 @@ impl Default for PlayerState {
             shuffle: false,
             repeat: false,
             volume: 50,
+            source: "spotify".into(),
         }
     }
 }
@@ -1355,6 +1358,20 @@ pub fn is_spotify_app(app_id: &str) -> bool {
     app_id.to_ascii_lowercase().contains("spotify")
 }
 
+/// O PWA do YouTube Music (Chrome/Edge: `…_crx_cinhimbnkkaeohfgghhklpknlkffjgod`)
+/// ou um app de desktop com "YouTube Music" no id.
+pub fn is_ytmusic_app(app_id: &str) -> bool {
+    let id = app_id.to_ascii_lowercase();
+    id.contains("cinhimbnkkaeohfgghhklpknlkffjgod") || id.contains("youtube-music") || id.contains("youtubemusic") || id.contains("youtube music")
+}
+
+/// Uma aba de navegador: só conta como YouTube Music se trouxer álbum (o
+/// YouTube comum não preenche o álbum; o music.youtube.com sim).
+pub fn is_browser_app(app_id: &str) -> bool {
+    let id = app_id.to_ascii_lowercase();
+    ["chrome", "msedge", "firefox", "brave", "opera", "vivaldi"].iter().any(|b| id.contains(b))
+}
+
 /// Windows durations and timeline positions: 100 ns ticks → seconds.
 pub fn ticks_to_secs(ticks: i64) -> f64 {
     ticks.max(0) as f64 / 10_000_000.0
@@ -1600,6 +1617,20 @@ mod win {
         (0..sessions.Size().ok()?)
             .filter_map(|i| sessions.GetAt(i).ok())
             .find(|s| s.SourceAppUserModelId().is_ok_and(|id| is_spotify_app(&id.to_string_lossy())))
+            .or_else(|| ytm_fallback(manager))
+    }
+
+    fn has_album(s: &Session) -> bool {
+        s.TryGetMediaPropertiesAsync().and_then(|op| op.get()).and_then(|p| p.AlbumTitle()).is_ok_and(|a| !a.to_string_lossy().trim().is_empty())
+    }
+
+    /// Sem Spotify: o YouTube Music (PWA, app ou aba com álbum).
+    fn ytm_fallback(manager: &Manager) -> Option<Session> {
+        let sessions = manager.GetSessions().ok()?;
+        (0..sessions.Size().ok()?).filter_map(|i| sessions.GetAt(i).ok()).find(|s| {
+            let id = s.SourceAppUserModelId().map(|id| id.to_string_lossy()).unwrap_or_default();
+            is_ytmusic_app(&id) || (is_browser_app(&id) && has_album(s))
+        })
     }
 
     // ── Reading ───────────────────────────────────────────────────────────────
@@ -1652,6 +1683,11 @@ mod win {
             }
             let props = match read {
                 Some((snap, props)) => {
+                    s.state.source = session
+                        .and_then(|x| x.SourceAppUserModelId().ok())
+                        .map(|id| if is_spotify_app(&id.to_string_lossy()) { "spotify" } else { "ytmusic" })
+                        .unwrap_or("spotify")
+                        .into();
                     s.state.running = true;
                     s.state.installed = true;
                     s.state.track = snap.track;
@@ -2075,6 +2111,10 @@ mod tests {
         assert!(is_spotify_app("SpotifyAB.SpotifyMusic_zpdnekdrzrea0!Spotify"));
         assert!(!is_spotify_app("Microsoft.ZuneMusic_8wekyb3d8bbwe!Microsoft.ZuneMusic"));
         assert!(!is_spotify_app("chrome.exe"));
+        assert!(is_ytmusic_app("Chrome._crx_cinhimbnkkaeohfgghhklpknlkffjgod"));
+        assert!(is_ytmusic_app("com.github.th-ch.youtube-music"));
+        assert!(!is_ytmusic_app("Spotify.exe"));
+        assert!(is_browser_app("MSEdge") && is_browser_app("chrome.exe") && !is_browser_app("Spotify.exe"));
     }
 
     #[test]

@@ -34,6 +34,8 @@ export interface SpotifyState {
   repeat: boolean;
   /** 0…100. */
   volume: number;
+  /** Quem toca: Spotify ou YouTube Music (sessão de mídia do Windows). */
+  source?: "spotify" | "ytmusic";
 }
 
 export const IDLE_SPOTIFY: SpotifyState = {

@@ -251,3 +251,9 @@
 .overview .sc-actions { flex-wrap: wrap !important; row-gap: 5px; }
 .overview .sc-actions .sc-btn { flex: 0 0 auto; overflow: visible; text-overflow: clip; }
 .overview .sc-meta { font-size: 10.5px; }
+
+/* Fase 21: o painel de agentes encolhe para o conteúdo; as pílulas sobem. */
+.card.has-chips .ag-panel { height: auto; max-height: calc(100% - 34px); flex: 0 1 auto; }
+.card.has-chips:not(.is-empty) { display: flex; flex-direction: column; }
+.ag-row.k-idle { opacity: .72; }
+.ag-row.k-idle .ag-status { background: transparent; }

@@ -3032,3 +3032,5 @@ html[data-dir="rtl"] #views :is(.bubble, .reply .md-p, .reply .md-h, .reply .md-
 .pill.icon-only { justify-content: center; }
 .pill.icon-only .lbl { display: none; }
 .pill.icon-only .mini { margin-left: 0; }
+.mini.media-mini { width: 24px; height: 24px; display: inline-grid; place-items: center; flex: 0 0 24px; }
+.media-mark { display: block; shape-rendering: geometricPrecision; }

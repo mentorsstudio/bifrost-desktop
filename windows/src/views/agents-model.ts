@@ -101,7 +101,7 @@ export function agentLabel(s: { id: string; name: string }): string {
   return s.name;
 }
 
-export interface DetectedLike { id: string; agent: string; kind: "cli" | "editor" | "ollama"; folder: string | null }
+export interface DetectedLike { id: string; agent: string; kind: "cli" | "editor" | "ollama" | "app" | "idle"; folder: string | null }
 
 /** Id da pílula de sessão com hooks que cobre esse agente. */
 function hookedId(agent: string): string[] {
@@ -125,14 +125,14 @@ export function mergeDetected<T extends DetectedLike>(live: SessionLike[], found
     seen.add(k);
     out.push(d);
   }
-  const rank = { cli: 0, ollama: 1, editor: 2 } as const;
+  const rank = { cli: 0, ollama: 1, editor: 2, app: 3, idle: 4 } as const;
   return out.sort((a, b) => rank[a.kind] - rank[b.kind]);
 }
 
-export const DETECTED_LABEL = { cli: N_("running"), editor: N_("open"), ollama: N_("model loaded") } as const;
+export const DETECTED_LABEL = { cli: N_("running"), editor: N_("open"), ollama: N_("model loaded"), app: N_("running"), idle: N_("installed") } as const;
 export const AGENT_COLOR: Record<string, string> = {
   claude: "#E07950", codex: "#2DD4BF", gemini: "#8AB4F8", ollama: "#F5F5F5",
-  vscode: "#3EA6FF", cursor: "#C0C4CC", antigravity: "#B47CFF", windsurf: "#5EF2C9",
+  vscode: "#3EA6FF", "claude-app": "#E07950", hermes: "#F5A524", grok: "#E8E8E8", lmstudio: "#7C9CFF", cursor: "#C0C4CC", antigravity: "#B47CFF", windsurf: "#5EF2C9",
 };
 /** Codex e Gemini aceitam hooks do Bifrost; um clique instala. */
 export const HOOKABLE = new Set(["codex", "gemini"]);

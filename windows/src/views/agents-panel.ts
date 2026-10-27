@@ -62,7 +62,7 @@ function detectedRow(d: DetectedAgent, a: ViewActions, now: number, hooked: Set<
   icon.style.setProperty("--ag", AGENT_COLOR[d.agent] ?? "#9AA3B8");
   const status = h("span", { class: "ag-status s-found", text: t(d.kind === "ollama" && !d.folder ? DETECTED_LABEL.cli : DETECTED_LABEL[d.kind]) });
   status.style.setProperty("--st", AGENT_COLOR[d.agent] ?? "#9AA3B8");
-  const where = d.kind === "ollama" ? (d.folder ?? t("No model loaded")) : [d.folder ? `📁 ${d.folder}` : null, d.host].filter(Boolean).join(" · ");
+  const where = d.kind === "ollama" ? (d.folder ?? t("No model loaded")) : d.kind === "idle" || d.kind === "app" ? [d.folder, d.host].filter(Boolean).join(" · ") : [d.folder ? `📁 ${d.folder}` : null, d.host].filter(Boolean).join(" · ");
   const acts: HTMLElement[] = [];
   let hookBtn: HTMLElement | null = null;
   if (d.window != null) acts.push(iconButton(t("Go to the window"), ICONS.arrowUpRight, () => void Bridge.agentsFocus(d.window!)));
@@ -92,7 +92,7 @@ function detectedRow(d: DetectedAgent, a: ViewActions, now: number, hooked: Set<
       h("span", { class: "ag-line" }, h("b", { text: d.name }), hookBtn ?? status),
       h("span", { class: "ag-sub" },
         h("span", { class: "ag-did", text: where || t("No activity yet") }),
-        h("span", { class: "ag-meta", text: d.kind === "editor" ? "" : elapsed((now - since) / 1000) }))),
+        h("span", { class: "ag-meta", text: d.kind === "editor" || d.kind === "idle" || d.kind === "app" ? "" : elapsed((now - since) / 1000) }))),
     h("span", { class: "ag-actions" }, ...acts));
   if (d.window != null) el.addEventListener("click", () => void Bridge.agentsFocus(d.window!));
   return el;

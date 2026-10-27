@@ -15,7 +15,7 @@ import {
   SPOTIFY_GREEN, SPOTIFY_ID, Spotify, currentArtwork, formatTime, isAd, spotifyPosition, volumeLevel, withPlaying,
   type SpotifyTrack,
 } from "../core/spotify";
-import { createMiniBot } from "../huginn/minibots";
+import { mediaMark, MEDIA_NAME } from "./media-marks";
 import { pillDefinition } from "../core/pills";
 import { N_, t } from "../i18n/i18n";
 
@@ -114,8 +114,9 @@ function pillButton(color: string, icon: string, onClick: () => void): HTMLEleme
  */
 export function buildSpotifyPill(task: AgentTask, onTap: () => void): SpotifyPillHost {
   const color = task.color;
-  const mini = createMiniBot(task, 24, () => State.spotifyPlaying);
-  const label = h("span", { class: "lbl", text: task.name });
+  let source: "spotify" | "ytmusic" = Spotify.state.source ?? "spotify";
+  const mini = h("span", { class: "mini media-mini" }, mediaMark(source, 18));
+  const label = h("span", { class: "lbl", text: MEDIA_NAME[source] });
   const playBtn = pillButton(color, ICONS.play, togglePlay);
   const nextBtn = pillButton(color, ICONS.forward, () => void Bridge.spotifyControl("next"));
   const controls = h("div", { class: "np-pill-controls" }, playBtn, nextBtn);
@@ -126,9 +127,14 @@ export function buildSpotifyPill(task: AgentTask, onTap: () => void): SpotifyPil
 
   const sync = () => {
     const s = Spotify.state;
-    const current = State.tasks.find((x) => x.id === task.id);
-    const name = current?.name ?? task.name;
+    const src = s.source ?? "spotify";
+    if (src !== source) { source = src; clear(mini); mini.append(mediaMark(src, 18)); }
+    const name = MEDIA_NAME[src];
     if (label.textContent !== name) label.textContent = name;
+    pill.title = s.track ? `${name} — ${s.track.title}` : name;
+    // O nome nunca aparece cortado: sem espaço, só a marca (o title diz tudo).
+    pill.classList.remove("icon-only");
+    if (label.clientWidth > 0 && label.scrollWidth > label.clientWidth + 1) pill.classList.add("icon-only");
     const show = hovered && s.track != null;
     pill.classList.toggle("controls", show);
     if (playing !== s.playing) {

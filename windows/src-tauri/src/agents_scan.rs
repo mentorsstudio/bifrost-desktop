@@ -219,7 +219,141 @@ pub async fn scan() -> Vec<Detected> {
         }
     }
     out.extend(ollama_row(models, running));
+    let exes: Vec<String> = procs.iter().map(|(_, _, e)| e.to_ascii_lowercase()).collect();
+    let present: Vec<String> = out.iter().map(|d| d.agent.clone()).collect();
+    out.extend(installed_rows(&installed_cached(), &exes, &present));
     out
+}
+
+/// Um agente instalado no PC (mesmo parado). `last` = a última sessão, se houver.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Installed {
+    pub agent: &'static str,
+    pub name: &'static str,
+    /// Executáveis que, rodando, fazem a linha dizer "em execução".
+    pub procs: &'static [&'static str],
+    pub last: Option<String>,
+    pub note: Option<String>,
+}
+
+/// Instalados → linhas: os que já aparecem (CLI num terminal, editor aberto,
+/// Ollama) não repetem; os demais saem como `app` (rodando) ou `installed`.
+pub fn installed_rows(list: &[Installed], exes: &[String], present: &[String]) -> Vec<Detected> {
+    list.iter()
+        .filter(|i| !present.iter().any(|p| p == i.agent))
+        .map(|i| {
+            let running = i.procs.iter().any(|p| exes.iter().any(|e| e == p));
+            Detected {
+                id: format!("installed:{}", i.agent),
+                agent: i.agent.into(),
+                kind: if running { "app" } else { "idle" },
+                name: i.name.into(),
+                folder: i.last.clone(),
+                window: None,
+                host: i.note.clone(),
+            }
+        })
+        .collect()
+}
+
+/// A pasta da sessão mais recente de um diretório de transcrições `.jsonl`
+/// (Claude Code: `~/.claude/projects/*/*.jsonl`; Codex: `~/.codex/sessions/…`).
+/// Lê só o começo do arquivo, atrás de `"cwd":"…"`.
+pub fn cwd_in(text: &str) -> Option<String> {
+    let i = text.find("\"cwd\":")?;
+    let rest = text[i + 6..].trim_start().strip_prefix('"')?;
+    let mut out = String::new();
+    let mut esc = false;
+    for c in rest.chars() {
+        if esc { out.push(c); esc = false; } else if c == '\\' { esc = true; } else if c == '"' { break; } else { out.push(c); }
+    }
+    (!out.is_empty()).then_some(out)
+}
+
+fn newest_jsonl(dir: &std::path::Path, depth: u32) -> Option<(std::time::SystemTime, std::path::PathBuf)> {
+    let mut best: Option<(std::time::SystemTime, std::path::PathBuf)> = None;
+    for e in std::fs::read_dir(dir).ok()?.flatten() {
+        let p = e.path();
+        let Ok(m) = e.metadata() else { continue };
+        let cand = if m.is_dir() { if depth == 0 { None } else { newest_jsonl(&p, depth - 1) } }
+            else if p.extension().is_some_and(|x| x == "jsonl") { m.modified().ok().map(|t| (t, p.clone())) } else { None };
+        if let Some(c) = cand { if best.as_ref().is_none_or(|b| c.0 > b.0) { best = Some(c); } }
+    }
+    best
+}
+
+fn last_session(dir: &std::path::Path, depth: u32) -> Option<String> {
+    use std::io::Read;
+    let (when, file) = newest_jsonl(dir, depth)?;
+    let mut buf = vec![0u8; 64 * 1024];
+    let n = std::fs::File::open(&file).ok()?.read(&mut buf).ok()?;
+    let cwd = cwd_in(&String::from_utf8_lossy(&buf[..n]));
+    let folder = cwd.as_deref().map(|c| c.trim_end_matches(['\\', '/']).rsplit(['\\', '/']).next().unwrap_or(c).to_string());
+    let ago = when.elapsed().ok().map(|d| ago_text(d.as_secs())).unwrap_or_default();
+    Some(match folder { Some(f) => format!("última sessão: {f} · {ago}"), None => format!("última sessão {ago}") })
+}
+
+pub fn ago_text(secs: u64) -> String {
+    match secs {
+        0..=59 => "agora".into(),
+        60..=3599 => format!("há {} min", secs / 60),
+        3600..=86_399 => format!("há {} h", secs / 3600),
+        _ => format!("há {} d", secs / 86_400),
+    }
+}
+
+/// O que está instalado (cache de 60 s: só olha pastas, nada roda).
+fn installed_cached() -> Vec<Installed> {
+    use std::sync::Mutex;
+    static CACHE: Mutex<Option<(std::time::Instant, Vec<Installed>)>> = Mutex::new(None);
+    if let Some((at, v)) = CACHE.lock().unwrap().as_ref() {
+        if at.elapsed() < std::time::Duration::from_secs(60) { return v.clone(); }
+    }
+    let v = installed_now();
+    *CACHE.lock().unwrap() = Some((std::time::Instant::now(), v.clone()));
+    v
+}
+
+fn on_path(names: &[&str]) -> bool {
+    let Some(path) = std::env::var_os("PATH") else { return false };
+    std::env::split_paths(&path).any(|d| names.iter().any(|n| d.join(n).is_file()))
+}
+
+fn installed_now() -> Vec<Installed> {
+    use std::path::PathBuf;
+    let env = |k: &str| std::env::var_os(k).map(PathBuf::from);
+    let home = env("USERPROFILE").or_else(|| env("HOME")).unwrap_or_default();
+    let appdata = env("APPDATA").unwrap_or_else(|| home.join("AppData/Roaming"));
+    let local = env("LOCALAPPDATA").unwrap_or_else(|| home.join("AppData/Local"));
+    let progs = local.join("Programs");
+    let any = |ps: &[PathBuf]| ps.iter().any(|p| p.exists());
+    let vsext = |needle: &str| [".vscode", ".cursor", ".windsurf"].iter().any(|d| {
+        std::fs::read_dir(home.join(d).join("extensions")).map(|r| r.flatten().any(|e| e.file_name().to_string_lossy().to_ascii_lowercase().starts_with(needle))).unwrap_or(false)
+    });
+    let mut v = Vec::new();
+    let mut add = |agent, name, procs, ok: bool, last: Option<String>, note: Option<String>| {
+        if ok { v.push(Installed { agent, name, procs, last, note }); }
+    };
+    let claude_cli = any(&[home.join(".local/bin/claude.exe"), home.join(".local/bin/claude"), appdata.join("npm/claude.cmd")]) || on_path(&["claude.exe", "claude.cmd", "claude"]);
+    let claude_ext = vsext("anthropic.claude-code");
+    add("claude", "Claude Code", &[], claude_cli || claude_ext, last_session(&home.join(".claude/projects"), 1),
+        (claude_ext && !claude_cli).then(|| "extensão do VS Code".to_string()).or_else(|| (claude_cli && claude_ext).then(|| "CLI + extensão do VS Code".into())));
+    let claude_app = any(&[local.join("AnthropicClaude"), progs.join("Claude")])
+        || std::fs::read_dir(local.join("Packages")).map(|r| r.flatten().any(|e| e.file_name().to_string_lossy().to_ascii_lowercase().starts_with("claude"))).unwrap_or(false);
+    add("claude-app", "Claude (app)", &["claude.exe"], claude_app, None, None);
+    add("codex", "Codex", &["codex.exe"], any(&[progs.join("OpenAI/Codex"), appdata.join("npm/codex.cmd")]) || on_path(&["codex.exe", "codex.cmd"]),
+        last_session(&home.join(".codex/sessions"), 3), None);
+    add("gemini", "Gemini CLI", &[], any(&[appdata.join("npm/gemini.cmd")]) || on_path(&["gemini.exe", "gemini.cmd", "gemini"]), None, None);
+    add("ollama", "Ollama", &["ollama.exe", "ollama app.exe"], any(&[progs.join("Ollama")]) || on_path(&["ollama.exe", "ollama"]), None, None);
+    add("vscode", "VS Code", &["code.exe"], any(&[progs.join("Microsoft VS Code")]) || on_path(&["code.cmd"]),
+        None, { let mut x = Vec::new(); for (n, l) in [("github.copilot", "Copilot"), ("saoudrizwan.claude-dev", "Cline"), ("continue.continue", "Continue"), ("rooveterinaryinc.roo-cline", "Roo")] { if vsext(n) { x.push(l); } } (!x.is_empty()).then(|| x.join(", ")) });
+    add("cursor", "Cursor", &["cursor.exe"], any(&[progs.join("cursor")]), None, None);
+    add("windsurf", "Windsurf", &["windsurf.exe"], any(&[progs.join("Windsurf")]), None, None);
+    add("antigravity", "Antigravity", &["antigravity.exe"], any(&[progs.join("Antigravity")]), None, None);
+    add("lmstudio", "LM Studio", &["lm studio.exe"], any(&[progs.join("LM Studio"), home.join(".lmstudio")]), None, None);
+    add("hermes", "Hermes", &["hermes.exe"], any(&[local.join("hermes/bin/hermes.exe")]) || on_path(&["hermes.exe"]), None, None);
+    add("grok", "Grok", &["grok.exe"], any(&[home.join(".grok/bin/grok.exe")]) || on_path(&["grok.exe"]), None, None);
+    v
 }
 
 /// O branch do repositório que contém `dir` (lendo `.git/HEAD`, subindo pastas).
@@ -253,6 +387,22 @@ pub fn branch_from_head(head: &str) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn installed_rows_and_cwd() {
+        assert_eq!(cwd_in(r#"{"type":"x","cwd":"D:\\Projetos\\blade","y":1}"#).as_deref(), Some("D:\\Projetos\\blade"));
+        assert_eq!(cwd_in("nada"), None);
+        let list = vec![
+            Installed { agent: "claude", name: "Claude Code", procs: &[], last: Some("última sessão: blade · há 2 h".into()), note: None },
+            Installed { agent: "ollama", name: "Ollama", procs: &["ollama.exe"], last: None, note: None },
+            Installed { agent: "hermes", name: "Hermes", procs: &["hermes.exe"], last: None, note: None },
+        ];
+        let rows = installed_rows(&list, &["hermes.exe".into()], &["ollama".into()]);
+        assert_eq!(rows.len(), 2);
+        assert_eq!(rows[0].kind, "idle");
+        assert_eq!(rows[1].kind, "app");
+        assert_eq!(ago_text(7200), "há 2 h");
+    }
+
     #[test]
     fn head_gives_branch() {
         assert_eq!(super::branch_from_head("ref: refs/heads/paulo-mcp\n").as_deref(), Some("paulo-mcp"));

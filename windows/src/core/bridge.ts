@@ -592,7 +592,7 @@ export interface HookStatus {
 export interface DetectedAgent {
   id: string;
   agent: string;
-  kind: "cli" | "editor" | "ollama";
+  kind: "cli" | "editor" | "ollama" | "app" | "idle";
   name: string;
   folder: string | null;
   window: number | null;

@@ -814,3 +814,9 @@ Ferramentas baixadas ficam em `%LOCALAPPDATA%\Bifrost\tools`.
 - **Cartão de sessão**: resumo com linha própria (2 linhas + title), botões compactos numa fileira abaixo.
 - **Ilha flutuante**: sem AppBar e sem barra nativa; ao iniciar, uma AppBar temporária é registrada/removida para o Explorer soltar a faixa de versões antigas. Vigia de 500 ms (topmost, volta após Win+D/Explorer, tela cheia real — maximizada não conta). A compacta nunca recolhe. Cliques fora da forma atravessam (cursor poll).
 - **QA visual**: halo de hover com raio diferente, halo dentro de grupo, célula com borda em grupo com contorno, raio do ink × aba, colisão de texto (glifos por `Range`, ≥ 6 px da borda e fora da curva) e página vazia abaixo do cabeçalho; Conversor e anel (abrindo, imagens, hover, sub, PDFs, progresso, pronto, erro) a 100/125/150 %.
+
+### 10.21 Fase 21 — rótulos inteiros, agentes instalados, marcas de mídia
+
+- **Botões nunca cortam.** Session card com rótulos curtos (Pasta / Conversar / Ajustes) e o nome completo em `title`/`aria-label`; a fileira quebra linha e o cartão cresce. Pílulas que não cabem viram só o ícone (`.pill.icon-only`). QA nova: `button-cut`.
+- **Agentes neste PC.** `agents_scan::installed_now()` olha (só leitura, cache de 60 s) PATH, `%LOCALAPPDATA%\Programs`, `%APPDATA%\npm`, `Packages\Claude*`, `~/.local/bin`, `~/.grok`, `%LOCALAPPDATA%\hermes` e as extensões do VS Code/Cursor. Cada agente sai como `app` (rodando) ou `idle` ("instalado"); Claude Code e Codex trazem a última sessão (`cwd` do `.jsonl` mais novo). O painel encolhe e as pílulas sobem.
+- **Mídia.** Marcas do Spotify e do YouTube Music em SVG nó a nó. Sem Spotify, a sessão de mídia do Windows aceita o PWA do YouTube Music (`_crx_cinhimbnkkaeohfgghhklpknlkffjgod`), apps "youtube-music" e abas de navegador com álbum; `PlayerState.source` diz quem toca.
