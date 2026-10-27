@@ -136,7 +136,7 @@ body.bf-pair .bf-muninn-perch { opacity: 1; transform: none; pointer-events: aut
 /* ── Fase 19: botões e caixas consistentes nas configurações ──
    Primário: um só tom do tema (sem o degradê arco-íris). Secundário: superfície
    com fio fino. Mesmo raio, mesma altura. Caixas de seleção desenhadas, no tema. */
-body.settings-window button:not(.hub-item):not(.tab):not(.toggle):not(.switch):not([role="switch"]):not(.color-dot):not(.th-card):not(.mp-row):not(.cmp-icon):not(.cmp-send):not(.cmp-model):not(.cmp-menu-item) {
+body.settings-window button:not(.hub-item):not(.tab):not(.hub-segmented > *):not(.toggle):not(.switch):not([role="switch"]):not(.color-dot):not(.th-card):not(.mp-row):not(.cmp-icon):not(.cmp-send):not(.cmp-model):not(.cmp-menu-item) {
   min-height: 30px; padding: 0 14px; border-radius: 9px !important; font-weight: 600; font-size: 12.5px;
   background: rgba(var(--tk-eef2ff-rgb, 238, 242, 255), .06) !important; color: var(--tk-eef2ff, #eef2ff) !important;
   border: 1px solid rgba(var(--tk-eef2ff-rgb, 238, 242, 255), .12) !important;
@@ -179,3 +179,43 @@ body.settings-window input[type="checkbox"]:checked::after { transform: translat
 @media (max-width: 1320px) { .hub-meta .hub-version { display: none !important; } }
 /* Fase 19: avisos/detalhes vazios não ocupam a coluna da direita (o "risquinho" ao lado do interruptor). */
 body.settings-window section > div:empty, body.settings-window section > p:empty { display: none !important; }
+
+/* ── Fase 20: uma forma só por botão, em todas as janelas ──
+   Reset: sem aparência nativa, sem contorno quadrado; todas as camadas herdam o
+   raio. Em grupos com indicador (ink) e em seletores segmentados, a célula não
+   tem caixa própria nem halo de hover: o único desenho é o do grupo/ink. */
+button, [role="button"], [role="tab"], .chip, .pill, .badge, .hub-segmented > * {
+  -webkit-appearance: none; appearance: none;
+}
+:where(button, [role="button"], [role="tab"], .chip, .pill)::before,
+:where(button, [role="button"], [role="tab"], .chip, .pill)::after { border-radius: inherit; }
+:where(button, [role="button"], [role="tab"], .chip, .pill):focus { outline: none; }
+:where(button, [role="button"], [role="tab"], .chip, .pill):focus-visible {
+  outline: none !important; box-shadow: 0 0 0 2px var(--bf-aurora-1, var(--tk-5ef2c9, #5ef2c9)) !important;
+}
+/* Células de grupos com ink: raio do ink, sem halo, sem fundo/borda/sombra. */
+.m-ink-hub .hub-item { border-radius: 17px !important; }
+.m-ink-tabs .tab, #header .m-ink-tabs .tab { border-radius: 11px !important; }
+.m-has-ink > :not(.m-ink)::before, .m-has-ink .tab::before, .m-has-ink .hub-item::before,
+.hub-segmented > button::before, .seg > button::before { display: none !important; }
+.m-has-ink .hub-item, .m-has-ink .tab { border: 0 !important; box-shadow: none !important; }
+.m-has-ink .hub-item:focus-visible, .m-has-ink .tab:focus-visible { box-shadow: inset 0 0 0 2px var(--bf-aurora-1, #5ef2c9) !important; }
+/* Segmentado (Semana · Mês · Tudo): uma cápsula com contorno; células lisas;
+   a escolhida ganha só um preenchimento com o raio de dentro (raio − padding). */
+body.settings-window .hub-segmented { border-radius: 11px; padding: 3px; gap: 2px; }
+body.settings-window .hub-segmented > button {
+  border: 0 !important; box-shadow: none !important; background: transparent !important;
+  border-radius: 8px !important; min-height: 26px; padding: 0 14px;
+}
+body.settings-window .hub-segmented > button:hover:not(.on) { background: rgba(var(--tk-eef2ff-rgb, 238, 242, 255), .05) !important; }
+body.settings-window .hub-segmented > button.on { background: rgba(var(--tk-eef2ff-rgb, 238, 242, 255), .14) !important; }
+body.settings-window .hub-segmented > button:focus-visible { box-shadow: inset 0 0 0 2px var(--bf-aurora-1, #5ef2c9) !important; }
+
+/* ── Fase 20: regra de colisão — texto nunca encosta na curva ──
+   Pílulas/chips: respiro lateral ≥ raio/2 + 8 px; largura pelo conteúdo, com
+   reticências (e title) quando apertar. */
+.hub-status { padding: 9px 16px 9px 14px; border-radius: 11px; width: fit-content; max-width: 100%; min-width: 0; box-sizing: border-box; }
+.hub-meta .hub-status { max-width: 300px; overflow: visible; }
+.hub-status .hub-status-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hub-status .dot { flex: none; }
+:where(.chip, .fl-quick-chip, .bf-chip) { padding-inline: max(10px, 1em); min-width: 0; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
