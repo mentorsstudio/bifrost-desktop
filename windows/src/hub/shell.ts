@@ -13,8 +13,9 @@ export function animatePage(page: HTMLElement): void {
     const raw = (b.textContent ?? "").trim();
     if (!/^[\d.]+$/.test(raw)) continue;
     const n = Number(raw.replace(/\./g, ""));
+    // O contador começa depois da entrada da página, para não pedir layout durante ela.
     b.textContent = "0";
-    tweenNumber(b, n);
+    setTimeout(() => tweenNumber(b, n), Durations.slow);
   }
 }
 import "../theme/bifrost.css";
@@ -188,14 +189,15 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
       // Dois quadros: o primeiro faz o layout/pintura escondidos, o segundo já é só composição.
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       if (token !== rendering) { page_.remove(); return; }
-      old!.classList.add("m-leaving");
     }
+    // Sem crossfade de duas páginas inteiras (pintura dobrada em raster de software):
+    // a antiga sai de uma vez e só a nova entra, numa camada própria (opacity/transform).
+    for (const el of [...stage.children]) { if (el !== page_) el.remove(); }
     scroll.scrollTop = 0;
     page_.classList.remove("m-premount");
     page_.classList.add("m-entering");
     animatePage(page_);
     if (motion) await new Promise((r) => setTimeout(r, Durations.slow));
-    for (const el of [...stage.children]) { if (el === page_) break; el.remove(); }
     page_.classList.remove("m-entering");
   }
 
