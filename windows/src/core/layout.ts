@@ -15,6 +15,7 @@ export type IslandViewName =
   | "upload"
   | "uploading"
   | "choose"
+  | "convert"
   | "mail"
   | "prompt"
   | "searching"
@@ -83,6 +84,8 @@ export const VIEW_LAYOUTS: Record<IslandViewName, ViewLayout> = {
   // layout says 118 while its own comment says 103; the comment matches the spec.
   uploading: { height: 176, botX: 46, botY: 103, botDiameter: 20, agentMode: "none" },
   choose: { height: 176, botX: 60, botY: 101, botDiameter: 52, agentMode: "column" },
+  // Conversor: o arquivo solto, os formatos e "Enviar para a IA" (src/filee/island.ts).
+  convert: { height: 196, botX: 56, botY: null, botDiameter: 48, agentMode: "column" },
   mail: { height: 240, botX: 56, botY: null, botDiameter: 46, agentMode: "column" },
   prompt: { height: 160, botX: 52, botY: null, botDiameter: 44, agentMode: "column" },
   searching: { height: 160, botX: 52, botY: null, botDiameter: 44, agentMode: "column" },

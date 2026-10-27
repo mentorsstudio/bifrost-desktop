@@ -152,6 +152,7 @@ export class Island {
         this.setView("prompt");
       },
       cancel: () => this.discardDrop(),
+      convert: () => this.setView("convert"),
     });
     const views = h("div", { id: "views" }, ...[...this.views.values()].map((v) => v.el));
     const content = h("div", { id: "content" }, this.header.el, views);

@@ -67,6 +67,20 @@ bytes = "1"
 tower-service = "0.3"
 tokio-util = "0.7"
 
+# Conversor (Filee no Bifrost, src/convert): tudo offline e de licença permissiva.
+# image (MIT/Apache): PNG/JPG/WEBP/BMP/TIFF/ICO/GIF. resvg (Apache/MIT): SVG → PNG.
+# lopdf (MIT): juntar, dividir, comprimir PDF e imagens → PDF. pdfium-render
+# (MIT/Apache): PDF → imagens/texto com o pdfium.dll baixado sob demanda.
+# zip/tar/flate2/sevenz-rust2 (MIT/Apache): arquivos compactados.
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "bmp", "tiff", "ico", "gif"] }
+resvg = "0.45"
+lopdf = "0.38"
+pdfium-render = { version = "0.9", default-features = false, features = ["pdfium_latest", "thread_safe", "image_latest"] }
+zip = { version = "2.4", default-features = false, features = ["deflate"] }
+tar = "0.4"
+flate2 = "1"
+sevenz-rust2 = "0.20"
+
 [target.'cfg(windows)'.dependencies]
 keyring = { version = "3", features = ["windows-native"] }
 # The island's file drop reads paths straight from WebView2 (webview_drop.rs).
@@ -102,6 +116,11 @@ windows = { version = "0.61", features = [
   "Win32_UI_WindowsAndMessaging",
   # Flow dictation's keyboard hook.
   "Win32_System_LibraryLoader",
+  # Conversor: o item sob o cursor (UI Automation) e "Escolher arquivos…".
+  "Win32_UI_Accessibility",
+  "Win32_UI_Controls_Dialogs",
+  # O ícone do arquivo no miolo do anel (SHGetFileInfoW).
+  "Win32_Storage_FileSystem",
 ] }
 # The clipboard for Flow dictation, kept out of the clipboard history. MIT/Apache-2.0.
 arboard = { version = "3.6", default-features = false }

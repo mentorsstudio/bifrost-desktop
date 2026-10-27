@@ -8,9 +8,11 @@ mod claude;
 mod cli_chat;
 mod codex_plan;
 mod config_file;
+mod convert;
 mod desktop;
 mod files;
 mod flow;
+mod gesture;
 mod github;
 mod hooks;
 mod i18n;
@@ -1040,6 +1042,10 @@ pub fn run() {
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             // `bifrost-desktop --shortcut <action>`: what a desktop's own keyboard
             // settings run where we can't listen for keys ourselves (Wayland).
+            // `--filee` / `--filee-ask`: o menu "Bifrost ›" do Explorador.
+            if gesture::handle_args(app, &argv) {
+                return;
+            }
             match shortcuts::from_args(&argv) {
                 Some(action) => shortcuts::dispatch(app, action),
                 // Opening Bifrost again (its shortcut, the Start menu) shows its window.
@@ -1063,6 +1069,21 @@ pub fn run() {
         .manage(shortcuts::Registry::default())
         .manage(recap::load())
         .invoke_handler(tauri::generate_handler![
+            convert::convert_plan,
+            convert::convert_tools,
+            convert::convert_install_tool,
+            convert::convert_start,
+            convert::convert_cancel,
+            convert::convert_reveal,
+            convert::convert_extract_text,
+            convert::convert_prefs,
+            convert::convert_set_prefs,
+            convert::convert_pick_files,
+            gesture::filee_menu_action,
+            gesture::filee_menu_close,
+            gesture::filee_menu_radius,
+            gesture::filee_menu_demo,
+            gesture::convert_take_pending,
             boot,
             notch::notch_bar_color,
             agents_detect,
@@ -1250,10 +1271,13 @@ pub fn run() {
             tray::build(&handle)?;
             // Before the island: see create_settings_window.
             create_settings_window(&handle);
+            // O corvo do gesto Ctrl + botão direito (Conversor), pela mesma regra.
+            gesture::create_window(&handle);
             // Same rule for Huginn's desktop window and the dictation pill.
             desktop::setup(&handle);
             flow::setup(&handle);
             notes::setup(&handle);
+            gesture::setup(&handle);
 
             if let Some(win) = island::window(&handle) {
                 // Where Tauri takes the drop itself (Linux), its paths are the

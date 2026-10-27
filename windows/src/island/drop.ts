@@ -9,6 +9,7 @@ import type { IslandViewName } from "../core/layout";
 import type { BotEngine } from "../bifrost/raven";
 import { USC, UploadSeq } from "../upload/sequence";
 import { fileNameOf, uploadCues, type UploadMarks } from "./upload-steps";
+import { FileeIsland } from "../filee/island";
 
 /** As três views que a sequência domina; sair delas para o motor. */
 export const UPLOAD_VIEWS: ReadonlySet<IslandViewName> = new Set(["upload", "uploading", "choose"]);
@@ -64,6 +65,8 @@ export class DropFlow {
     const name = fileNameOf(path);
     State.droppedFile = { name, path };
     State.promptContext = { kind: "file", name, path };
+    FileeIsland.original = [path];
+    FileeIsland.pendingPrompt = null;
     State.chatHistory = [];
     void Bridge.chatReset();
     UploadSeq.performDrop(State.uploadDuration);

@@ -40,6 +40,7 @@ import { activePillsSection } from "./page-pills";
 import { localSection } from "./page-chat";
 import { integrationsSection, whatsappSections } from "./page-integrations";
 import { generalSection } from "./page-general";
+import { fileeSection } from "./page-filee";
 import { charactersSection, themesSection } from "./page-themes";
 import { shortcutsSection } from "./page-shortcuts";
 
@@ -126,7 +127,7 @@ async function render() {
   S.shortcutsListener = null;
   clear(S.root);
   const sections: Partial<Record<PageId, () => HTMLElement[]>> = {
-    general: () => [generalSection()],
+    general: () => [generalSection(), fileeSection()],
     themes: () => [themesSection(), charactersSection()],
     pills: () => [activePillsSection(connected)],
     agents: () => [claudeSection(status), agentsSection(agents), planSection(status)],

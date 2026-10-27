@@ -743,3 +743,63 @@ Fonte: Freya Branding v1 (`/workspace/freya-branding/kit`). Bifrost não usa o l
 - Ajustes → Temas ganhou a seção **Personagens** (radiogroup de cartões com os dois corvos animando em idle; ao escolher, um pulinho curto, desligado com movimento reduzido).
 - Correção junto: ids de gradiente dos SVG agora são únicos por instância (antes, dois corvos iguais num SVG oculto deixavam o outro preto).
 - QA visual: a ilha, a bandeja e a pílula rodam com um personagem diferente por tema/escala.
+
+## 11. Conversor e gestos (Filee)
+
+Inspirado no **Filee** (MIT, © 2026 Myeonggu Kim / KnifeLemon) — estudamos o modo de uso
+e reimplementamos tudo do zero; nenhum código, ícone ou asset do Filee está no Bifrost.
+Estudo completo em `filee-re.md`.
+
+### O que existe
+- **Página "Conversor"** (reino *Forja* no Hub): soltar arquivos, escolher o destino,
+  opções (qualidade, lado máximo, %, DPI, pasta de saída), fila com progresso/cancelar/
+  abrir pasta, ferramentas opcionais com download, ajustes do gesto.
+- **Ilha**: soltar arquivo mostra "Enviar para a IA", "Converter…" e "Cancelar".
+- **Gesto — o anel (rondó)**: no Explorer ou na Área de Trabalho, com o mouse sobre um
+  arquivo, segure **Ctrl** e **segure o botão direito** (~280 ms). Abre um anel em volta do
+  cursor: no miolo, o **ícone do arquivo** como o Windows o mostra (ou uma runa do tipo, se
+  não houver ícone), com um selo de contagem quando há vários arquivos selecionados. Em
+  volta, botões redondos surgem um atrás do outro (35 ms entre eles, mola contida dos
+  tokens `--m-snappy`): Converter para…, Comprimir, Redimensionar, Juntar PDFs (só quando
+  todos são PDF), Enviar para a IA e Abrir no Conversor. O Huginn fica pequeno, pousado no
+  topo do anel, e o balãozinho dele diz o nome do botão sob o mouse. "Converter para…" e
+  "Enviar para a IA" abrem um **segundo arco** por fora (formatos / atalhos de pergunta);
+  com ele aberto, o nome vai para o miolo. Soltar o botão sobre um item o executa; Esc ou
+  clique fora do **círculo** fecha, e o anel recolhe na ordem inversa. Um toque rápido devolve
+  o clique direito normal. Perto das bordas, a janela do anel é empurrada para dentro da
+  tela (o centro se desloca), em 100/125/150%.
+- **Menu do Explorer** (opcional, desligado): HKCU `*\shell\Bifrost` com "Converter…" e
+  "Perguntar à IA". Sem admin.
+
+### Implementação
+- Rust: `src-tauri/src/convert/{formats,jobs,engines,tools,prefs,mod}.rs`,
+  `src-tauri/src/gesture/{logic,win,mod}.rs` (anel: `place_ring`/`inside_ring` em logic.rs,
+  ícone por SHGetFileInfoW → PNG em win.rs; WH_MOUSE_LL + WH_KEYBOARD_LL só com o menu
+  aberto; IShellWindows→IShellBrowser→IFolderView2 + UIA ElementFromPoint; se o item sob o
+  mouse estiver selecionado, vale a seleção inteira; nunca sobrescreve: "nome (2).ext").
+- TS: `src/filee/*` (`ring.ts` = geometria e acerto por fatia, testado em
+  `tests/filee-ring.test.mjs`; `menu.ts`/`menu.css` = o anel), `src/hub/pages/converter.ts`, `src/settings/page-filee.ts`, `fileemenu.html`.
+
+### Formatos
+| Entrada → saída | Precisa de |
+|---|---|
+| PNG/JPG/WebP/BMP/GIF/TIFF/ICO ↔ entre si, → PDF; SVG → PNG/JPG/WebP/PDF | nada (nativo) |
+| HEIC/AVIF → imagem | FFmpeg (ou ImageMagick) |
+| Juntar/dividir/comprimir PDF, imagens → PDF | nada |
+| PDF → imagens, PDF → texto completo | PDFium (download 6 MB) |
+| DOCX/ODT/HTML/MD → texto, MD → HTML | nada |
+| DOCX/XLSX/PPTX/ODT → PDF | LibreOffice |
+| RTF/EPUB/DOCX ↔ MD/HTML | Pandoc |
+| Áudio/vídeo (MP3, WAV, M4A, OGG, FLAC, MP4, WebM, MKV, GIF…) | FFmpeg (download ~80 MB ou WinGet) |
+| ZIP/TAR/TGZ/7z extrair; criar ZIP | nada |
+| RAR extrair | 7-Zip |
+
+Ferramentas baixadas ficam em `%LOCALAPPDATA%\Bifrost\tools`.
+
+### Limites
+- O gesto só funciona no Explorer e na Área de Trabalho (não em diálogos de abrir/salvar
+  nem em outros apps). Janelas elevadas (admin) não recebem o gancho de um Bifrost comum.
+- O acerto é pela geometria do anel (fatia e raio), e o clique-fora usa o círculo, não o
+  retângulo da janela. A janela ainda é um quadrado transparente: um clique nos cantos
+  fecha o anel em vez de passar direto para o que está embaixo.
+- Sem OCR, pastas vigiadas, CLI nem rotas multi-salto do Filee nesta fase.

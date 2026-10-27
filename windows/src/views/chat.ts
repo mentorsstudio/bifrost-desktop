@@ -7,6 +7,7 @@
 // Um modelo local escreve aos poucos: o Rust manda `chat-delta` com o texto
 // visível até agora, e a fala cresce no lugar.
 
+import { FileeIsland, quickPrompts } from "../filee/island";
 import { h, svg, clear } from "./dom";
 import { ICONS } from "./icons";
 import { renderMarkdown } from "./markdown";
@@ -91,6 +92,8 @@ export function growHeight(scrollH: number, line = 18, maxLines = 5): number {
 
 export function buildPrompt(onHeightChange: () => void): ViewHost {
   const files = h("div", { class: "chip-row" });
+  // Atalhos de pergunta do Conversor ("O que é isso?", "Resumir"…), com o arquivo.
+  const quick = quickPrompts((prompt) => { field.value = prompt; void ask(); });
   const saga = h("div", { class: "chat-log bf-saga" });
   const field = h("textarea", { class: "chat-input cmp-field", rows: "1", placeholder: TEXT.first, spellcheck: "false", "aria-label": "Mensagem" }) as HTMLTextAreaElement;
 
@@ -246,7 +249,14 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
       if (files.dataset.label !== label) {
         files.dataset.label = label;
         clear(files);
-        if (label) files.append(fileTag(label));
+        if (label) files.append(fileTag(label), quick);
+      }
+      quick.hidden = State.chatHistory.length > 0 || busy;
+      // O balão do gesto já escolheu a pergunta: ela vai sozinha.
+      if (FileeIsland.pendingPrompt && State.view === "prompt" && !busy && label) {
+        field.value = FileeIsland.pendingPrompt;
+        FileeIsland.pendingPrompt = null;
+        queueMicrotask(() => void ask());
       }
       const wait = State.stateOverride === "thinking";
       const n = State.chatHistory.length + (wait ? 0.5 : 0);
