@@ -80,6 +80,12 @@ async function main() {
       for (const id of PAGES) {
         await page.evaluate((id) => (window.__TAURI_INTERNALS__?.__emit?.("hub-page", id) ?? window.__emit?.("hub-page", id)), id);
         await page.waitForTimeout(450);
+        // Espera a página pedida estar montada e ativa (só uma fora de .m-layer/.m-leaving,
+        // com conteúdo): sem isso o "blank" pegava a página anterior no meio da troca.
+        await page.waitForFunction(() => {
+          const act = [...document.querySelectorAll(".hub-page")].filter((x) => !x.classList.contains("m-layer") && !x.classList.contains("m-leaving"));
+          return act.length === 1 && act[0].querySelectorAll("*").length > 8;
+        }, null, { timeout: 4000 }).catch(() => {});
         add({ scene: `hub:${id}`, theme, scale, width: vp.w }, await page.evaluate(CHECKS));
         await page.evaluate(() => document.querySelectorAll(".hub-scroll").forEach((s) => (s.scrollTop = s.scrollHeight)));
         await page.waitForTimeout(80);

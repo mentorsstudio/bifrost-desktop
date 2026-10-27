@@ -31,7 +31,8 @@ export function ringPreview(style: RingStyle, size = 168): HTMLElement {
   new Mascot("huginn", d.ravenBox);
   d.hubIcon.append(Object.assign(document.createElement("span"), { className: "fm-file-rune c-image", textContent: "ᛒ" }));
   d.hubTitle.textContent = "1 × PNG";
-  d.hint("Solte aqui para cancelar", true);
+  // A dica da fatia acesa (JPG): curta, cabe no miolo pequeno da prévia com folga.
+  d.hint("Solte → JPG");
   // As medidas dos rótulos precisam do quadro no documento.
   requestAnimationFrame(() => { d.draw(SAMPLE); d.mark({ kind: "slice", index: 1 }); });
   return frame;

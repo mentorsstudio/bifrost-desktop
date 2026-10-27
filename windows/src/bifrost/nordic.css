@@ -214,3 +214,6 @@ body.bf-sky, .bf-sky {
 .bf-state-success .bf-wing-back { animation: bf-flap-l 260ms var(--m-ease) 4 alternate; }
 .bf-state-success .bf-wing-front { animation: bf-flap-r 260ms var(--m-ease) 4 alternate; }
 .bf-state-sleeping .bf-crest { transform: rotate(-8deg); transition: transform var(--m-slow) var(--m-smooth); }
+
+/* Regra geral de texto que cabe (core/fit-text.ts): a letra diminui até caber com folga; reticências só abaixo do mínimo. */
+.bf-fit { min-width: 0; max-width: 100%; }

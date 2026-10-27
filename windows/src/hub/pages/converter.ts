@@ -15,6 +15,7 @@ import {
   type FileePrefs, type ItemReport, type Options, type Plan, type TargetInfo, type ToolProgress, type ToolStatus,
 } from "../../filee/api";
 import { reducedMotion } from "../../bifrost/motion";
+import { fitAll } from "../../core/fit-text";
 
 const IS_TAURI = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -114,7 +115,7 @@ export async function converterPage(page: HTMLElement, ctx: HubContext) {
 
   function targetButton(t: TargetInfo): HTMLElement {
     const b = h("button", { class: ["fl-target", t.group, chosen === t.id ? "on" : "", t.ready ? "" : "locked"].filter(Boolean).join(" "), "aria-pressed": String(chosen === t.id) });
-    b.append(h("span", { class: "fl-target-label", text: t.group === "convert" ? t.label : actionLabel(t.id) }));
+    b.append(h("span", { class: "fl-target-label bf-fit", text: t.group === "convert" ? t.label : actionLabel(t.id) }));
     if (!t.ready && t.needsLabel) b.append(h("span", { class: "fl-target-need", text: t.needsLabel }));
     b.title = t.ready ? actionLabel(t.id) : `Precisa do ${t.needsLabel}`;
     b.addEventListener("click", () => { chosen = t.id; drawPicker(); drawOptions(); drawRun(); });
@@ -132,6 +133,7 @@ export async function converterPage(page: HTMLElement, ctx: HubContext) {
     const tools = ts.filter((t) => t.group === "tools");
     if (conv.length) picker.append(h("div", { class: "fl-group-title", text: "Converter para" }), h("div", { class: "fl-grid" }, ...conv.map(targetButton)));
     if (tools.length) picker.append(h("div", { class: "fl-group-title", text: "Ferramentas" }), h("div", { class: "fl-grid" }, ...tools.map(targetButton)));
+    requestAnimationFrame(() => fitAll(picker));
   }
 
   function drawOptions() {
