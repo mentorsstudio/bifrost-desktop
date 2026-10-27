@@ -1,3 +1,4 @@
+import { RAVEN } from "./raven-shape";
 // RavenEngine — o motor do Huginn (e do Muninn), escrito do zero para o Bifrost.
 //
 // Contrato: o mesmo que a ilha, a área de trabalho, a pílula, o hub e o resumo
@@ -625,33 +626,39 @@ export class RavenEngine {
       g.addColorStop(1, css(tint > 0.01 ? mix(dark, this.col, tint * 0.35) : dark));
       return g;
     };
-    const ink = "#070b16";
     x.save();
     x.globalAlpha *= a;
     x.scale(k, k);
     x.translate(-60, -62);
     x.lineJoin = "round";
-    x.lineWidth = 2;
-    x.strokeStyle = ink;
-    const head: RavenHead = { x: 60 + gx * 0.5, y: 40 + gy * 0.5 + this.physDy * 4, r: 17, chestY: 82, bodyR: 22 };
+    // Sem contorno preto: só um aro de luz finíssimo, para o corvo não "colar" no fundo.
+    x.lineWidth = 0.9;
+    x.strokeStyle = "rgba(190,205,255,0.16)";
+    const H = RAVEN.head;
+    const head: RavenHead = { x: 60 + gx * 0.5, y: 40 + gy * 0.5 + this.physDy * 4, r: H.r, chestY: 82, bodyR: 23 };
     const dressed = !this.isMini && this.outfit !== "none";
     const st = { presence: this.outfitPresence, morph: 0 };
     if (dressed) drawOutfitBehind(x, this.outfit, head, st);
     const wing = (side: -1 | 1) => {
       x.save();
-      x.translate(side < 0 ? 42 : 78, 64);
+      x.translate(side < 0 ? 45 : 75, 64);
       x.rotate(side * (-flap) - (side > 0 ? wave : 0));
-      x.translate(side < 0 ? -42 : -78, -64);
-      const p = new Path2D(side < 0 ? "M42 62 C30 62 20 70 16 84 C26 82 34 80 42 76 Z" : "M78 62 C90 62 100 70 104 84 C94 82 86 80 78 76 Z");
-      x.fillStyle = feather(60, 86);
+      x.translate(side < 0 ? -45 : -75, -64);
+      const p = new Path2D(side < 0 ? RAVEN.wingL : RAVEN.wingR);
+      x.fillStyle = feather(58, 84);
       x.fill(p); x.stroke(p);
       x.restore();
     };
-    if (!this.isMini) wing(-1);
-    const tail = new Path2D("M50 94 L44 108 L56 102 L60 110 L64 102 L76 108 L70 94 Z");
+    // As duas asas atrás do corpo, espelhadas: simetria e nenhuma sobreposição no peito.
+    if (!this.isMini) { wing(-1); wing(1); }
+    const tail = new Path2D(RAVEN.tail);
     x.fillStyle = css(dark); x.fill(tail); x.stroke(tail);
-    const body = new Path2D(); body.ellipse(60, 76, 22, 22, 0, 0, Math.PI * 2);
-    x.fillStyle = feather(54, 98); x.fill(body); x.stroke(body);
+    const body = new Path2D(RAVEN.body);
+    x.fillStyle = feather(50, 98); x.fill(body); x.stroke(body);
+    // Peito: brilho macio, como um material.
+    const sheen = x.createRadialGradient(56, 70, 1, 60, 78, 22);
+    sheen.addColorStop(0, "rgba(255,255,255,0.13)"); sheen.addColorStop(1, "rgba(255,255,255,0)");
+    x.fillStyle = sheen; x.fill(body);
     if (!this.isMini && !(dressed && this.outfit === "runeBand")) {
       x.save();
       x.fillStyle = GOLD_A; x.globalAlpha *= 0.9;
@@ -660,19 +667,21 @@ export class RavenEngine {
       x.fillText("ᚨ", 60, 82);
       x.restore();
     }
-    if (!this.isMini) wing(1);
     // Cabeça: crista, círculo, olhos, bico — sempre por cima do corpo e das asas.
     x.save();
     x.translate(head.x - 60, head.y - 40);
     if (!this.isMini && this.outfit === "none") {
       const sw = this.physDx * 0.3 + Math.sin(t * 1.7) * 0.05;
-      x.save(); x.translate(60, 26); x.rotate(sw); x.translate(-60, -26);
-      const crest = new Path2D("M54 26 L50 14 L58 22 L61 10 L65 22 L70 15 L67 27 Z");
-      x.fillStyle = css(lit); x.fill(crest); x.stroke(crest);
+      x.save(); x.translate(60, 24); x.rotate(sw); x.translate(-60, -24);
+      const crest = new Path2D(RAVEN.crest);
+      x.fillStyle = css(lit); x.fill(crest);
       x.restore();
     }
-    const hp = new Path2D(); hp.arc(60, 40, 17, 0, Math.PI * 2);
-    x.fillStyle = feather(23, 57); x.fill(hp); x.stroke(hp);
+    const hp = new Path2D(); hp.arc(H.cx, H.cy, H.r, 0, Math.PI * 2);
+    x.fillStyle = feather(21, 57); x.fill(hp); x.stroke(hp);
+    const gloss = x.createRadialGradient(54, 29, 0.5, 56, 32, 14);
+    gloss.addColorStop(0, "rgba(255,255,255,0.18)"); gloss.addColorStop(1, "rgba(255,255,255,0)");
+    x.fillStyle = gloss; x.fill(hp);
     const flush = Math.max(this.blush, this.tint * 0.4);
     if (flush > 0.02) {
       x.fillStyle = `rgba(180,124,255,${0.4 * flush})`;
@@ -688,16 +697,16 @@ export class RavenEngine {
     const big = this.isMini ? 1.5 : 1;
     for (const side of [-1, 1]) {
       x.save();
-      x.translate(60 + side * 7 + gx, 37 + gy);
+      x.translate(60 + side * RAVEN.eyes.dx + gx, RAVEN.eyes.y + gy);
       eyeShape(x, shape, 7 * this.es * big, 8.4 * this.es * big, side, this.open);
       x.restore();
     }
     x.restore();
     if (!this.isMini) {
-      const beak = new Path2D("M56 44 L60 53 L64 44 Q60 42.5 56 44 Z");
+      const beak = new Path2D(RAVEN.beak);
       x.save(); x.translate(gx * 0.6, gy * 0.6);
       const g = x.createLinearGradient(56, 43, 64, 53); g.addColorStop(0, GOLD_A); g.addColorStop(1, GOLD_B);
-      x.fillStyle = g; x.lineWidth = 1.2; x.fill(beak); x.stroke(beak);
+      x.fillStyle = g; x.fill(beak);
       x.restore();
     }
     x.restore();
