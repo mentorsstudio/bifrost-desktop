@@ -212,6 +212,8 @@ export const DIFF_TTL_MS = 3_600_000;
 class AppState {
   mode: IslandMode = "hidden";
   view: IslandViewName = "overview";
+  /** Fase 19: o seletor de modelos aberto pede a ilha na altura máxima do chat. */
+  chatPicking = false;
 
   tasks: AgentTask[] = [];
   focusId: string | null = null;

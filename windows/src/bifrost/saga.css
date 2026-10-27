@@ -124,3 +124,116 @@
 .ag-panel.dense .ag-icon { width: 18px; height: 18px; font-size: 8px; }
 .ag-panel.dense .ag-sub { display: none; }
 .ag-panel.dense .ag-act { width: 18px; height: 18px; }
+
+/* ── Fase 19: o compositor ──────────────────────────────────────────────
+   Um único contêiner arredondado: [+] [campo que cresce] [modelo] [mic] [enviar/parar].
+   O brilho de foco é um ::after só de opacidade. */
+.bf-saga-body { position: relative; }
+.cmp {
+  position: relative; display: flex !important; align-items: flex-end; gap: 6px; padding: 5px 5px 5px 6px !important;
+  border-radius: 18px !important; background: rgba(var(--tk-070b16-rgb, 7, 11, 22), .72) !important;
+  border: 1px solid rgba(var(--tk-e2b55a-rgb, 226, 181, 90), .22); box-shadow: none !important;
+}
+.cmp::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; opacity: 0;
+  box-shadow: 0 0 0 1px rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .45), 0 0 18px -4px rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .45);
+  transition: opacity var(--m-base) var(--m-ease); }
+.cmp:focus-within::after { opacity: 1; }
+.cmp .cmp-field {
+  flex: 1 1 auto; min-width: 0; resize: none; overflow-y: auto; background: transparent !important; border: 0 !important; box-shadow: none !important;
+  outline: none !important; padding: 5px 2px !important; margin: 0; font: 400 12.5px/18px var(--font, inherit); color: var(--bf-frost, #eef2ff) !important;
+  min-height: 18px; max-height: 90px; border-radius: 0 !important; scrollbar-width: thin;
+}
+.cmp .cmp-field::placeholder { color: rgba(var(--tk-b9c2d8-rgb, 185, 194, 216), .6); }
+.cmp-tools { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.cmp-icon { width: 28px; height: 28px; border-radius: 50% !important; display: grid; place-items: center; flex: 0 0 28px;
+  background: transparent !important; color: var(--tk-b9c2d8, #b9c2d8) !important; border: 0 !important; }
+.cmp-icon:hover { background: rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .1) !important; color: var(--tk-eafff8, #eafff8) !important; }
+.cmp-icon svg { fill: none; stroke: currentColor; stroke-width: 1.8; }
+.cmp-icon.cmp-plus svg, .cmp-icon.cmp-mic svg { fill: currentColor; stroke: none; }
+.cmp-model { height: 26px; max-width: 150px; padding: 0 9px !important; border-radius: 13px !important; display: inline-flex !important; align-items: center; gap: 6px;
+  background: rgba(var(--tk-14203f-rgb, 20, 32, 63), .9) !important; border: 1px solid rgba(var(--tk-e2b55a-rgb, 226, 181, 90), .25) !important; color: var(--bf-frost, #eef2ff) !important; font-size: 11px; }
+.cmp-model .model-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.cmp-model .model-dot { width: 6px; height: 6px; border-radius: 50%; flex: 0 0 6px; }
+.cmp-model svg { flex: 0 0 9px; opacity: .7; }
+.cmp-send { width: 28px !important; height: 28px !important; border-radius: 50% !important; flex: 0 0 28px; position: relative; display: grid; place-items: center;
+  border: 0 !important; color: var(--th-on-accent, #06221a) !important;
+  background: linear-gradient(135deg, var(--bf-aurora-1, #5ef2c9), var(--bf-aurora-2, #6f8dff)) !important; }
+.cmp-send > span { grid-area: 1 / 1; display: grid; place-items: center; transition: opacity var(--m-fast) var(--m-ease), transform var(--m-base) var(--m-bouncy); }
+.cmp-send svg { fill: currentColor; }
+.cmp-send-stop { opacity: 0; transform: scale(.4) rotate(-90deg); }
+.cmp.busy .cmp-send-go { opacity: 0; transform: scale(.4) translateY(-6px); }
+.cmp.busy .cmp-send-stop { opacity: 1; transform: none; }
+.cmp.busy .cmp-send { background: rgba(var(--tk-ff7a6e-rgb, 255, 122, 110), .9) !important; }
+.cmp-menu { position: absolute; left: 4px; bottom: calc(100% + 6px); z-index: 5; min-width: 220px; padding: 5px; border-radius: 12px;
+  background: rgba(var(--tk-0b1326-rgb, 11, 19, 38), .98); border: 1px solid rgba(var(--tk-e2b55a-rgb, 226, 181, 90), .22);
+  box-shadow: 0 14px 30px -12px rgba(0, 0, 0, .7); display: flex; flex-direction: column; gap: 2px;
+  opacity: 0; transform: translateY(6px) scale(.97); transform-origin: 0 100%; pointer-events: none;
+  transition: opacity var(--m-fast) var(--m-ease), transform var(--m-base) var(--m-bouncy); }
+.cmp-menu.on { opacity: 1; transform: none; pointer-events: auto; }
+.cmp-menu-item { display: flex !important; align-items: center; gap: 9px; height: 30px; padding: 0 10px !important; border-radius: 8px !important;
+  background: transparent !important; color: var(--bf-frost, #eef2ff) !important; font-size: 12px; text-align: start; border: 0 !important; }
+.cmp-menu-item:hover { background: rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .1) !important; }
+.cmp-menu-item svg { fill: none; stroke: currentColor; }
+.cmp-hint { position: absolute; left: 92px; right: 14px; bottom: 54px; font-size: 11px; color: var(--tk-b9c2d8, #b9c2d8); text-align: center;
+  opacity: 0; transform: translateY(4px); pointer-events: none; transition: opacity var(--m-base) var(--m-ease), transform var(--m-base) var(--m-ease); }
+.cmp-hint.on { opacity: 1; transform: none; }
+
+/* ── Fase 19: o seletor de modelos (popover) ── */
+.mp-pop { position: absolute; left: 92px; right: 14px; top: 38px; bottom: 54px; z-index: 6; display: flex; flex-direction: column; gap: 6px;
+  padding: 8px; border-radius: 14px; background: rgba(var(--tk-0b1326-rgb, 11, 19, 38), .985);
+  border: 1px solid rgba(var(--tk-e2b55a-rgb, 226, 181, 90), .25); box-shadow: 0 18px 40px -16px rgba(0, 0, 0, .8);
+  opacity: 0; transform: translateY(8px) scale(.98); transform-origin: 70% 100%; pointer-events: none;
+  transition: opacity var(--m-base) var(--m-ease), transform var(--m-base) var(--m-bouncy); }
+.mp-pop.on { opacity: 1; transform: none; pointer-events: auto; }
+.mp-search { display: flex; align-items: center; gap: 7px; height: 30px; padding: 0 10px; border-radius: 10px; flex: 0 0 auto;
+  background: rgba(var(--tk-14203f-rgb, 20, 32, 63), .8); color: var(--tk-b9c2d8, #b9c2d8); }
+.mp-search svg { fill: none; stroke: currentColor; flex: 0 0 13px; }
+.mp-search-input { flex: 1; min-width: 0; background: transparent !important; border: 0 !important; outline: none !important; box-shadow: none !important;
+  color: var(--bf-frost, #eef2ff); font-size: 12px; padding: 0 !important; }
+.mp-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 1px; scrollbar-width: thin; }
+.mp-group { font: 600 9.5px var(--bf-heading-font, inherit); letter-spacing: .16em; text-transform: uppercase; color: var(--bf-gold-2, #f6d27a);
+  padding: 8px 8px 3px; flex: 0 0 auto; }
+.mp-row { display: grid !important; grid-template-columns: 24px minmax(0, 1fr) 8px 16px; align-items: center; gap: 9px; min-height: 38px; padding: 4px 8px !important;
+  border-radius: 9px !important; background: transparent !important; border: 0 !important; color: var(--bf-frost, #eef2ff) !important; text-align: start; flex: 0 0 auto;
+  animation: m-row-in var(--m-base) var(--m-ease) both; animation-delay: calc(var(--i, 0) * 18ms); }
+.mp-row.kb, .mp-row:hover { background: rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .1) !important; }
+.mp-row.on { background: rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .14) !important; }
+.mp-icon { width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center; font: 700 11px var(--font, inherit);
+  color: var(--tk-0b1326, #0b1326); background: var(--accent); }
+.mp-text { display: flex; flex-direction: column; min-width: 0; }
+.mp-name, .mp-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mp-name { font-size: 12.5px; font-weight: 600; }
+.mp-sub { font-size: 10.5px; color: var(--tk-93a1c6, #93a1c6); }
+.mp-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--tk-93a1c6, #93a1c6); opacity: .6; }
+.mp-dot.ok { background: var(--tk-34d399, #34d399); opacity: 1; }
+.mp-dot.off { background: var(--tk-ff7a6e, #ff7a6e); opacity: .9; }
+.mp-dot.loading { animation: m-dot-pulse 1.2s var(--m-ease) infinite; }
+.mp-check { display: grid; place-items: center; color: var(--bf-aurora-1, #5ef2c9); }
+.mp-check svg { fill: none; stroke: currentColor; }
+.mp-empty { padding: 16px; text-align: center; font-size: 12px; color: var(--tk-93a1c6, #93a1c6); }
+@keyframes m-row-in { from { opacity: 0; transform: translateY(4px); } }
+@keyframes m-dot-pulse { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) {
+  .mp-row, .mp-dot.loading { animation: none !important; }
+  .mp-pop, .cmp-menu, .cmp-send > span, .cmp-hint { transition: none !important; }
+}
+
+/* ── Fase 19: cartão da sessão em grade ──
+   Coluna de texto | coluna reservada do corvo (112 px à direita, onde ele pousa).
+   Nada invade a coluna do corvo; os botões quebram linha ou encolhem com reticências. */
+.overview .sc-card { padding: 10px 116px 10px 16px !important; display: grid !important; grid-template-rows: auto auto auto auto; align-content: center; gap: 5px; }
+.overview .sc-head, .overview .sc-summary, .overview .sc-meta { min-width: 0; }
+.overview .sc-head .ag-status { flex: 0 0 auto; }
+.overview .sc-actions { flex-wrap: wrap !important; row-gap: 5px; }
+.overview .sc-btn { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; }
+.overview .card:has(.sc-card) > .jump { display: none !important; }
+
+/* Fase 19: o corvo do chat tem o seu lugar — uma coluna própria (84 px) com fio de ouro,
+   em vez de flutuar na borda da ilha. O corvo pousa no centro dela (botX 52 = 10 + 42). */
+.bf-saga-card { position: relative; }
+.bf-saga-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 84px; pointer-events: none; border-radius: inherit;
+  border-top-right-radius: 0; border-bottom-right-radius: 0;
+  background: radial-gradient(60px 70px at 50% 50%, rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .08), transparent 70%);
+  box-shadow: inset -1px 0 0 rgba(var(--tk-e2b55a-rgb, 226, 181, 90), .14); }
+.bf-saga-body { padding-left: 98px !important; }
+.mp-pop, .cmp-hint { left: 98px; }

@@ -359,7 +359,7 @@ export class Island {
 
   /** Encolher desliza na curva; crescer usa as molas (Dynamic Island). */
   private reshape(shrinking: boolean): void {
-    const s = targetShape(State.mode, State.view, State.chatHistory.length, Boolean(State.pendingApproval?.questions));
+    const s = targetShape(State.mode, State.view, State.chatPicking ? 99 : State.chatHistory.length, Boolean(State.pendingApproval?.questions));
     if (shrinking) {
       this.w.curveTowards(s.w); this.hgt.curveTowards(s.h); this.rad.curveTowards(s.r);
     } else {

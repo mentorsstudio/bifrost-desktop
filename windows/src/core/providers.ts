@@ -129,3 +129,34 @@ export function switchProvider(settings: Settings, id: ProviderId, offered: stri
 export function modelLabel(id: string, list: readonly { id: string; label: string }[] | undefined): string {
   return list?.find((m) => m.id === id)?.label ?? id;
 }
+
+// ── Fase 19: o seletor único (todas as IAs num popover) ─────────────────────
+
+/** Escolher um modelo de QUALQUER seção troca o provedor junto (o bug antigo: só o modelo mudava). */
+export function chooseModel(settings: Settings, provider: ProviderId, model: string): Settings {
+  return { ...withModel(settings, provider, model), chatProvider: provider };
+}
+
+export type PickerGroup = "pc" | "mcp" | "remote";
+export function providerGroup(id: string): PickerGroup {
+  if (id === "cli" || id === "ollama" || id === "lmstudio") return "pc";
+  if (id === "mcp") return "mcp";
+  return "remote";
+}
+
+export interface PickerRow { provider: ProviderId; model: string; label: string; sub: string; group: PickerGroup }
+
+/** Busca sem acento nem caixa, no nome, no id e no provedor. */
+export function filterRows(rows: readonly PickerRow[], query: string): PickerRow[] {
+  const n = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const q = n(query.trim());
+  if (!q) return [...rows];
+  return rows.filter((r) => n(`${r.label} ${r.model} ${r.sub}`).includes(q));
+}
+
+/** Setas no seletor: anda e dá a volta. */
+export function stepIndex(i: number, delta: number, count: number): number {
+  if (count <= 0) return -1;
+  if (i < 0) return delta > 0 ? 0 : count - 1;
+  return (i + delta + count) % count;
+}
