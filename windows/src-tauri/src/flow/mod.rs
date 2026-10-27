@@ -260,6 +260,8 @@ fn run(app: AppHandle, flow: Arc<Flow>, rx: mpsc::Receiver<(KeyEvent, Instant)>)
         match action {
             Action::None => {}
             Action::Start => {
+                // Reloads the model in the background if it was freed while idle.
+                speech::preload();
                 listening = begin(&app, &flow);
                 if listening.is_none() {
                     logic.reset();

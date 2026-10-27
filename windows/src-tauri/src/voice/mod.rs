@@ -46,6 +46,11 @@ struct Running {
 
 static RUNNING: Mutex<Option<Running>> = Mutex::new(None);
 
+/// True while « OK Bifrost » is listening (it needs the speech model loaded).
+pub fn listening() -> bool {
+    RUNNING.lock().map(|r| r.is_some()).unwrap_or(true)
+}
+
 /// Rust waits on these for the island's answers and the end of speech.
 fn pending() -> &'static Mutex<HashMap<u64, mpsc::Sender<String>>> {
     static P: OnceLock<Mutex<HashMap<u64, mpsc::Sender<String>>>> = OnceLock::new();

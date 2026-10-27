@@ -45,6 +45,8 @@ mod update;
 mod voice;
 #[cfg(windows)]
 mod webview_drop;
+#[cfg(windows)]
+pub(crate) mod webview_memory;
 mod whatsapp;
 
 use std::process::Command;
@@ -917,6 +919,8 @@ static HUB_SHOWN: AtomicBool = AtomicBool::new(false);
 fn set_hub_shown(win: &tauri::WebviewWindow, shown: bool) {
     if HUB_SHOWN.swap(shown, Ordering::Relaxed) != shown {
         let _ = win.emit_to(HUB_LABEL, "hub-visible", shown);
+        #[cfg(windows)]
+        if shown { webview_memory::shown(win) } else { webview_memory::hidden(win) }
     }
 }
 

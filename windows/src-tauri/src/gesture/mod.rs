@@ -180,6 +180,8 @@ pub(crate) fn open_at(x: i32, y: i32, resolve: impl FnOnce() -> Result<Vec<Strin
     *RECT.lock().unwrap_or_else(|e| e.into_inner()) = Some((left, top, size, size));
     let _ = win.set_size(tauri::PhysicalSize::new(size as u32, size as u32));
     let _ = win.set_position(PhysicalPosition::new(left, top));
+    #[cfg(windows)]
+    crate::webview_memory::shown(&win);
     let _ = win.emit("filee-menu-open", OpenPayload { cursor_x: (x - left) as f64 / scale, cursor_y: (y - top) as f64 / scale });
     let _ = win.show();
     let _ = win.set_always_on_top(true);
@@ -247,6 +249,8 @@ fn retract() {
         if OPEN_GEN.load(std::sync::atomic::Ordering::SeqCst) == gen {
             if let Some(win) = menu() {
                 let _ = win.hide();
+                #[cfg(windows)]
+                crate::webview_memory::hidden(&win);
             }
         }
     });
@@ -271,6 +275,8 @@ fn hide() {
     *RECT.lock().unwrap_or_else(|e| e.into_inner()) = None;
     if let Some(win) = menu() {
         let _ = win.hide();
+        #[cfg(windows)]
+        crate::webview_memory::hidden(&win);
     }
     #[cfg(windows)]
     win::closed();

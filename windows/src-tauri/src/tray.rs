@@ -236,6 +236,8 @@ fn popup(app: &AppHandle, x: f64, y: f64) {
                     w.on_window_event(move |e| {
                         if let tauri::WindowEvent::Focused(false) = e {
                             let _ = handle.hide();
+                            #[cfg(windows)]
+                            crate::webview_memory::hidden(&handle);
                         }
                     });
                     w
@@ -248,6 +250,8 @@ fn popup(app: &AppHandle, x: f64, y: f64) {
         }
     };
     let _ = win.set_position(tauri::LogicalPosition::new(px, py));
+    #[cfg(windows)]
+    crate::webview_memory::shown(&win);
     let _ = win.emit("traymenu-open", ());
     let _ = win.show();
     let _ = win.set_focus();

@@ -314,12 +314,50 @@ pub fn recognizer() -> Option<Arc<OfflineRecognizer>> {
 
 /// Loads the model in the background, so the first dictation is not slowed down.
 pub fn preload() {
+    touch();
     if !PARAKEET.is_present() || recognizer_slot().lock().unwrap().is_some() {
         return;
     }
     std::thread::spawn(|| {
         let _ = recognizer();
+        start_reaper();
     });
+}
+
+/// The model takes ~650 MB. After this long without dictation it is freed; the
+/// next key press reloads it in the background (~2 s) while the user speaks.
+const IDLE_UNLOAD: std::time::Duration = std::time::Duration::from_secs(10 * 60);
+
+fn last_use() -> &'static Mutex<Instant> {
+    static L: OnceLock<Mutex<Instant>> = OnceLock::new();
+    L.get_or_init(|| Mutex::new(Instant::now()))
+}
+
+/// Marks the model as just used (dictation started, audio transcribed).
+pub fn touch() {
+    *last_use().lock().unwrap() = Instant::now();
+}
+
+fn start_reaper() {
+    static STARTED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+    if STARTED.swap(true, std::sync::atomic::Ordering::SeqCst) {
+        return;
+    }
+    std::thread::Builder::new()
+        .name("bifrost-speech-idle".into())
+        .spawn(|| loop {
+            std::thread::sleep(std::time::Duration::from_secs(60));
+            // "OK Bifrost" transcribes all the time: then the model stays.
+            if crate::voice::listening() || recognizer_slot().lock().unwrap().is_none() {
+                continue;
+            }
+            if last_use().lock().unwrap().elapsed() >= IDLE_UNLOAD {
+                let _guard = load_lock().lock().unwrap();
+                unload();
+                crate::log::line("Parakeet freed after 10 min idle");
+            }
+        })
+        .ok();
 }
 
 /// Frees the model's memory (dictation turned off, models removed).
@@ -340,6 +378,7 @@ const MAX_CHUNK_SECONDS: f64 = 28.0;
 
 /// Transcribes 16 kHz mono audio.
 pub fn transcribe(samples: &[f32]) -> Option<Transcript> {
+    touch();
     let rec = recognizer()?;
     let mut out = Transcript::default();
     for (offset, chunk) in audio::split_for_model(samples, SAMPLE_RATE, MAX_CHUNK_SECONDS) {
