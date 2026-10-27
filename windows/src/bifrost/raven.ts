@@ -598,7 +598,7 @@ export class RavenEngine {
       for (const s of [-1, 1]) { x.beginPath(); x.ellipse(s * rx * 0.55 + off, ry * 0.2, R * 0.17, R * 0.1, 0, 0, Math.PI * 2); x.fill(); }
       x.restore();
     }
-    if (!this.isMini && m < 0.6) this.crest(x, R, ry, 1 - m / 0.6);
+    if (!this.isMini && m < 0.6) this.crest(x, R, ry, (1 - m / 0.6) * (this.outfit === "none" ? 1 : 0));
     this.eyes(x, body, R, rx, ry);
     if (!this.isMini && m < 0.5) this.beak(x, R, rx, ry, 1 - m * 2);
     if (m > 0.05) this.slot(x, R, m);
@@ -667,7 +667,7 @@ export class RavenEngine {
   }
 
   /** Peito: nó nórdico entalhado em ouro. */
-  private knot(x: CanvasRenderingContext2D, body: Path2D, R: number, rx: number, ry: number) {
+  private knot(x: CanvasRenderingContext2D, body: Path2D, R: number, rx: number, _ry: number) {
     x.save();
     x.clip(body);
     x.globalAlpha *= Math.max(0, 1 - this.morph * 2);
@@ -679,13 +679,8 @@ export class RavenEngine {
     x.lineWidth = Math.max(0.7, R * 0.035);
     x.lineCap = "round";
     x.globalAlpha *= 0.35;
-    const y0 = ry * 0.62;
-    x.beginPath();
-    x.moveTo(ox - R * 0.32, y0);
-    x.quadraticCurveTo(ox, y0 + R * 0.28, ox + R * 0.32, y0);
-    x.moveTo(ox - R * 0.22, y0 + R * 0.2);
-    x.quadraticCurveTo(ox, y0 - R * 0.04, ox + R * 0.22, y0 + R * 0.2);
-    x.stroke();
+    // Sem traços no peito: nada cruza o bico nem os olhos (só o contorno dourado).
+    void ox;
     x.restore();
     x.save();
     x.strokeStyle = "rgba(226,181,90,0.22)";
@@ -815,9 +810,9 @@ export class RavenEngine {
   /** Emblemas como runas gravadas num escudo redondo. */
   private rune(x: CanvasRenderingContext2D, b: Badge, R: number, cx: number, cy: number) {
     const s = this.badgeS;
-    const bx = cx + R * 0.95;
-    const by = cy - R * 0.85;
-    const r = R * 0.32 * s;
+    const bx = cx + R * 1.2;
+    const by = cy - R * 1.08;
+    const r = R * 0.27 * s;
     x.save();
     x.translate(bx, by);
     x.beginPath();
