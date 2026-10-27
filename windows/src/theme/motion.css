@@ -107,3 +107,9 @@ input, textarea, select {
 .hub-prefetch { position: absolute; left: 0; right: 0; top: 0; height: 0; overflow: hidden; visibility: hidden; pointer-events: none; z-index: -1; }
 .hub-scroll { position: relative; }
 .hub-prefetch .hub-page *, .hub-prefetch .hub-page { animation-play-state: paused !important; }
+
+/* Camadas do palco: a página escondida já está diagramada, só não aparece. */
+.hub-stage { position: relative; }
+.hub-stage > .hub-page.m-layer { position: absolute; top: 0; left: 0; right: 0; visibility: hidden; pointer-events: none; contain: layout paint style; }
+/* Sem animações nem camadas próprias enquanto escondida: o compositor não as carrega. */
+.hub-stage > .hub-page.m-layer, .hub-stage > .hub-page.m-layer * { animation: none !important; will-change: auto !important; transition: none !important; }

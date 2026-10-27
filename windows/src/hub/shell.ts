@@ -165,8 +165,9 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
   interface Built { id: PageId; el: HTMLElement; local: HubContext; activate?: () => void; at: number; epoch: number }
   // Páginas da ilha já mostradas ficam vivas (desanexadas) por 60 s: voltar a uma não remonta nada.
   const alive = new Map<PageId, Built>();
-  const prefetchHolder = h("div", { class: "hub-prefetch", "aria-hidden": "true" });
-  scroll.append(prefetchHolder);
+  // Camadas sobrepostas: toda página montada mora no palco; as escondidas ficam
+  // em .m-layer (absolutas, invisíveis, com estilo e layout prontos). Trocar é só
+  // mudar classes e animar opacity/transform — nada é montado no quadro da animação.
   let pre: Built | null = null;
   let active: Built | null = null;
   let epoch = 0;
@@ -178,7 +179,9 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
     page_.dataset.page = def.id;
     const renderer = opts.flowPages[def.id];
     let activate: (() => void) | undefined;
-    if (prefetch) prefetchHolder.append(page_);
+    page_.classList.add("m-layer");
+    page_.setAttribute("aria-hidden", "true");
+    stage.append(page_);
     if (renderer) {
       await renderer(page_, local);
     } else {
@@ -205,6 +208,7 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
     pre = null;
     const b = await build(def, true);
     if (mine !== epoch || id === current) { drop(b); return; }
+    b.el.dataset.ready = "1";
     pre = b;
   }
 
@@ -252,28 +256,31 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
    * transform/opacity. Nenhum layout acontece durante a animação.
    */
   async function swapPage(page_: HTMLElement, token: number) {
-    const old = stage.firstElementChild as HTMLElement | null;
-    const motion = old && !reducedMotion();
-    page_.classList.add("m-premount");
-    stage.append(page_);
-    if (motion) {
-      // Dois quadros: o primeiro faz o layout/pintura escondidos, o segundo já é só composição.
+    const motion = !reducedMotion();
+    // Montada agora há pouco: dois quadros para estilo/layout/pintura acontecerem escondidos.
+    if (motion && !page_.dataset.ready) {
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       if (token !== rendering) { page_.remove(); return; }
     }
-    // Sem crossfade de duas páginas inteiras (pintura dobrada em raster de software):
-    // a antiga sai de uma vez e só a nova entra, numa camada própria (opacity/transform).
-    for (const el of [...stage.children]) {
-      if (el === page_) continue;
-      // Uma página viva vai para o palco escondido (já tem estilo e layout); as outras saem.
-      const id = (el as HTMLElement).dataset.page as PageId | undefined;
-      if (id && alive.get(id)?.el === el) prefetchHolder.append(el); else el.remove();
+    page_.dataset.ready = "1";
+    // Lido antes de mexer nas classes (layout limpo, leitura barata); escrito só se preciso.
+    const scrolled = scroll.scrollTop !== 0;
+    for (const el of [...stage.children] as HTMLElement[]) {
+      if (el === page_ || el.classList.contains("m-layer")) continue;
+      const id = el.dataset.page as PageId | undefined;
+      if (id && (alive.get(id)?.el === el || pre?.el === el)) {
+        el.classList.remove("m-entering");
+        el.classList.add("m-layer");
+        el.setAttribute("aria-hidden", "true");
+      } else el.remove();
     }
-    scroll.scrollTop = 0;
-    page_.classList.remove("m-premount");
+    page_.classList.remove("m-layer");
+    page_.removeAttribute("aria-hidden");
+    if (scrolled) scroll.scrollTop = 0;
+    if (!motion) return;
     page_.classList.add("m-entering");
     animatePage(page_);
-    if (motion) await new Promise((r) => setTimeout(r, Durations.slow));
+    await new Promise((r) => setTimeout(r, Durations.slow));
     page_.classList.remove("m-entering");
   }
 
