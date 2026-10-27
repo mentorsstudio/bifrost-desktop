@@ -1,210 +1,144 @@
-// Island open/close FSM — port of IslandStateMachine.swift.
-// No DOM, no Tauri: it only reports transitions.
+// Bifrost — a máquina de estados da ilha, escrita do zero.
+// Quatro estados: "hidden" (recolhida), "petit" (compacta), "home" (aberta) e
+// "bifrost-desktop" (a saudação ao abrir). Entradas são os gestos (cursor,
+// clique), os eventos de trabalho e os pedidos explícitos; saídas são só as
+// transições, por `onTransition`. Sem DOM, sem Tauri — os testes a dirigem.
+// Um único relógio por nome ("hide", "fold", "greet") guarda cada contagem.
 
 export type FsmState = "hidden" | "petit" | "home" | "bifrost-desktop";
+type Clock = "hide" | "fold" | "greet";
 
 export class IslandStateMachine {
   state: FsmState = "hidden";
-
   onTransition: ((from: FsmState, to: FsmState) => void) | null = null;
 
-  /**
-   * home → petit delay, seconds: the auto-close preference. Changing it while a
-   * countdown runs starts that countdown again with the new delay, so an edit in
-   * Settings applies at once (IslandStateMachine.homeToPetitDelay on macOS).
-   */
-  get homeToPetitDelay(): number {
-    return this.homeDelay;
-  }
-  set homeToPetitDelay(seconds: number) {
-    if (!Number.isFinite(seconds) || seconds < 0 || seconds === this.homeDelay) return;
-    this.homeDelay = seconds;
-    if (this.state === "home" && this.homeCollapse != null) this.scheduleHomeCollapse();
-  }
-  /** petit → hidden delay, seconds. */
+  /** compacta → recolhida, em segundos. */
   petitToHiddenDelay = 60;
-  /** bifrost-desktop → petit once the greeting animation ends (no hover). */
+  /** saudação → compacta depois que a animação acaba (sem cursor). */
   greetAutoCollapseDelay = 0.6;
-  /** bifrost-desktop → petit while the mouse hovers the greeting. */
+  /** saudação → compacta com o cursor em cima. */
   greetHoverCollapseDelay = 10;
-  /** An alert waiting for an answer stays open, even when the mouse leaves. */
+  /** Um alerta esperando resposta segura a ilha aberta. */
   pinned = false;
-  /**
-   * Hovering opens the island all the way instead of peeking (Settings →
-   * General → Open on hover, off by default), as IslandStateMachine.openOnHover.
-   */
+  /** Passar o cursor abre de vez (Configurações → Geral). */
   openOnHover = false;
-  /** Grace period after the pointer leaves a hover-opened island, seconds. */
+  /** Folga depois que o cursor sai de uma ilha aberta pelo cursor. */
   hoverCloseDelay = 0.6;
-  /** Open because of a hover, until the user clicks inside it. */
-  get openedByHover(): boolean {
-    return this.byHover;
-  }
-
-  /**
-   * When the open island will fold, on the performance.now() clock, while the
-   * mouse-leave countdown runs; null otherwise. The island draws its countdown
-   * bar from it.
-   */
+  /** Quando a ilha aberta vai fechar (relógio performance.now), ou null. */
   homeCollapseDueAt: number | null = null;
 
-  private homeDelay = 15;
-  private byHover = false;
-  private petitHide: number | null = null;
-  private homeCollapse: number | null = null;
-  private greetCollapse: number | null = null;
+  private foldAfter = 15;
+  private hoverOpen = false;
+  private clocks = new Map<Clock, number>();
 
-  // ── Inputs ──────────────────────────────────────────────────────────────────
-
-  launch() {
-    this.cancelTimers();
-    this.transition("bifrost-desktop");
+  /** aberta → compacta: a preferência de fechar sozinho. Mudar no meio da contagem recomeça com o novo valor. */
+  get homeToPetitDelay(): number { return this.foldAfter; }
+  set homeToPetitDelay(seconds: number) {
+    if (!Number.isFinite(seconds) || seconds < 0 || seconds === this.foldAfter) return;
+    this.foldAfter = seconds;
+    if (this.state === "home" && this.clocks.has("fold")) this.startFold();
   }
 
+  /** Aberta por passar o cursor, até o primeiro clique dentro. */
+  get openedByHover(): boolean { return this.hoverOpen; }
+
+  // ── Gestos ────────────────────────────────────────────────────────────────
+
+  launch() { this.cancelTimers(); this.go("bifrost-desktop"); }
+
   mouseEntered() {
-    if (this.openOnHover && (this.state === "hidden" || this.state === "petit") && !this.pinned) {
+    const s = this.state;
+    if (this.openOnHover && !this.pinned && (s === "hidden" || s === "petit")) {
       this.cancelTimers();
-      this.byHover = true;
-      this.transition("home");
+      this.hoverOpen = true;
+      this.go("home");
       return;
     }
-    switch (this.state) {
-      case "hidden":
-        this.cancelTimers();
-        this.transition("petit");
-        break;
-      case "petit":
-        this.clear("petitHide");
-        break;
-      case "home":
-        this.clear("homeCollapse");
-        break;
-      case "bifrost-desktop":
-        this.scheduleGreetCollapse(this.greetHoverCollapseDelay);
-        break;
-    }
+    if (s === "hidden") { this.cancelTimers(); this.go("petit"); }
+    else if (s === "petit") this.stop("hide");
+    else if (s === "home") this.stop("fold");
+    else this.startGreet(this.greetHoverCollapseDelay);
   }
 
   mouseLeft() {
-    switch (this.state) {
-      case "hidden":
-        break;
-      case "petit":
-        this.schedulePetitHide();
-        break;
-      case "home":
-        this.scheduleHomeCollapse();
-        break;
-      case "bifrost-desktop":
-        this.clear("greetCollapse");
-        this.transition("petit");
-        break;
-    }
+    const s = this.state;
+    if (s === "petit") this.startHide();
+    else if (s === "home") this.startFold();
+    else if (s === "bifrost-desktop") { this.stop("greet"); this.go("petit"); }
   }
 
   click() {
-    this.byHover = false;
+    this.hoverOpen = false;
     if (this.state !== "petit") return;
     this.cancelTimers();
-    this.transition("home");
+    this.go("home");
   }
 
-  /** Greeting animation finished (T.end). Doesn't override a running hover timer. */
+  /** A animação da saudação acabou; não passa por cima de uma contagem do cursor. */
   greetComplete() {
-    if (this.state !== "bifrost-desktop") return;
-    if (this.greetCollapse == null) this.scheduleGreetCollapse(this.greetAutoCollapseDelay);
+    if (this.state === "bifrost-desktop" && !this.clocks.has("greet")) this.startGreet(this.greetAutoCollapseDelay);
   }
 
-  /** Non-alert work event: show compact from hidden. */
+  /** Trabalho que não é alerta: mostra a compacta se estava recolhida. */
   reveal() {
     if (this.state !== "hidden") return;
     this.cancelTimers();
-    this.transition("petit");
-    this.schedulePetitHide();
+    this.go("petit");
+    this.startHide();
   }
 
-  /**
-   * The user clicked inside the island: a hover-opened island now stays like
-   * any open island (normal auto-close) instead of folding once the pointer leaves.
-   */
+  /** Clique dentro: a ilha aberta pelo cursor passa a fechar no tempo normal. */
   userInteracted() {
-    if (!this.byHover) return;
-    this.byHover = false;
-    // The short countdown already running becomes the normal one.
-    if (this.state === "home" && this.homeCollapse != null) this.scheduleHomeCollapse();
+    if (!this.hoverOpen) return;
+    this.hoverOpen = false;
+    if (this.state === "home" && this.clocks.has("fold")) this.startFold();
   }
 
-  /** Alert or explicit request: open straight to expanded. */
-  forceHome() {
-    this.byHover = false;
-    this.cancelTimers();
-    this.transition("home");
-  }
+  /** Alerta ou pedido explícito: abre de vez. */
+  forceHome() { this.hoverOpen = false; this.cancelTimers(); this.go("home"); }
+  /** Fechar explícito (OK, Esc, alerta respondido). */
+  forcePetit() { this.hoverOpen = false; this.cancelTimers(); this.go("petit"); }
+  forceHidden() { this.hoverOpen = false; this.cancelTimers(); this.go("hidden"); }
 
-  /// Explicit close (OK button, Escape, an alert being answered).
-  forcePetit() {
-    this.byHover = false;
-    this.cancelTimers();
-    this.transition("petit");
-  }
+  cancelTimers() { for (const c of [...this.clocks.keys()]) this.stop(c); }
 
-  forceHidden() {
-    this.byHover = false;
-    this.cancelTimers();
-    this.transition("hidden");
-  }
+  // ── Relógios ──────────────────────────────────────────────────────────────
 
-  // ── Timers ──────────────────────────────────────────────────────────────────
-
-  private schedulePetitHide() {
-    this.clear("petitHide");
-    // A card folded away while it waits for an answer keeps the compact island
-    // on screen, so it can be reopened (isHeldOpen on macOS).
+  private startHide() {
+    this.stop("hide");
+    // Um cartão esperando resposta mantém a compacta na tela.
     if (this.pinned) return;
-    this.petitHide = window.setTimeout(() => {
-      this.petitHide = null;
-      if (this.state === "petit" && !this.pinned) this.transition("hidden");
-    }, this.petitToHiddenDelay * 1000);
+    this.after("hide", this.petitToHiddenDelay, () => { if (this.state === "petit" && !this.pinned) this.go("hidden"); });
   }
 
-  private scheduleHomeCollapse() {
-    this.clear("homeCollapse");
+  private startFold() {
+    this.stop("fold");
     if (this.pinned) return;
-    const ms = (this.byHover ? this.hoverCloseDelay : this.homeDelay) * 1000;
-    this.homeCollapseDueAt = performance.now() + ms;
-    this.homeCollapse = window.setTimeout(() => {
-      this.homeCollapse = null;
+    const seconds = this.hoverOpen ? this.hoverCloseDelay : this.foldAfter;
+    this.homeCollapseDueAt = performance.now() + seconds * 1000;
+    this.after("fold", seconds, () => {
       this.homeCollapseDueAt = null;
-      // An alert pinned while the countdown ran keeps the island open.
-      if (this.state === "home" && !this.pinned) {
-        this.byHover = false;
-        this.transition("petit");
-      }
-    }, ms);
+      if (this.state === "home" && !this.pinned) { this.hoverOpen = false; this.go("petit"); }
+    });
   }
 
-  private scheduleGreetCollapse(delay: number) {
-    this.clear("greetCollapse");
-    this.greetCollapse = window.setTimeout(() => {
-      this.greetCollapse = null;
-      if (this.state === "bifrost-desktop") this.transition("petit");
-    }, delay * 1000);
+  private startGreet(seconds: number) {
+    this.stop("greet");
+    this.after("greet", seconds, () => { if (this.state === "bifrost-desktop") this.go("petit"); });
   }
 
-  private clear(which: "petitHide" | "homeCollapse" | "greetCollapse") {
-    const id = this[which];
+  private after(name: Clock, seconds: number, run: () => void) {
+    this.clocks.set(name, window.setTimeout(() => { this.clocks.delete(name); run(); }, seconds * 1000));
+  }
+
+  private stop(name: Clock) {
+    const id = this.clocks.get(name);
     if (id != null) window.clearTimeout(id);
-    this[which] = null;
-    if (which === "homeCollapse") this.homeCollapseDueAt = null;
+    this.clocks.delete(name);
+    if (name === "fold") this.homeCollapseDueAt = null;
   }
 
-  cancelTimers() {
-    this.clear("petitHide");
-    this.clear("homeCollapse");
-    this.clear("greetCollapse");
-  }
-
-  private transition(next: FsmState) {
+  private go(next: FsmState) {
     if (next === this.state) return;
     const from = this.state;
     this.state = next;
