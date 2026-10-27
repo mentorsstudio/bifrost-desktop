@@ -191,7 +191,7 @@ body.bf-sky, .bf-sky {
 .bf-state-sleeping .bf-eyes { transform: scaleY(.1); }
 .bf-state-sleeping .bf-raven-body { animation: bf-breathe 5s ease-in-out infinite; }
 .bf-state-sleeping .bf-zzz { animation: bf-zzz 2.4s ease-in-out infinite; }
-@keyframes bf-zzz { 0% { opacity: 0; transform: translate(0, 0); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(10px, -16px); } }
+@keyframes bf-zzz { 0% { opacity: 0; transform: translate(0, 0); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(7px, -11px); } }
 
 .bf-mascot-pair { display: flex; gap: 6px; align-items: flex-end; }
 .bf-mascot-pair .bf-muninn { width: 84px; height: 84px; }

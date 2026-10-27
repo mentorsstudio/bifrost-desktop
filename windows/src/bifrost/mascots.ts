@@ -51,7 +51,7 @@ export function mascotSvg(name: MascotName): string {
     <path class="bf-check" d="M92 20 l6 6 l13 -14" fill="none" stroke="#5ef2c9" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
     <text class="bf-err" x="102" y="28" font-size="22" text-anchor="middle" fill="#ff6b6b">ᚾ</text>
     <path class="bf-wave" d="M10 34 q-5 8 0 16 M3 29 q-8 13 0 26" fill="none" stroke="#5ef2c9" stroke-width="2.5" stroke-linecap="round"/>
-    <text class="bf-zzz" x="96" y="26" font-size="14" fill="#9aa6c8">z</text>
+    <text class="bf-zzz" x="88" y="36" font-size="14" fill="#9aa6c8">z</text>
   </g>
 </svg>`;
 }

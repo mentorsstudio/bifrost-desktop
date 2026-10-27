@@ -375,7 +375,10 @@ export class RavenEngine {
       const z = kind === "z";
       this.sparks.push({
         // Nascem ao lado da cabeça (|x| ≥ 0.6R) e se afastam: nunca cruzam o rosto.
-        ...(() => { const side = z ? 1 : (i % 2 === 0 ? 1 : -1); return {
+        ...(() => { // Com um selo à direita, as faíscas vão só para a esquerda (nunca tocam o selo).
+          const side = z ? 1 : this.badge ? -1 : (i % 2 === 0 ? 1 : -1);
+          if (z) return { x: 0.5 + Math.random() * 0.15, y: -0.62, vx: 0.12 + Math.random() * 0.08, vy: -(0.22 + Math.random() * 0.08) };
+          return {
           x: side * (0.62 + Math.random() * 0.3), y: -0.85 - Math.random() * 0.25,
           vx: side * (0.12 + Math.random() * 0.25), vy: -(0.4 + Math.random() * 0.3) }; })(),
         kind,
