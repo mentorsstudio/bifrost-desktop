@@ -100,3 +100,39 @@ export function agentLabel(s: { id: string; name: string }): string {
   if (/^(integration_claude|vscode|cursor|terminal|claude)/.test(s.id) || !/^[a-z]+_/.test(s.id)) return "Claude Code";
   return s.name;
 }
+
+export interface DetectedLike { id: string; agent: string; kind: "cli" | "editor" | "ollama"; folder: string | null }
+
+/** Id da pílula de sessão com hooks que cobre esse agente. */
+function hookedId(agent: string): string[] {
+  if (agent === "claude") return ["integration_claude", "vscode", "cursor"];
+  return [`agent_${agent}`];
+}
+
+/**
+ * Os achados sem hooks que não repetem uma sessão com hooks: um Codex com hooks
+ * já está no painel; um editor só aparece se nenhuma sessão roda naquela pasta.
+ */
+export function mergeDetected<T extends DetectedLike>(live: SessionLike[], found: readonly T[]): T[] {
+  const folders = new Set(live.map((s) => (s.sessionCwd ?? "").replace(/[\\/]+$/, "").split(/[\\/]/).pop()?.toLowerCase()).filter(Boolean));
+  const out: T[] = [];
+  const seen = new Set<string>();
+  for (const d of found) {
+    if (d.kind === "cli" && live.some((s) => hookedId(d.agent).some((id) => s.id === id || s.id.startsWith(`${id}_`)))) continue;
+    if (d.kind === "editor" && d.folder && folders.has(d.folder.toLowerCase())) continue;
+    const k = `${d.kind}:${d.agent}:${d.folder ?? ""}`;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(d);
+  }
+  const rank = { cli: 0, ollama: 1, editor: 2 } as const;
+  return out.sort((a, b) => rank[a.kind] - rank[b.kind]);
+}
+
+export const DETECTED_LABEL = { cli: N_("running"), editor: N_("open"), ollama: N_("model loaded") } as const;
+export const AGENT_COLOR: Record<string, string> = {
+  claude: "#E07950", codex: "#2DD4BF", gemini: "#8AB4F8", ollama: "#F5F5F5",
+  vscode: "#3EA6FF", cursor: "#C0C4CC", antigravity: "#B47CFF", windsurf: "#5EF2C9",
+};
+/** Codex e Gemini aceitam hooks do Bifrost; um clique instala. */
+export const HOOKABLE = new Set(["codex", "gemini"]);

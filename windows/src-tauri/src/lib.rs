@@ -1,5 +1,6 @@
 // Bifrost for Windows — app wiring and the commands the island calls.
 
+mod agents_scan;
 mod agent_hooks;
 mod agents;
 mod chat;
@@ -969,6 +970,21 @@ fn bifrost_boot_mcp(s: &mut Settings) {
 }
 
 #[tauri::command]
+async fn agents_detect() -> Vec<agents_scan::Detected> {
+    agents_scan::scan().await
+}
+
+#[tauri::command]
+fn git_branch(path: String) -> Option<String> {
+    agents_scan::git_branch(std::path::Path::new(&path))
+}
+
+#[tauri::command]
+fn agents_focus(window: isize) -> bool {
+    platform::focus_window_handle(window)
+}
+
+#[tauri::command]
 fn mcp_scan() -> mcp::catalog::Scan {
     mcp::catalog::scan(&mcp::catalog::Env::current()).0
 }
@@ -1021,6 +1037,9 @@ pub fn run() {
         .manage(recap::load())
         .invoke_handler(tauri::generate_handler![
             boot,
+            agents_detect,
+            agents_focus,
+            git_branch,
             save_settings,
             set_system_languages,
             set_collapsed,

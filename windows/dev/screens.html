@@ -7,6 +7,19 @@
       html, body { overflow: hidden; background: radial-gradient(1200px 600px at 50% -20%, #1a2346, #05070f 70%) !important; }
       #root { position: fixed; inset: 0; }
     </style>
+    <script>
+      // Agentes sem hooks de mentira, para a tela home-scan.
+      if (/shot=home-scan/.test(location.search)) window.__FIXTURES__ = {
+        agents_detect: [
+          { id: "cli:codex:1", agent: "codex", kind: "cli", name: "Codex", folder: null, window: 1, host: "Windows Terminal" },
+          { id: "cli:gemini:2", agent: "gemini", kind: "cli", name: "Gemini CLI", folder: "relatorio", window: 2, host: "VS Code" },
+          { id: "ollama:llama3.2", agent: "ollama", kind: "ollama", name: "Ollama", folder: "llama3.2", window: null, host: "127.0.0.1:11434" },
+          { id: "editor:cursor:loja", agent: "cursor", kind: "editor", name: "Cursor", folder: "site-loja", window: 3, host: null },
+        ],
+        agent_hooks_list: [{ id: "gemini", installed: true }],
+        git_branch: "paulo-mcp",
+      };
+    </script>
     <script src="./tauri-stub.js"></script>
   </head>
   <body>

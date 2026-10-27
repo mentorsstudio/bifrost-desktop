@@ -283,6 +283,10 @@ export const Bridge = {
 
   // ── Other agents (Gemini CLI, Codex, Cursor…) ─────────────────────────────
   agentHooksList: () => call<AgentHookStatus[]>("agent_hooks_list"),
+  /** Agentes rodando sem hooks: CLIs nos terminais, editores abertos, modelos do Ollama. */
+  agentsDetect: () => call<DetectedAgent[]>("agents_detect"),
+  agentsFocus: (window: number) => call<boolean>("agents_focus", { window }),
+  gitBranch: (path: string) => call<string | null>("git_branch", { path }),
   /** Diff to show before anything is written. `install: false` previews removal. */
   agentHooksPreview: (agent: string, install: boolean) =>
     callOrThrow<AgentHookPlan>("agent_hooks_preview", { agent, install }),
@@ -580,6 +584,17 @@ export interface HookStatus {
   settingsPath: string;
   hookPath: string;
   hookReady: boolean;
+}
+
+/** Um agente achado sem hooks (agents_scan.rs). */
+export interface DetectedAgent {
+  id: string;
+  agent: string;
+  kind: "cli" | "editor" | "ollama";
+  name: string;
+  folder: string | null;
+  window: number | null;
+  host: string | null;
 }
 
 /** One agent other than Claude Code, as agents.rs reports it. */

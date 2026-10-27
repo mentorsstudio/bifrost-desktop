@@ -641,3 +641,16 @@ pub fn prepare_pill_window(win: &WebviewWindow, _mode: super::DesktopMode) -> bo
 pub fn set_pill_edge(_win: &WebviewWindow, _edge: &str) {}
 
 pub fn set_pill_input(_win: &WebviewWindow, _rects: Vec<(f64, f64, f64, f64)>) {}
+
+// ── Agents without hooks (agents_scan.rs) ─────────────────────────────────────
+
+/// Every process (pid, parent, exe) and every visible titled window (hwnd, pid, title).
+pub fn agent_snapshot() -> (Vec<(u32, u32, String)>, Vec<(isize, u32, String)>) {
+    let procs = process_table().into_iter().map(|(pid, p)| (pid, p.parent, p.exe)).collect();
+    (procs, top_windows())
+}
+
+/// Brings one window forward by handle.
+pub fn focus_window_handle(raw: isize) -> bool {
+    bring_forward(raw)
+}

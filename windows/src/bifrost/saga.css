@@ -93,3 +93,26 @@
 .ag-row { padding: 3px 6px; }
 .ag-icon { width: 22px; height: 22px; }
 .ag-row { grid-template-columns: 22px minmax(0, 1fr) auto; }
+.ag-row.s-found { background: rgba(19, 32, 63, .35); border-style: dashed; }
+.ag-row.k-editor .ag-icon { border-radius: 7px; }
+.ag-status.s-found { color: #c9d2e8; }
+.ag-hook { flex: 0 0 auto; height: 16px; padding: 0 6px; font-size: 9px !important; border-radius: 6px; border: 1px solid rgba(226,181,90,.55); background: rgba(226,181,90,.14); color: #f6d27a; font: 600 9.5px "Space Grotesk","Segoe UI",sans-serif; cursor: pointer; white-space: nowrap; }
+.ag-hook:hover { background: rgba(226,181,90,.26); }
+.ag-hook[disabled] { opacity: .7; cursor: default; }
+
+/* ── Cartão da sessão (esquerda) ─────────────────────────────────────── */
+.sc-ctx { font-size: 10px; color: #8692ad; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.sc-card { display: flex; flex-direction: column; gap: 5px; min-width: 0; height: 100%; justify-content: center; padding-right: 8px; }
+.sc-head { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.sc-head b { font: 600 13px "Space Grotesk", "Segoe UI", sans-serif; color: #eef1f8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sc-dot { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; }
+.sc-summary { font-size: 12px; color: #dfe5f3; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.sc-summary.is-empty { color: #8f9ab4; font-size: 11px; }
+.sc-meta { font-size: 10px; color: #8692ad; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sc-actions { display: flex; gap: 6px; flex-wrap: nowrap; min-width: 0; }
+.sc-btn { height: 24px; padding: 0 9px; font-size: 10.5px; white-space: nowrap; }
+.left-body > .card-body { height: 100%; box-sizing: border-box; }
+.sc-ctx { position: absolute; left: 108px; right: 16px; bottom: 12px; margin: 0; }
+.sc-card { padding: 10px 14px 10px 108px; box-sizing: border-box; }
+.int-actions { display: flex; flex-wrap: wrap; gap: 6px; padding-right: 8px; }
+.int-actions > * { white-space: nowrap; }

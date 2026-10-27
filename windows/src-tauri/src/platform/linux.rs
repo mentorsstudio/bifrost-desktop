@@ -937,3 +937,12 @@ fn apply_rects(gw: &impl IsA<gtk::Widget>, rects: &[(f64, f64, f64, f64)]) {
     }
     gdk_window.input_shape_combine_region(&region, 0, 0);
 }
+
+/// Agents without hooks: not scanned on Linux (the island there is a dev target).
+pub fn agent_snapshot() -> (Vec<(u32, u32, String)>, Vec<(isize, u32, String)>) {
+    (Vec::new(), Vec::new())
+}
+
+pub fn focus_window_handle(_raw: isize) -> bool {
+    false
+}

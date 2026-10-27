@@ -397,6 +397,7 @@ const NOT_TEXT = new Set([
   "working", // a bot state
   "error", // a bot state and a pill badge
   "idle", // a bot state
+  "open", // a class name (picker.on/open)
   "unknown", // a CI state
   "Resend", // the service's name (the Mac's "Resend" is a button: send again)
   "Stop", // Claude Code's hook event (the Mac's "Stop" is a button)

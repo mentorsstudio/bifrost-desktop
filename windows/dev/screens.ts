@@ -133,11 +133,17 @@ if (shot === "greeting") {
   island.applySettings();
   State.loadIntegrationTasks();
   await wait(50);
-  if (shot === "home-empty") { island.expand("overview"); }
+  if (shot === "home-empty" || shot === "home-scan") { island.expand("overview"); }
   else {
   hook({ hook_event_name: "SessionStart", session_id: "s1", cwd: "C:\\Users\\paulo\\projetos\\bifrost-desktop" });
   hook({ hook_event_name: "UserPromptSubmit", session_id: "s1", prompt: "Revise o servidor MCP" });
   if (shot === "idle") { island.collapse(); }
+  if (shot === "home-last") {
+    hook({ hook_event_name: "PreToolUse", session_id: "s1", cwd: "C:\\Users\\paulo\\projetos\\bifrost-desktop", tool_name: "Edit", tool_input: { file_path: "src/mcp/client.rs" } });
+    hook({ hook_event_name: "Stop", session_id: "s1", cwd: "C:\\Users\\paulo\\projetos\\bifrost-desktop", last_assistant_message: "Pronto: o login Basic Auth agora vai para o cofre do sistema e os testes passam." });
+    await wait(400);
+    island.expand("overview");
+  }
   if (shot === "home") {
     hook({ hook_event_name: "PreToolUse", session_id: "s1", tool_name: "Edit", tool_input: { file_path: "src/mcp/client.rs" } });
     hook({ hook_event_name: "SessionStart", session_id: "c1", coucou_agent: "codex", cwd: "C:\\Users\\paulo\\projetos\\site-loja" });

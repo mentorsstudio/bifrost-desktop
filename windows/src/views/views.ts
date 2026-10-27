@@ -30,6 +30,7 @@ import type { Outfit, OutfitSelection } from "../huginn/wardrobe";
 import { language, t, tl, type Msg } from "../i18n/i18n";
 import type { ViewCommand } from "../island/shortcuts";
 import { agentsPanel } from "./agents-panel";
+import { SessionMemory, buildSessionCard, contextLine } from "./session-card";
 import { isSession } from "./agents-model";
 import { approvalView, confusedView, errorView, finishedView, noteView, questionView } from "./alerts";
 
@@ -176,7 +177,10 @@ function buildOverview(actions: ViewActions): ViewHost {
     State.notify();
   });
   const who = h("div", { class: "who" });
-  const tickerBody = h("div", { class: "card-body" }, who, ticker.el);
+  const ctxLine = h("div", { class: "sc-ctx" });
+  const tickerBody = h("div", { class: "card-body" }, who, ticker.el, ctxLine);
+  const memory = new SessionMemory();
+  const sessionCard = buildSessionCard(memory, { settings: () => actions.openSettingsWindow(), chat: () => actions.setView("prompt") }, () => State.notify());
   const leftBody = h("div", { class: "left-body" });
   const jump = h(
     "button",
@@ -209,7 +213,7 @@ function buildOverview(actions: ViewActions): ViewHost {
   let pillIds = "";
   let detailOpen = false;
   let lastFocus: string | null = null;
-  let mode: "ticker" | "card" | "plan" | "diff" | "spotify" | "whatsapp" | null = null;
+  let mode: "ticker" | "card" | "plan" | "diff" | "spotify" | "whatsapp" | "sessionCard" | null = null;
   let cardKey = "";
   /** The list row highlighted at the last sync, to scroll only when it moves. */
   let shownSelection: number | null = null;
@@ -357,6 +361,16 @@ function buildOverview(actions: ViewActions): ViewHost {
           }));
         }
         ticker.sync(task);
+        const r = memory.note(task, Date.now());
+        ctxLine.textContent = contextLine(task.sessionCwd ?? r.cwd, r.started, Date.now(), () => State.notify());
+      } else if (task && !sessionActive && isSession(task) && (memory.get(task.id) || task.id.startsWith("agent_") || State.integrations[task.id]?.configured)) {
+        if (mode !== "sessionCard") {
+          clear(leftBody);
+          leftBody.append(sessionCard.el);
+          mode = "sessionCard";
+          cardKey = "";
+        }
+        sessionCard.sync(task!, Date.now());
       } else if (task && task.id === SPOTIFY_ID) {
         // Its own card for every state: playing, idle, not installed.
         if (mode !== "spotify") {

@@ -32,3 +32,28 @@ test("rótulo e monograma", () => {
   assert.equal(agentLabel({ id: "integration_claude", name: "Sessão" }), "Claude Code");
   assert.equal(monogram("Gemini CLI"), "GC");
 });
+
+import { mergeDetected } from "../src/views/agents-model.ts";
+import { SessionMemory } from "../src/views/session-card.ts";
+test("achados sem hooks não repetem sessões com hooks", () => {
+  const live = [{ id: "agent_codex", name: "Codex", sessionCwd: "C:\\p\\loja" }];
+  const found = [
+    { id: "cli:codex:1", agent: "codex", kind: "cli", folder: null },
+    { id: "cli:gemini:2", agent: "gemini", kind: "cli", folder: null },
+    { id: "editor:cursor:loja", agent: "cursor", kind: "editor", folder: "loja" },
+    { id: "editor:vscode:x", agent: "vscode", kind: "editor", folder: "x" },
+    { id: "ollama:q", agent: "ollama", kind: "ollama", folder: "q" },
+  ];
+  assert.deepEqual(mergeDetected(live, found).map((d) => d.id), ["cli:gemini:2", "ollama:q", "editor:vscode:x"]);
+});
+test("a memória da sessão guarda o último resumo e sobrevive a um reinício", () => {
+  const store = new Map();
+  const ls = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) };
+  const m = new SessionMemory(ls);
+  m.note({ id: "agent_codex", finalLine: "Checkout corrigido", sessionCwd: "C:\\p\\loja", steps: [], stepIndex: 0, state: "finished" }, 1000);
+  m.note({ id: "agent_codex", finalLine: null, sessionCwd: null, steps: [], stepIndex: 0, state: "idle" }, 5000);
+  const again = new SessionMemory(ls).get("agent_codex");
+  assert.equal(again.summary, "Checkout corrigido");
+  assert.equal(again.cwd, "C:\\p\\loja");
+  assert.equal(again.started, 1000);
+});
