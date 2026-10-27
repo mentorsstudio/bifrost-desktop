@@ -158,6 +158,7 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
     for (const [id, el] of items) el.classList.toggle("on", id === current);
     const token = ++rendering;
     const page_ = h("div", { class: "hub-page" });
+    page_.dataset.page = def.id;
     const renderer = opts.flowPages[def.id];
     if (renderer) {
       await renderer(page_, ctx);
