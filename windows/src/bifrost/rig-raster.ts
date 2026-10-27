@@ -8,7 +8,8 @@ import { ART_META } from "./art/meta";
 import type { RigPose, Who } from "./rig";
 
 type Meta = { w: number; h: number; pivot: readonly number[]; eyes: readonly (readonly number[])[]; brow: readonly number[] | null;
-  beakRoot: readonly number[] | null; shoulder: readonly number[] | null; lid: readonly number[]; ink: readonly number[]; layers: readonly string[] };
+  beakRoot: readonly number[] | null; shoulder: readonly number[] | null; lid: readonly number[]; ink: readonly number[];
+  sticker: readonly number[]; stickerW: number; layers: readonly string[] };
 const META = ART_META as unknown as Record<Who, Meta>;
 
 const URLS: Record<string, string> = {
@@ -23,6 +24,7 @@ const URLS: Record<string, string> = {
   "muninn-eyes": new URL("./art/muninn-eyes.webp", import.meta.url).href,
   "muninn-beakLo": new URL("./art/muninn-beakLo.webp", import.meta.url).href,
   "muninn-wing": new URL("./art/muninn-wing.webp", import.meta.url).href,
+  "muninn-chest": new URL("./art/muninn-chest.webp", import.meta.url).href,
 };
 
 const imgs = new Map<string, HTMLImageElement>();
@@ -60,6 +62,9 @@ function sc(key: string, w: number, h: number) {
 }
 const rgb = (c: readonly number[]) => `rgb(${c[0]},${c[1]},${c[2]})`;
 
+/** Limites que mantêm as juntas invisíveis (gola de penas no pescoço, raiz da asa sob o peito). */
+export const RASTER_LIMITS = { tilt: 0.065, wing: 0.5, beak: 0.14 };
+
 /** Desenha o corvo original com o centro do rig em (0,0); `s` = px por unidade do rig (112 = altura). */
 export function drawRaster(x: C2, who: Who, pose: RigPose, s: number, alpha = 1) {
   const m = META[who];
@@ -71,41 +76,41 @@ export function drawRaster(x: C2, who: Who, pose: RigPose, s: number, alpha = 1)
   const k = m.h / 112; // px da arte por unidade do rig
   const rise = (-pose.breath * 0.7 - pose.lift) * k;
   // Base: corpo e pés plantados; a respiração estica o peito um tiquinho a partir dos pés.
-  g.save(); g.translate(0, m.h); g.scale(1, 1 + pose.breath * 0.008); g.translate(0, -m.h);
+  g.save(); g.translate(0, m.h); g.scale(1, 1 + pose.breath * 0.006); g.translate(0, -m.h);
   if (pose.lift) g.translate(0, -pose.lift * k);
   g.drawImage(im("base"), 0, 0);
   g.restore();
-  // Asa que acena (Muninn): gira no ombro, por cima do corpo.
-  const wingA = m.shoulder ? -Math.max(-0.3, Math.min(2.2, pose.wingR)) * 0.32 : 0;
-  const drawWing = () => {
-    if (!m.shoulder) return;
-    const [sx, sy] = m.shoulder;
-    g.save(); g.translate(0, rise * 0.6); g.translate(sx, sy); g.rotate(wingA); g.translate(-sx, -sy); g.drawImage(im("wing"), 0, 0); g.restore();
-  };
-  // Cabeça + topete: inclina no pescoço; ao falar, o Huginn balança a cabeça de leve.
+  // Cabeça + topete: inclina no pescoço (a gola serrilhada cobre a junta); ao falar, o Huginn balança.
   const [hx, hy] = m.pivot;
-  const tilt = Math.max(-0.14, Math.min(0.14, pose.tilt));
-  const bob = who === "huginn" ? Math.max(0, pose.beak) * 2.2 * k * 0.4 : 0;
+  const tilt = Math.max(-RASTER_LIMITS.tilt, Math.min(RASTER_LIMITS.tilt, pose.tilt * 0.85));
+  const bob = who === "huginn" ? Math.max(0, Math.min(1, pose.beak)) * 0.9 * k : 0;
   g.save();
   g.translate(0, rise + bob); g.translate(hx, hy); g.rotate(tilt); g.translate(-hx, -hy);
   g.drawImage(im("head"), 0, 0);
-  // Bico inferior do Muninn (já nasce aberto: 0,5 = como no desenho).
+  // Bico inferior do Muninn (o desenho já é de bico aberto: 0,5 = repouso).
   if (m.beakRoot) {
     const [bx, by] = m.beakRoot;
-    const a = Math.max(-0.12, Math.min(0.16, (pose.beak - 0.5) * 0.32));
+    const a = Math.max(-RASTER_LIMITS.beak * 0.6, Math.min(RASTER_LIMITS.beak, (pose.beak - 0.5) * 0.3));
     g.save(); g.translate(bx, by); g.rotate(-a); g.translate(-bx, -by); g.drawImage(im("beakLo"), 0, 0); g.restore();
   }
-  // Olhos: pupilas que deslizam + pálpebra, recortados pela máscara do branco do olho.
+  // Olhos: pupilas que deslizam + pálpebras curvas, recortadas pela forma do olho.
   const e = sc(`${who}-eyes`, m.w, m.h), ge = e.getContext("2d")!;
   ge.globalCompositeOperation = "source-over"; ge.clearRect(0, 0, m.w, m.h);
-  const big = Math.min(...m.eyes.map((q) => q[2]));
-  ge.drawImage(im("pupils"), pose.px * big * 0.3, pose.py * big * 0.25);
-  if (pose.lid > 0.01) {
+  const small = Math.min(...m.eyes.map((q) => q[2]));
+  ge.drawImage(im("pupils"), pose.px * small * 0.3, pose.py * small * 0.25);
+  const lid = Math.max(0, Math.min(1, pose.lid));
+  if (lid > 0.01) {
     for (const [cx, cy, rx, ry] of m.eyes) {
-      const top = cy - ry - 4, hh = (ry * 2 + 8) * Math.min(1, pose.lid);
-      ge.fillStyle = rgb(m.lid); ge.fillRect(cx - rx - 6, top, rx * 2 + 12, hh);
-      ge.strokeStyle = rgb(m.ink); ge.lineWidth = Math.max(6, ry * 0.16); ge.lineCap = "round";
-      ge.beginPath(); ge.moveTo(cx - rx - 2, top + hh); ge.quadraticCurveTo(cx, top + hh + ry * 0.18 * (1 - pose.lid), cx + rx + 2, top + hh); ge.stroke();
+      // A borda de baixo da pálpebra é o arco de cima do próprio olho, descido: acompanha a curva.
+      const d = (ry * 2 + 6) * lid;
+      const p = new Path2D();
+      p.rect(cx - rx - 8, cy - ry - 8, rx * 2 + 16, ry * 2 + 16);
+      p.ellipse(cx, cy + d - 2, rx * 1.08, ry * 1.04, 0, 0, Math.PI * 2);
+      ge.fillStyle = rgb(m.lid); ge.fill(p, "evenodd");
+      ge.save(); ge.clip(p, "evenodd");
+      ge.strokeStyle = rgb(m.ink); ge.lineWidth = Math.max(7, ry * 0.14);
+      ge.beginPath(); ge.ellipse(cx, cy + d - 2, rx * 1.08, ry * 1.04, 0, Math.PI, Math.PI * 2); ge.stroke();
+      ge.restore();
     }
   }
   ge.globalCompositeOperation = "destination-in"; ge.drawImage(im("eyes"), 0, 0);
@@ -114,30 +119,46 @@ export function drawRaster(x: C2, who: Who, pose: RigPose, s: number, alpha = 1)
   // Sobrancelha do Huginn (a direita, o "entendi"): sobe e gira um tico.
   if (m.brow) {
     const [bx, by] = m.brow;
-    const r = pose.browR;
-    g.save(); g.translate(0, -Math.max(-0.4, Math.min(1.2, r)) * 3.2 * k); g.translate(bx, by); g.rotate(-r * 0.1); g.translate(-bx, -by);
+    const r = Math.max(-0.4, Math.min(1.2, pose.browR));
+    g.save(); g.translate(0, -r * 3 * k); g.translate(bx, by); g.rotate(-r * 0.08); g.translate(-bx, -by);
     g.drawImage(im("brow"), 0, 0); g.restore();
   }
   g.restore();
-  drawWing();
+  // Asa que acena (Muninn): gira no ombro, com a raiz escondida sob as penas do peito.
+  if (m.shoulder) {
+    const [sx, sy] = m.shoulder;
+    const wa = -Math.max(-0.1, Math.min(RASTER_LIMITS.wing, pose.wingR * 0.25));
+    g.save(); g.translate(0, rise * 0.5); g.translate(sx, sy); g.rotate(wa); g.translate(-sx, -sy); g.drawImage(im("wing"), 0, 0); g.restore();
+    g.save(); g.translate(0, rise * 0.5); g.drawImage(im("chest"), 0, 0); g.restore();
+  }
 
-  // Reduz em meias etapas até perto do tamanho final (qualidade em ícones pequenos).
+  // Reduz em meias etapas até perto do tamanho final (nítido em ícones pequenos).
   const t = x.getTransform ? x.getTransform() : null;
   const dev = t ? Math.hypot(t.a, t.b) || 1 : 1;
   const target = (s / k) * dev; // px de tela (reais) por px da arte
   let src: HTMLCanvasElement = f, sw = W, sh = H, lvl = 0;
   while (target * (W / sw) < 0.5 && sw > 64) {
     const nw = Math.ceil(sw / 2), nh = Math.ceil(sh / 2);
-    const d = sc(`${who}-mip${lvl++}`, nw, nh), gd = d.getContext("2d")!;
+    const d2 = sc(`${who}-mip${lvl++}`, nw, nh), gd = d2.getContext("2d")!;
     gd.clearRect(0, 0, nw, nh); gd.imageSmoothingEnabled = true; gd.imageSmoothingQuality = "high";
     gd.drawImage(src, 0, 0, sw, sh, 0, 0, nw, nh);
-    src = d; sw = nw; sh = nh;
+    src = d2; sw = nw; sh = nh;
   }
+  // Adesivo AO VIVO: a silhueta composta dilatada (círculo de cópias), em cinza, por baixo.
+  const r = m.stickerW * (sw / W);
+  const st = sc(`${who}-stk`, sw, sh), gs = st.getContext("2d")!;
+  gs.globalCompositeOperation = "source-over"; gs.clearRect(0, 0, sw, sh);
+  if (r >= 0.6) {
+    const n = r > 3 ? 20 : 12;
+    for (const rr of r > 2.5 ? [r, r * 0.6] : [r]) for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2; gs.drawImage(src, Math.cos(a) * rr, Math.sin(a) * rr); }
+    gs.globalCompositeOperation = "source-in"; gs.fillStyle = rgb(m.sticker); gs.fillRect(0, 0, sw, sh);
+    gs.globalCompositeOperation = "source-over";
+  }
+  gs.drawImage(src, 0, 0);
   x.save();
   if (alpha !== 1) x.globalAlpha *= alpha;
   x.imageSmoothingEnabled = true; x.imageSmoothingQuality = "high";
-  // A origem do rig: centro horizontal, pés em +50 unidades.
   const ox = (m.w / 2 + pad) / k, oy = (m.h + pad) / k - 50;
-  x.drawImage(src, 0, 0, sw, sh, -ox * s, -oy * s, (W / k) * s, (H / k) * s);
+  x.drawImage(st, 0, 0, sw, sh, -ox * s, -oy * s, (W / k) * s, (H / k) * s);
   x.restore();
 }

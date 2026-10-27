@@ -890,3 +890,39 @@ máscara dos olhos, sobrancelha direita do Huginn, bico inferior+língua e a asa
 Muninn (o corpo sob ela é repintado com contorno e adesivo). `rig-raster.ts` compõe tudo
 num quadro em tamanho cheio e reduz em meias etapas (nítido em 24–32 px). O "Clássico" e
 "Seguir o tema" usam a arte original; os outros estilos seguem no rig vetorial recolorido.
+
+### 10.25 Anel do gesto v24: disco opaco, sem retângulo no miolo, PDFium embutido
+
+- **Transparência vazando.** Entre o miolo (raio 60) e a faixa das fatias (começa em 66)
+  havia um vão de 6 px totalmente transparente, e o cinto de runas/aros (raio 162–180)
+  era desenhado sobre o nada; a Aurora ainda tinha a faixa a 80–92 % de opacidade. A área
+  de trabalho (ícones, "paulo", "Temp") aparecia por ali. Agora um `.fm-disc` redondo e
+  opaco fica por baixo de tudo (raio 168, Runa 181), com o mesmo movimento da faixa; a
+  Aurora ficou opaca e mantém o brilho de vidro só no gradiente.
+- **Colchete/retângulo acima do ícone.** Não era um elemento nosso: era o retângulo de
+  seleção do ícone da área de trabalho (o arquivo sob o cursor fica selecionado pelo clique
+  direito) visto pelo vão transparente. O disco opaco o cobre. A QA (`tests/visual/qa.mjs`,
+  cenas `anel:<estilo>:<png|pdf>`) agora falha com `hub-rect` se qualquer elemento perto do
+  miolo tiver contorno, borda ou sombra com cantos retos, e com `ring-bleed` se o disco
+  faltar, não for opaco ou não cobrir até a borda.
+- **PDFium.** O v23 só procurava `%LOCALAPPDATA%\Bifrost\tools\pdfium\pdfium.dll`, que só
+  existe depois de "Baixar" em Conversor › Ferramentas; o instalador não trazia a DLL, por
+  isso PDF → PNG/JPG aparecia como "Precisa do PDFium". O CI agora baixa
+  `pdfium-win-x64` (bblanchon/pdfium-binaries chromium/7881, BSD-3/Apache-2.0) e o
+  `tauri.windows.conf.json` embute `pdfium\pdfium.dll` + LICENSE ao lado do exe;
+  `tools::locate` procura também ali (a pasta tools continua valendo).
+- **Rótulos.** Sem hífen opcional: `fit()` mede a palavra mais longa sem quebra, reduz a
+  letra até ela caber (piso 8,5 px) e, se ainda faltar, alarga o rótulo dentro da fatia.
+  "Redimensionar" fica inteiro numa linha; a QA falha com `word-split` se houver hífen,
+  corte ou palavra partida.
+
+#### 10.24.1 Camadas recriadas e adesivo ao vivo
+
+Revisão do vídeo (borda, pescoço, asa fantasma, boca, piscada, emenda do laço): as camadas
+agora saem SEM o adesivo cinza e cada peça móvel tem o contorno inteiro. O adesivo é gerado
+a cada quadro dilatando o alfa da silhueta composta (cópias em círculo + `source-in` cinza),
+então acompanha cabeça e asa. A cabeça desce sobre o peito com uma gola serrilhada; a base
+sob ela é pena lisa; inclinação limitada a ±0,065 rad. A asa do Muninn gira no ombro com
+a raiz sob uma sobreposição de penas do peito; o corpo por trás é repintado com contorno.
+Pálpebras curvas recortadas pelo olho. Laços começam e terminam no repouso exato; o bico
+do Muninn só se mexe no estado "falando". Vídeos renderizados quadro a quadro (`__fix`).

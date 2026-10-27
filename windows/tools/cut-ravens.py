@@ -1,13 +1,15 @@
-# Recorta os corvos da referência em camadas de fantoche (PNG/WebP com alfa) + meta JSON.
-#   /workspace/vt/bin/python tools/cut-ravens.py <ref.png> <pasta_saida>
-import sys, json, os
+# Recria os corvos da referência como camadas de fantoche limpas e completas (WebP com alfa)
+# + art/meta.ts. Uso: /workspace/vt/bin/python tools/cut-ravens.py <ref.png> <pasta_saida>
+# - Sem o adesivo cinza (ele é gerado ao vivo da silhueta composta, em rig-raster.ts).
+# - Cada peça móvel tem o próprio contorno; por baixo, a base é repintada (sem linhas velhas).
+# - A cabeça desce sobre o peito com uma gola de penas serrilhada que cobre a junta.
+import sys, os, json
 import numpy as np, cv2
 from PIL import Image
 from scipy import ndimage as nd
 REF, OUT = sys.argv[1], sys.argv[2]
 im = np.array(Image.open(REF).convert("RGBA")).astype(np.float32)
-rgb = im[..., :3].copy(); al = im[..., 3]
-rgb[al < 128] = 255
+rgb = im[..., :3].copy(); rgb[im[..., 3] < 128] = 255
 PAL = {
   "huginn": {"bg": (255,255,255), "body": (48,48,56), "ink": (16,15,21), "ink2": (25,24,31), "wing": (55,58,73), "sticker": (177,179,187),
              "crest": (48,61,97), "beak": (102,103,117), "beakHi": (146,146,154), "medal": (174,124,75), "eyeoff": (215,215,218)},
@@ -15,19 +17,27 @@ PAL = {
              "beak": (99,99,113), "cheek": (216,214,217), "beakHi": (142,141,147), "tongue": (218,119,111), "medal": (175,112,77)},
 }
 CFG = {
-  "huginn": {"x": (164, 752), "y": (72, 835), "cut": 445, "pivot": (300, 450), "brow": (445, 200, 545, 268)},
-  "muninn": {"x": (1025, 1616), "y": (114, 835), "cut": 418, "pivot": (210, 420), "brow": None, "wing": "R", "shoulder": (330, 440), "bodyEll": (240, 520, 205, 125)},
+  "huginn": {"x": (164, 752), "y": (72, 835), "cut": 445, "pivot": (300, 448), "brow": (445, 200, 545, 268)},
+  "muninn": {"x": (1025, 1616), "y": (114, 835), "cut": 418, "pivot": (210, 418), "wing": "R", "bodyEll": (240, 520, 205, 125)},
 }
-BAND = 28
 meta = {}
-def save(name, rgbA):
-    Image.fromarray(np.clip(rgbA, 0, 255).astype(np.uint8), "RGBA").save(os.path.join(OUT, name + ".webp"), lossless=False, quality=92, alpha_quality=100, method=6)
-def inpaint(img, mask, r=9):
-    return cv2.inpaint(np.clip(img, 0, 255).astype(np.uint8), (mask > 0).astype(np.uint8) * 255, r, cv2.INPAINT_TELEA).astype(np.float32)
+def save(name, C, A):
+    out = np.dstack([np.clip(C, 0, 255), np.clip(A, 0, 1) * 255]).astype(np.uint8)
+    Image.fromarray(out, "RGBA").save(os.path.join(OUT, name + ".webp"), quality=94, alpha_quality=100, method=6)
+def bleed(C, A, n=4):
+    C = C.copy()
+    for _ in range(n):
+        dil = cv2.dilate(C.astype(np.uint8), np.ones((3, 3), np.uint8)).astype(np.float32)
+        C = np.where((A[..., None] <= 0.02), dil, C)
+    return C
+def hull_of(mask):
+    pts = np.argwhere(mask)[:, ::-1].astype(np.int32)
+    h = np.zeros(mask.shape, np.uint8); cv2.fillPoly(h, [cv2.convexHull(pts)], 1); return h.astype(bool)
 for who, cfg in CFG.items():
+    P = PAL[who]; ink = np.array(P["ink"], np.float32); body = np.array(P["body"], np.float32)
     x0, x1 = cfg["x"]; y0, y1 = cfg["y"]
     R = rgb[y0:y1, x0:x1].copy(); H, W = R.shape[:2]
-    names = list(PAL[who]); cols = np.array([PAL[who][n] for n in names], np.float32)
+    names = list(P); cols = np.array([P[n] for n in names], np.float32)
     cls = np.array(names)[((R[:, :, None, :] - cols[None, None]) ** 2).sum(-1).argmin(-1)]
     cls[cls == "ink2"] = "ink"
     if who == "huginn": cls[cls == "eyeoff"] = "bg"
@@ -35,142 +45,138 @@ for who, cfg in CFG.items():
     lab, _ = nd.label(~fg)
     border = set(np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))) - {0}
     outside = np.isin(lab, list(border))
-    sil = ~outside
-    # alfa suave: dentro = 255; na borda, pela "brancura" do pixel (o adesivo é cinza ~178)
-    whit = np.clip((255 - R.min(-1)) / (255 - 178), 0, 1)
-    ring = nd.binary_dilation(sil, iterations=2) & ~nd.binary_erosion(sil, iterations=2)
-    A = np.where(sil, 1.0, 0.0); A[ring] = np.maximum(A[ring] * 0, whit[ring])
-    A[nd.binary_erosion(sil, iterations=2)] = 1
-    # cor da borda: desfaz a mistura com o branco (sem halo)
-    C = R.copy(); m = (A > 0.02) & (A < 1)
-    C[m] = np.clip((R[m] - 255 * (1 - A[m, None])) / A[m, None], 0, 255)
-    C[A <= 0.02] = 0
-    for _ in range(3):  # sangra a cor para fora (sem franja escura ao filtrar)
-        dil = cv2.dilate(C.astype(np.uint8), np.ones((3, 3), np.uint8)).astype(np.float32)
-        C = np.where((A[..., None] <= 0.02), dil, C)
     yy, xx = np.mgrid[0:H, 0:W]
-    cut = cfg["cut"]
+    # --- silhueta SEM adesivo: o desenho termina no contorno de tinta ---
+    stick = (~outside) & (cls == "sticker")
+    # o adesivo é a faixa externa: o "sticker" ligado ao fundo
+    sl, sn = nd.label(stick | outside)
+    outer = np.isin(sl, list(set(np.unique(sl[outside])) - {0}))
+    art = ~outer  # tudo que é desenho (tinta para dentro)
+    alR = im[y0:y1, x0:x1, 3]
+    art &= nd.distance_transform_edt(alR > 200) > 4.5  # a franja externa do adesivo nunca é desenho
+    # alfa na borda tinta→adesivo pela escuridão do pixel (antisserrilhado limpo)
+    L = R.mean(-1); Lst = np.array(P["sticker"]).mean(); Li = ink.mean()
+    edge = nd.binary_dilation(art, iterations=2) & ~nd.binary_erosion(art, iterations=2)
+    A = art.astype(np.float32)
+    f = np.clip((Lst - L) / (Lst - Li), 0, 1)
+    A[edge] = np.where(outer[edge] | (cls[edge] == "sticker"), f[edge], np.maximum(A[edge], f[edge]))
+    C = R.copy(); C[edge & (A < 1)] = ink
+    # largura do adesivo na referência (para o adesivo ao vivo)
+    dt = nd.distance_transform_edt(~art)
+    sw = float(np.percentile(dt[stick & outer & ~outside], 95)) if (stick & outer).any() else 10.0
     eyeW = (~fg) & ~outside
-    # olhos: cada branco fechado + pupila (buracos)
+    # --- olhos ---
     el, en = nd.label(eyeW)
     eyes = []
     for i in range(1, en + 1):
         if (el == i).sum() < 400: continue
-        pts = np.argwhere(el == i)[:, ::-1].astype(np.int32)
-        hull = np.zeros((H, W), np.uint8); cv2.fillPoly(hull, [cv2.convexHull(pts)], 1)
-        mm = hull.astype(bool) & ~(nd.binary_erosion(cls == "ink", iterations=0) & ~nd.binary_erosion(hull.astype(bool), iterations=3))
-        eyes.append(mm)
+        eyes.append(hull_of(el == i))
     eyes.sort(key=lambda e: np.where(e)[1].mean())
     eyeAll = np.zeros((H, W), bool)
     for e in eyes: eyeAll |= e
+    eyeIn = eyeAll & ~nd.binary_dilation(cls == "ink", iterations=0) | (eyeAll & nd.binary_erosion(eyeAll, iterations=4))
     sclera = np.median(R[eyeW], axis=0)
-    pupil = eyeAll & (R.min(-1) < 150)
-    pupilD = nd.binary_dilation(pupil, iterations=2) & eyeAll
-    # cabeça: tudo acima do corte (com rampa suave na faixa do pescoço)
-    headA = np.clip((cut - yy) / BAND, 0, 1) * A
-    Hc = C.copy()
-    # pupilas fora da cabeça (camada própria); sob elas, a esclera
-    Hc[pupilD] = sclera
-    P = np.zeros((H, W, 4), np.float32); P[..., :3] = C; P[..., 3] = np.where(pupilD, 255, 0)
-    P[..., 3] = np.where(pupilD, np.clip((sclera.mean() - R.mean(-1)) / (sclera.mean() - 20), 0, 1) * 255, 0)
-    P[..., :3] = np.where(pupilD[..., None], 0, 0) + C * pupilD[..., None]
-    # pupila: preto puro com alfa (o brilho é o "furo" claro), recompõe sobre a esclera
-    P[..., :3] = PAL[who]["ink"]
+    pupil = eyeAll & (R.min(-1) < 150) & nd.binary_erosion(eyeAll, iterations=3)
+    pupD = nd.binary_dilation(pupil, iterations=2) & eyeAll
+    pupA = np.where(pupD, np.clip((sclera.mean() - L) / (sclera.mean() - Li), 0, 1), 0)
+    cut = cfg["cut"]
+    # --- partes ---
+    wl, wn = nd.label(cls == "wing")
+    wsz = nd.sum(np.ones_like(wl), wl, range(1, wn + 1))
+    wingPix = np.zeros((H, W), bool)
+    for q in range(1, wn + 1):
+        if wsz[q - 1] > 150: wingPix |= wl == q
+    nearWing = nd.binary_dilation(wingPix, iterations=10)
+    # gola serrilhada: a cabeça desce sobre o peito em "penas" (dentes de 26 px)
+    saw = 34 + 16 * np.abs(((xx / 26.0) % 2) - 1)
+    ruff = art & (yy >= cut) & (yy < cut + saw) & ~nearWing & np.isin(cls, ["body", "ink", "cheek", "medal"])
+    ruff = nd.binary_opening(ruff, iterations=2)
+    headM = (art & (yy < cut)) | ruff
+    headM &= ~(wingPix & (yy >= cut - 30))  # asas não vão com a cabeça
     layers = {}
-    # sobrancelha (Huginn): tinta na caixa, longe da borda; sob ela, pena (inpaint)
+    Hc = C.copy()
+    Hc[pupD] = sclera  # pupilas em camada própria
+    # sobrancelha (Huginn): camada própria; por baixo, pena
     browInfo = None
-    if cfg["brow"]:
+    if cfg.get("brow"):
         a, b, c, e = cfg["brow"]
         box = np.zeros((H, W), bool); box[b:e, a:c] = True
-        inner = nd.binary_erosion(sil, iterations=14)
-        mb = box & (cls == "ink") & inner
+        mb = box & (cls == "ink") & nd.binary_erosion(art, iterations=14)
         l2, n2 = nd.label(mb); s2 = nd.sum(np.ones_like(l2), l2, range(1, n2 + 1)); mb = l2 == (np.argmax(s2) + 1)
         mb = nd.binary_dilation(mb, iterations=2) & box & ~eyeAll
-        Bm = np.zeros((H, W, 4), np.float32); Bm[..., :3] = C; Bm[..., 3] = mb * 255
-        Hc = inpaint(Hc, mb & ~(cls == "ink") * 0 | mb, 7)
-        layers["brow"] = Bm
+        bA = np.where(mb, np.clip((body.mean() + 10 - L) / (body.mean() + 10 - Li), 0, 1), 0) if who == "muninn" else mb.astype(np.float32)
+        layers["brow"] = (C.copy(), mb.astype(np.float32))
+        Hc[nd.binary_dilation(mb, iterations=2)] = body
         ys, xs = np.where(mb); browInfo = [float(xs.mean()), float(ys.mean())]
-    beakInfo = None
+    beakRoot = None
     if who == "muninn":
-        # bico inferior + língua: o maior componente de bico abaixo do superior
-        bl, bn = nd.label(np.isin(cls, ["beak", "beakHi", "tongue"]) & (yy < cut + 40))
+        # bico inferior + língua + boca, contorno próprio; por baixo: interior da boca (escuro)
+        bl, bn = nd.label(np.isin(cls, ["beak", "beakHi", "tongue"]) & (yy < cut + 40) & ~eyeAll)
         bsz = nd.sum(np.ones_like(bl), bl, range(1, bn + 1))
         comps = [i + 1 for i in np.argsort(-bsz)[:3] if bsz[i] > 300]
         comps.sort(key=lambda q: nd.center_of_mass(bl == q)[0])
-        if len(comps) > 1:
-            lo = np.zeros((H, W), bool)
-            for q in comps[1:]: lo |= bl == q
-            lo |= (cls == "tongue") & (yy < cut); lo = nd.binary_fill_holes(lo)
-            lo = nd.binary_dilation(lo, iterations=6) & sil & ~eyeAll & (yy > np.where(lo)[0].min() - 4)
-            L = np.zeros((H, W, 4), np.float32); L[..., :3] = C; L[..., 3] = lo * A * 255
-            layers["beakLo"] = L
-            ys, xs = np.where(lo)
-            # raiz: o canto de trás (lado do rosto, x máximo, Muninn olha à esquerda)
-            beakInfo = [float(xs.max() - 10), float(ys.min() + 8)]
-            under = nd.binary_erosion(lo, iterations=3)
-            Hc[under] = PAL[who]["ink"]
-    Hl = np.zeros((H, W, 4), np.float32); Hl[..., :3] = Hc; Hl[..., 3] = headA * 255
-    if "beakLo" in layers: Hl[..., 3] = np.where(layers["beakLo"][..., 3] > 0, np.maximum(Hl[..., 3], A * 255), Hl[..., 3])
-    # base: corpo + pés (+ a faixa do pescoço); acima disso, transparente
-    Bc = C.copy()
-    nearOut = ~nd.binary_erosion(sil, iterations=22)
-    baseA = A * np.where(nearOut, np.clip((yy - (cut - BAND)) / 18, 0, 1), (yy >= cut - BAND).astype(np.float32))
-    wingInfo = None
+        lo = np.zeros((H, W), bool)
+        for q in comps[1:]: lo |= bl == q
+        lo |= (cls == "tongue") & (yy < cut)
+        lo = nd.binary_fill_holes(nd.binary_closing(lo, iterations=4))
+        loO = nd.binary_dilation(lo, iterations=7) & art & ~eyeAll & (yy > np.where(lo)[0].min() - 3)
+        layers["beakLo"] = (C.copy(), loO.astype(np.float32))
+        ys, xs = np.where(lo); beakRoot = [float(xs.max() - 12), float(ys.min() + 6)]
+        Hc[nd.binary_erosion(loO, iterations=4)] = ink * 0.9 + np.array([40, 10, 14]) * 0.1  # boca por dentro
+    # --- base: corpo e pés; sob a cabeça, pena lisa (sem o contorno do pescoço) ---
+    Bc = C.copy(); bA = A * (yy >= cut - 80)
+    under = art & (yy < cut + 60) & (yy >= cut - 80) & nd.binary_erosion(art, iterations=8) & ~nearWing
+    Bc[under & ~np.isin(cls, ["medal"])] = np.where(np.isin(cls[under & ~np.isin(cls, ["medal"])], ["ink"])[:, None], body, Bc[under & ~np.isin(cls, ["medal"])])
+    shoulder = None
     if cfg.get("wing"):
-        wl, wn = nd.label(cls == "wing")
-        sizes = nd.sum(np.ones_like(wl), wl, range(1, wn + 1))
-        big = (np.argsort(-sizes)[:2] + 1).tolist()
-        big.sort(key=lambda q: nd.center_of_mass(wl == q)[1])
+        big = (np.argsort(-wsz)[:2] + 1).tolist(); big.sort(key=lambda q: nd.center_of_mass(wl == q)[1])
         wm = wl == (big[1] if cfg["wing"] == "R" else big[0])
-        # junta as pontas de pena vizinhas (componentes de asa colados na principal)
         near = nd.binary_dilation(wm, iterations=12)
         for q in range(1, wn + 1):
-            if sizes[q - 1] > 150 and (near & (wl == q)).any(): wm |= wl == q
-        wm = nd.binary_fill_holes(nd.binary_dilation(wm, iterations=9) & sil) & (yy > cut - 40)
-        # o adesivo e a tinta de fora da asa vão junto
-        wm = (wm | (nd.binary_dilation(wm, iterations=14) & sil & np.isin(cls, ["sticker"]) & ~nd.binary_dilation(sil & ~wm & ~np.isin(cls, ["sticker", "ink"]), iterations=3)))
-        # a borda (adesivo/tinta) que sobra em volta da asa vai com ela
-        fringe = nd.binary_dilation(wm, iterations=18) & ~wm & (((yy < 640) & (xx > W * 0.5)) | (xx > W * 0.68)) & (A > 0.01) & (np.isin(cls, ["sticker", "ink", "bg"]) | (A < 1))
-        wm = wm | fringe
-        Wl = np.zeros((H, W, 4), np.float32); Wl[..., :3] = C; Wl[..., 3] = wm * A * 255
-        layers["wing"] = Wl
-        # sob a asa: corpo pintado (a silhueta do corpo sem a asa, fechada)
-        rest = sil & ~wm
-        # o corpo por trás: espelha a borda esquerda do peito em torno do medalhão
-        med = (cls == "medal") & (yy < cut + 120)
-        xc = float(np.where(med)[1].mean()) if med.any() else W / 2
-        bodyM = (cls == "body") & (yy > cut - 10)
-        hull = np.zeros((H, W), bool)
-        for y in range(H):
-            xs = np.where(bodyM[y])[0]
-            if xs.size < 5: continue
-            L = xs.min(); Rr = int(round(2 * xc - L)) + 6
-            hull[y, L:max(L, Rr)] = True
-        hull = nd.binary_opening(nd.binary_closing(hull, iterations=6), iterations=4)
+            if wsz[q - 1] > 150 and (near & (wl == q)).any(): wm |= wl == q
+        wm = nd.binary_fill_holes(nd.binary_closing(wm, iterations=3))
+        wmO = nd.binary_dilation(wm, iterations=8) & art  # a asa com o contorno inteiro
+        # zona da asa: inclui os riscos soltos das pontas (tinta perto da asa)
+        zone = nd.binary_fill_holes(nd.binary_closing(wmO | (art & (cls == "ink") & nd.binary_dilation(wmO, iterations=28) & (xx > 380)), iterations=10))
+        wmO = zone & art
+        layers["wing"] = (C.copy(), (A * wmO))
+        # corpo por trás da asa: elipse do peito ∪ peito visível; contorno de tinta na borda
         ex, ey, erx, ery = cfg["bodyEll"]
-        hull |= ((xx - ex) / erx) ** 2 + ((yy - ey) / ery) ** 2 <= 1
-        bodyBehind = hull & wm
-        Bc[wm] = PAL[who]["body"]
-        Bc = cv2.GaussianBlur(Bc, (0, 0), 1.2) * wm[..., None] + Bc * ~wm[..., None]
-        baseA = np.where(wm, np.where(bodyBehind, 1.0, 0.0), baseA)
-        # contorno do corpo onde a asa cobria
-        edge = bodyBehind & ~nd.binary_erosion(bodyBehind, iterations=4)
-        Bc[edge] = PAL[who]["ink"]
-        st = nd.binary_dilation(bodyBehind, iterations=9) & ~bodyBehind & wm
-        Bc[st] = PAL[who]["sticker"]; baseA = np.where(st, 1.0, baseA)
-        baseA = np.where(nd.binary_dilation(wm, iterations=4) & ~nd.binary_dilation(bodyBehind, iterations=10) & (yy < 690), 0, baseA)
-        wingInfo = list(cfg["shoulder"])
-    Bl = np.zeros((H, W, 4), np.float32); Bl[..., :3] = Bc; Bl[..., 3] = baseA * 255
-    E = np.zeros((H, W, 4), np.float32); E[..., :3] = 255; E[..., 3] = eyeAll * 255
-    save(f"{who}-base", Bl); save(f"{who}-head", Hl); save(f"{who}-pupils", P); save(f"{who}-eyes", E)
-    for k, v in layers.items(): save(f"{who}-{k}", v)
+        bodyM = (cls == "body") & (yy > cut - 10)
+        Lx = np.full(H, -1)
+        behind = (((xx - ex) / erx) ** 2 + ((yy - ey) / ery) ** 2 <= 1) | (art & ~wmO & (yy > cut))
+        behind &= (yy < 650)
+        behind = nd.binary_opening(nd.binary_closing(behind, iterations=6), iterations=3)
+        hole = wmO & behind
+        Bc[hole] = body
+        ring = behind & ~nd.binary_erosion(behind, iterations=5) & wmO
+        Bc[ring] = ink
+        bA = np.where(wmO, np.where(behind, 1.0, 0.0), bA)
+        bA = np.where(ring, 1.0, bA)
+        bA = np.where(nd.binary_dilation(wmO, iterations=6) & ~behind & ((yy < 660) | (xx > 410)), 0, bA)
+        layers["wing"] = (C.copy(), A * (wmO & ~(behind & ~nd.binary_dilation(wm, iterations=8))))
+        # pivô do ombro: o canto de cima, por dentro (escondido pelo peito)
+        ys, xs = np.where(wm)
+        top = ys.min(); xsTop = xs[ys < top + 30]
+        shoulder = [float(xsTop.min() + 18), float(top + 26)]
+        # sobreposição do peito: penas do peito que ficam por cima da raiz da asa
+        sx, sy = shoulder
+        chest = behind & (((xx - sx) ** 2 + (yy - sy) ** 2) < 46 ** 2) & (xx < sx + 10) & ~wm & art
+        layers["chest"] = (Bc.copy(), chest.astype(np.float32))
+    headA = A * headM
+    if "beakLo" in layers: headA = np.maximum(headA, A * layers["beakLo"][1] * 0)  # (o bico vem por cima)
+    save(f"{who}-base", bleed(Bc, bA), bA)
+    save(f"{who}-head", bleed(Hc, headA), headA)
+    Pc = np.zeros_like(C); Pc[:] = ink
+    save(f"{who}-pupils", Pc, pupA)
+    save(f"{who}-eyes", np.full_like(C, 255), eyeAll.astype(np.float32))
+    for k, (cc, aa) in layers.items(): save(f"{who}-{k}", bleed(cc, aa), aa)
     ein = []
     for e in eyes:
         ys, xs = np.where(e)
-        ein.append([float(xs.mean()), float(ys.mean()), float((xs.max() - xs.min()) / 2), float((ys.max() - ys.min()) / 2)])
-    # cor da pálpebra: a pena logo acima do olho
-    lid = [int(v) for v in PAL[who]["body"]]
-    meta[who] = {"w": W, "h": H, "pivot": list(cfg["pivot"]), "eyes": ein, "brow": browInfo, "beakRoot": beakInfo,
-                 "shoulder": wingInfo, "lid": lid, "ink": list(PAL[who]["ink"]), "layers": ["base", "head", "pupils", "eyes"] + list(layers)}
-    print(who, W, H, meta[who]["layers"], len(eyes))
-open(os.path.join(OUT, "meta.ts"), "w").write("// GERADO por tools/cut-ravens.py (camadas recortadas da referência).\nexport const ART_META = " + json.dumps(meta) + " as const;\n")
+        ein.append([round(float(xs.mean()), 1), round(float(ys.mean()), 1), float((xs.max() - xs.min()) / 2), float((ys.max() - ys.min()) / 2)])
+    meta[who] = {"w": W, "h": H, "pivot": list(cfg["pivot"]), "eyes": ein, "brow": browInfo, "beakRoot": beakRoot, "shoulder": shoulder,
+                 "lid": [int(v) for v in P["body"]], "ink": list(P["ink"]), "sticker": list(P["sticker"]), "stickerW": max(7.0, round(sw, 1)),
+                 "layers": ["base", "head", "pupils", "eyes"] + list(layers)}
+    print(who, meta[who]["layers"], "adesivo", max(7.0, round(sw, 1)), "ombro", shoulder)
+open(os.path.join(OUT, "meta.ts"), "w").write("// GERADO por tools/cut-ravens.py (camadas recriadas da referência).\nexport const ART_META = " + json.dumps(meta) + " as const;\n")

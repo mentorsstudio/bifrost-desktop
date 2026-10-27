@@ -14,8 +14,8 @@ const loop = q.get("loop") as Who | null;
 if (loop) {
   const size = Number(q.get("sz") ?? 360);
   const c = cv(size); const t0 = performance.now();
-  const W = window as unknown as { __t: number };
-  const f = () => { const t = q.get("t") ? Number(q.get("t")) : (performance.now() - t0) / 1000; W.__t = t; paint(c, size, loop, signature(loop, t)); requestAnimationFrame(f); };
+  const W = window as unknown as { __t: number; __fix?: number };
+  const f = () => { const t = W.__fix ?? (q.get("t") ? Number(q.get("t")) : (performance.now() - t0) / 1000); W.__t = t; const ps = signature(loop, t); if (q.get("beak")) ps.beak = Number(q.get("beak")); if (q.get("tilt")) ps.tilt = Number(q.get("tilt")); paint(c, size, loop, ps); requestAnimationFrame(f); };
   f();
 } else {
   for (const who of ["huginn", "muninn"] as Who[]) for (const s of [240, 64, 32, 24]) paint(cv(s), s, who);

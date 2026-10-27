@@ -98,7 +98,7 @@ export function signature(who: Who, t: number): RigPose {
   const up = t < 2.5 ? 0 : t < 3 ? seg(t, 2.5, 3) : t < 4 ? 1 : 1 - seg(t, 4, 5);
   const wave = t >= 3 && t < 4 ? Math.sin(((t - 3) / 1) * 2 * Math.PI * 2) * 0.22 * Math.sin(Math.PI * (t - 3)) : 0;
   return { ...REST_POSE, breath, lid: blinkAt(t, 1, 1.3), tilt: -0.09 * tilt, px: -0.15 * tilt, py: -0.2 * tilt,
-    wingR: up * 2.0 + wave, beak: 0.55 + 0.1 * tilt, browL: 0.35 * tilt, browR: 0.35 * tilt };
+    wingR: up * 2.0 + wave, beak: 0.5, browL: 0.35 * tilt, browR: 0.35 * tilt };
 }
 
 /** Desenha o corvo com centro em (0,0) e escala `s` px por unidade. `lod` simplifica abaixo de ~40 px. */
