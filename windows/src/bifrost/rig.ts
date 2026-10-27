@@ -33,7 +33,7 @@ export const REST_POSE: RigPose = { breath: 0, tilt: 0, px: 0, py: 0, lid: 0, br
 export interface RigPalette {
   body: string; head: string; crest: string; wing: string; wingDark: string;
   beak: string; beakDark: string; feet: string; ink: string; sticker: string;
-  medal: string; medalHi: string; cord: string; tongue: string; mouth: string; eye: string; pupil: string;
+  beakHi?: string; medal: string; medalHi: string; cord: string; tongue: string; mouth: string; eye: string; pupil: string;
 }
 
 /** As cores da referência. */
@@ -41,12 +41,12 @@ export const REF_PALETTE: Record<Who, RigPalette> = {
   huginn: {
     body: "#232328", head: "#26262C", crest: "#2E3E6E", wing: "#353A50", wingDark: "#262A3A",
     beak: "#6E717C", beakDark: "#50535D", feet: "#4A4B55", ink: "#121217", sticker: "#C9CBD2",
-    medal: "#B47A45", medalHi: "#E0AE78", cord: "#121217", tongue: "#E07A86", mouth: "#3A1E24", eye: "#FFFFFF", pupil: "#121217",
+    medal: "#B47A45", medalHi: "#E0AE78", cord: "#121217", tongue: "#E07A86", mouth: "#3A1E24", eye: "#F4F2EC", pupil: "#121217", beakHi: "#9A9CA6",
   },
   muninn: {
     body: "#BDBEC4", head: "#C4C5CB", crest: "#D7D8DD", wing: "#3B3C44", wingDark: "#2C2D33",
     beak: "#5F626B", beakDark: "#474A52", feet: "#4A4B55", ink: "#17171C", sticker: "#C9CBD2",
-    medal: "#B47A45", medalHi: "#E0AE78", cord: "#17171C", tongue: "#E07A86", mouth: "#3A1E24", eye: "#FFFFFF", pupil: "#17171C",
+    medal: "#B47A45", medalHi: "#E0AE78", cord: "#17171C", tongue: "#E07A86", mouth: "#3A1E24", eye: "#F4F2EC", pupil: "#17171C", beakHi: "#8E9099",
   },
 };
 
@@ -60,12 +60,16 @@ const CREST: Record<Who, string> = {
 };
 // Asa esquerda, com o pivô no ombro em (0,0); a direita é o espelho.
 const WING = "M4 -3 C-6 -2 -15 8 -18 21 L-26 31 L-17 30 L-18 38 L-10 32 L-8 39 L-3 31 C2 24 7 12 4 -3Z";
+// Bico em curva com gancho, de 3/4 (Huginn olha para a direita; o Muninn usa o espelho).
 const BEAK_UP: Record<Who, string> = {
-  huginn: "M-8 -11 C-3 -15 7 -15 11 -10 C15 -5 14 3 9 8 C8 3 4 -1 -1 -2 C-5 -3 -8 -6 -8 -11Z",
-  muninn: "M-10 -10 C-5 -14 6 -14 10 -10 C13 -7 12 -3 9 -2 C4 -4 -3 -4 -11 -4 C-12 -6 -12 -8 -10 -10Z",
+  huginn: "M-6 -9 C-4 -15 5 -17 12 -14 C19 -11 23 -4 21 4 C20 7 17 7 16.5 3.5 C16 0 12 -3 6 -3.5 C0 -4 -5 -5 -6 -9Z",
+  muninn: "M-6 -10 C-4 -16 5 -17 12 -14 C19 -11 23 -5 21.5 1.5 C20.5 4 18 4 17.5 1 C16.5 -2.5 12 -4.5 6 -4.5 C0 -4.5 -5 -6 -6 -10Z",
 };
-const BEAK_LO = "M-9 -4 C-3 -3 4 -3 9 -2 C9 4 4 8 -1 8 C-5 8 -9 2 -9 -4Z";
-
+const BEAK_LO: Record<Who, string> = {
+  huginn: "M-4 -5 C3 -4 10 -2.5 15 1 C12 6 4 7 -1 4.5 C-4 2.5 -5 -1 -4 -5Z",
+  muninn: "M-4 -5.5 C3 -5 10 -4 15.5 -1.5 C14.5 5.5 7 9 1 7.5 C-3 6.5 -5 1 -4 -5.5Z",
+};
+const BEAK_HI = "M0 -12 C4 -14.5 10 -14 13.5 -11.5 C9 -12 4 -11.5 0 -12Z";
 const PATHS = new Map<string, Path2D>();
 const path = (d: string) => { let p = PATHS.get(d); if (!p) { p = P(d); PATHS.set(d, p); } return p; };
 
@@ -159,15 +163,25 @@ export function drawRig(x: CanvasRenderingContext2D, who: Who, pose: RigPose, pa
   fillInk(head, pal.head);
   const face = opts.face ?? 0;
   x.translate(face * 3, 0);
-  const eyes: [number, number, number, number][] = who === "huginn" ? [[-9.5, -19, 8, 8.6], [9, -18, 7.2, 7.8]] : [[-9, -19, 7.6, 8.4], [9.5, -19, 8, 8.6]];
-  eyes.forEach(([ex, ey, rx, ry]) => {
-    const e = new Path2D(); e.ellipse(ex, ey, rx, ry, 0, 0, Math.PI * 2);
-    x.fillStyle = pal.eye; x.fill(e); x.strokeStyle = pal.ink; x.lineWidth = inkW * 0.85; x.stroke(e);
+  // Rosto de 3/4: o Huginn vira à direita; o Muninn é o espelho (vira à esquerda).
+  const dir = who === "huginn" ? 1 : -1;
+  x.scale(dir, 1);
+  // Olhos grandes, juntos e perto do bico, de tamanhos levemente diferentes: [x, y, rx, ry].
+  const eyes: [number, number, number, number][] = who === "huginn"
+    ? [[-4.5, -21, 9.6, 9.2], [13.5, -20, 6.4, 7.8]]
+    : [[-4.5, -22, 9.2, 9.6], [13.5, -21, 6.8, 8.4]];
+  eyes.forEach(([ex, ey, rx, ry], i) => {
+    const e = new Path2D(); e.ellipse(ex, ey, rx, ry, i ? 0.12 : -0.06, 0, Math.PI * 2);
+    x.fillStyle = pal.eye; x.fill(e); x.strokeStyle = pal.ink; x.lineWidth = inkW * 0.9; x.stroke(e);
     x.save(); x.clip(e);
-    const pr = rx * 0.52;
-    const cx = ex + pose.px * (rx - pr - 0.6), cy = ey + 1 + pose.py * (ry - pr - 0.6);
+    const pr = Math.min(rx, ry) * (lod ? 0.66 : 0.6);
+    // Pupilas grandes, já olhando para o lado do bico; o olhar (px) desliza dentro do olho.
+    const gx = 0.35 + pose.px * dir;
+    const cx = ex + Math.max(-1, Math.min(1, gx)) * (rx - pr - 0.5), cy = ey + 0.6 + pose.py * (ry - pr - 0.5);
     x.fillStyle = pal.pupil; x.beginPath(); x.arc(cx, cy, pr, 0, Math.PI * 2); x.fill();
-    if (!lod) { x.fillStyle = "#FFFFFF"; x.beginPath(); x.arc(cx - pr * 0.35, cy - pr * 0.4, pr * 0.3, 0, Math.PI * 2); x.fill(); }
+    x.fillStyle = "#FFFFFF";
+    x.beginPath(); x.arc(cx - pr * 0.3, cy - pr * 0.36, pr * (lod ? 0.34 : 0.3), 0, Math.PI * 2); x.fill();
+    if (!lod) { x.beginPath(); x.arc(cx + pr * 0.38, cy + pr * 0.34, pr * 0.12, 0, Math.PI * 2); x.fill(); }
     if (pose.lid > 0.01) {
       x.fillStyle = pal.head;
       x.fillRect(ex - rx - 1, ey - ry - 1, rx * 2 + 2, (ry * 2 + 2) * Math.min(1, pose.lid));
@@ -177,30 +191,55 @@ export function drawRig(x: CanvasRenderingContext2D, who: Who, pose: RigPose, pa
     }
     x.restore();
   });
-  // Sobrancelhas: o humor do Huginn (um lado sobe: "entendi").
-  const brow = (ex: number, ey: number, rx: number, raise: number, side: -1 | 1) => {
-    const base = who === "huginn" ? 2.2 : -0.6; // o Huginn começa de cenho meio franzido
-    const y0 = ey - 10.5 - raise * 4.6;
-    x.strokeStyle = pal.ink; x.lineWidth = lod ? 2.4 : 2;
-    x.beginPath();
-    x.moveTo(ex - rx * 0.8, y0 + (side === -1 ? 0 : base * (1 - raise)));
-    x.quadraticCurveTo(ex, y0 - 2.2 - raise * 1.2, ex + rx * 0.8, y0 + (side === -1 ? base * (1 - raise) : 0));
-    x.stroke();
+  // Sobrancelhas: Huginn grossas e inclinadas (convencido: a ponta de dentro desce);
+  // Muninn arredondadas e curiosas. `raise` ergue (o "entendi" do Huginn).
+  const brow = (ex: number, ey: number, rx: number, ry: number, raise: number, inner: -1 | 1) => {
+    const lift = raise * 4.6;
+    x.strokeStyle = pal.ink; x.lineCap = "round";
+    if (who === "huginn") {
+      const drop = 5 * (1 - Math.max(0, raise));
+      const xo = ex - inner * rx * 0.95, xi = ex + inner * rx * 0.75;
+      const yo = ey - ry - 3.2 - lift, yi = ey - ry - 0.6 + drop - 3 - lift;
+      x.lineWidth = lod ? 3.8 : 3.8;
+      x.beginPath(); x.moveTo(xo, yo + 1.2); x.quadraticCurveTo(ex, yo - 1.6, xi, yi); x.stroke();
+    } else {
+      const y0 = ey - ry - 3 - lift;
+      x.lineWidth = lod ? 2.6 : 2.2;
+      x.beginPath(); x.moveTo(ex - rx * 0.7, y0 + 1.4); x.quadraticCurveTo(ex, y0 - 2.8 - raise, ex + rx * 0.7, y0 + 1.4); x.stroke();
+    }
   };
-  brow(eyes[0][0], eyes[0][1], eyes[0][2], pose.browL, -1);
-  brow(eyes[1][0], eyes[1][1], eyes[1][2], pose.browR, 1);
+  brow(eyes[0][0], eyes[0][1], eyes[0][2], eyes[0][3], dir === 1 ? pose.browL : pose.browR, 1);
+  brow(eyes[1][0], eyes[1][1], eyes[1][2], eyes[1][3], dir === 1 ? pose.browR : pose.browL, -1);
 
-  // Bico: o inferior gira para baixo ao abrir (língua no Muninn), o superior por cima.
-  x.save(); x.translate(1, 0);
+  // Bico: o inferior gira na raiz ao falar (o Muninn já nasce aberto: 0,5 = como no desenho).
   const open = Math.max(0, Math.min(1, pose.beak));
-  if (open > 0.02) {
-    x.save(); x.translate(-6, -4); x.rotate(open * 0.42); x.translate(6, 4);
-    fillInk(path(BEAK_LO), pal.beakDark, inkW * 0.85);
-    x.save(); x.clip(path(BEAK_LO)); x.fillStyle = pal.mouth; x.fillRect(-8, -5, 17, 4 + open * 2);
-    x.fillStyle = pal.tongue; x.beginPath(); x.ellipse(1.5, -1.2 + open * 1.4, 4.2, 2.2, 0, 0, Math.PI * 2); x.fill(); x.restore();
+  const loA = who === "huginn" ? open * 0.4 : (open - 0.5) * 0.5 + 0.02;
+  const showLo = who === "muninn" ? open > 0.08 : open > 0.02;
+  if (showLo) {
+    const lo = path(BEAK_LO[who]);
+    x.save(); x.translate(-4, -5); x.rotate(Math.max(-0.15, loA)); x.translate(4, 5);
+    x.fillStyle = pal.mouth; x.fill(lo);
+    x.save(); x.clip(lo);
+    x.fillStyle = pal.tongue; x.beginPath();
+    if (who === "muninn") x.ellipse(6, 4.2, 7, 3.9, 0.2, 0, Math.PI * 2); else x.ellipse(5, 3.2, 5, 2.4, 0.15, 0, Math.PI * 2);
+    x.fill();
+    x.fillStyle = pal.beakDark; x.beginPath(); x.ellipse(5, 13, 16, 5.5, 0.15, 0, Math.PI * 2); x.fill();
+    x.restore();
+    x.strokeStyle = pal.ink; x.lineWidth = inkW * 0.9; x.stroke(lo);
     x.restore();
   }
-  fillInk(path(BEAK_UP[who]), pal.beak, inkW * 0.9);
+  x.save();
+  fillInk(path(BEAK_UP[who]), pal.beak, inkW);
+  if (!lod) {
+    x.fillStyle = pal.beakHi ?? mixHex(pal.beak, "#FFFFFF", 0.35); x.fill(path(BEAK_HI));
+    x.fillStyle = pal.ink; x.beginPath(); x.ellipse(6, -10.5, 1.1, 0.7, -0.3, 0, Math.PI * 2); x.fill();
+  }
+  x.restore();
+  // Sorrisinho do Huginn (canto da boca, do lado de trás do bico).
+  if (who === "huginn" && !lod) {
+    x.strokeStyle = pal.ink; x.lineWidth = 1.5;
+    x.beginPath(); x.moveTo(-5.2, -6.8); x.quadraticCurveTo(-8.5, -5.2, -11.5, -8.4); x.stroke();
+  }
   x.restore();
   x.restore();
   x.restore();
@@ -215,7 +254,7 @@ export function rigPalette(who: Who, characterId: string, look: { dark: string; 
   if (characterId === "theme") return { ...ref, crest: who === "huginn" ? mixHex(ref.crest, accent ?? ref.crest, 0.35) : ref.crest, medalHi: accent ?? ref.medalHi };
   if (characterId === "classic" || !look) return ref;
   const body = who === "huginn" ? look.dark : look.lit;
-  return { ...ref, body, head: body, wing: look.wing, wingDark: mixHex(look.wing, "#000000", 0.3), crest: look.markColor, beak: look.beak[1] ?? ref.beak, beakDark: mixHex(look.beak[1] ?? ref.beak, "#000000", 0.25) };
+  return { ...ref, body, head: body, wing: look.wing, wingDark: mixHex(look.wing, "#000000", 0.3), crest: look.markColor, beak: look.beak[1] ?? ref.beak, beakDark: mixHex(look.beak[1] ?? ref.beak, "#000000", 0.25), beakHi: mixHex(look.beak[1] ?? ref.beak, "#FFFFFF", 0.3) };
 }
 function mixHex(a: string, b: string, t: number): string {
   const p = (h: string) => { const m = h.replace("#", ""); const n = m.length === 3 ? m.split("").map((c) => c + c).join("") : m.slice(0, 6); return [0, 2, 4].map((i) => parseInt(n.slice(i, i + 2), 16)); };
