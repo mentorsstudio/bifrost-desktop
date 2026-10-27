@@ -11,7 +11,7 @@ import { h, svg, clear } from "./dom";
 import { ICONS } from "./icons";
 import { renderMarkdown } from "./markdown";
 import { Bridge, onEvent, type ChatContext, type ModelInfo } from "../core/bridge";
-import { activeModel, pickModel, providerDef, visibleProviders, withModel, type ProviderDef } from "../core/providers";
+import { activeModel, modelLabel, switchProvider, pickModel, providerDef, visibleProviders, withModel, type ProviderDef } from "../core/providers";
 import { Sound } from "../core/sound";
 import { State, type ChatMessage } from "../core/state";
 import type { ViewHost } from "./views";
@@ -29,7 +29,22 @@ const TEXT = {
 };
 
 let seq = 1;
-const persist = () => void Bridge.saveSettings(State.settings);
+/** A gravação em curso: a próxima pergunta espera por ela, então a troca vale já. */
+let saving: Promise<unknown> = Promise.resolve();
+let pending = 0;
+const persist = () => {
+  pending++;
+  saving = Bridge.saveSettings(State.settings).catch(() => undefined).finally(() => { pending--; });
+};
+/**
+ * O eco "settings-changed" de uma gravação anterior não pode desfazer uma troca
+ * mais nova: enquanto houver gravação do seletor em curso, a escolha local vence.
+ */
+export function keepChatChoice<T extends { chatProvider: unknown; chatModels: unknown; model: unknown }>(incoming: T, local: T): T {
+  return pending > 0 ? { ...incoming, chatProvider: local.chatProvider, chatModels: local.chatModels, model: local.model } : incoming;
+}
+/** Modelos já listados por provedor (o cabeçalho mostra o rótulo). */
+const labels = new Map<string, ModelInfo[]>();
 
 /** Uma fala da saga. */
 function line(m: ChatMessage): HTMLElement {
@@ -79,7 +94,7 @@ function selector(changed: () => void): Selector {
         h("i", { class: "picker-dot" }), h("span", { text: t(p.name) }));
       b.addEventListener("click", () => {
         if (p.id === State.settings.chatProvider) return;
-        State.settings = { ...State.settings, chatProvider: p.id };
+        State.settings = switchProvider(State.settings, p.id, known.get(p.id)?.map((m) => m.id) ?? null);
         persist();
         Sound.play("pop");
         drawTabs();
@@ -120,8 +135,13 @@ function selector(changed: () => void): Selector {
     if (mine !== ticket) return;
     say(t(TEXT.loading));
     try {
-      const list = await Bridge.chatModels(p.id);
+      const list = (await Bridge.chatModels(p.id)) ?? [];
       if (mine !== ticket) return;
+      if (list.length === 0) {
+        say("Nenhum modelo encontrado aqui — veja Configurações → Chat.", true);
+        return;
+      }
+      labels.set(p.id, list);
       if (!p.urlField) known.set(p.id, list);
       const keep = pickModel(p, list.map((m) => m.id), activeModel(State.settings));
       if (keep && keep !== activeModel(State.settings)) {
@@ -166,7 +186,9 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
   function drawWho() {
     const p = providerDef(State.settings.chatProvider);
     dot.style.background = p.accent;
-    name.textContent = activeModel(State.settings) || t(TEXT.noModel);
+    const m = activeModel(State.settings);
+    name.textContent = m ? modelLabel(m, labels.get(p.id)) : t(TEXT.noModel);
+    name.title = m;
     who.classList.toggle("open", pick.isOpen);
     who.disabled = busy;
   }
@@ -202,6 +224,7 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
     const f = State.droppedFile;
     const ctx: ChatContext | null = State.chatHistory.length === 1 && f ? { kind: "file", name: f.name, path: f.path } : null;
     try {
+      await saving;
       const r = await Bridge.chatSend(q, ctx);
       State.chatHistory.push({ id: seq++, role: "assistant", content: r.text });
       State.stateOverride = null;

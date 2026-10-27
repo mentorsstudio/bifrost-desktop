@@ -25,7 +25,8 @@
   transition: transform var(--bf-quick) var(--bf-ease-raven), box-shadow var(--bf-quick); }
 .bf-saga-send:hover { transform: translateY(-2px) rotate(-4deg); box-shadow: 0 0 14px rgba(246,210,122,.35); }
 .bf-saga-send-rune { font: 700 15px var(--bf-rune-font); color: var(--bf-gold-2); }
-.bf-saga-picker { border-top: 1px solid rgba(226,181,90,.18); }
+.bf-saga-picker { border: 1px solid rgba(226,181,90,.18); background: linear-gradient(180deg, rgba(19,32,63,.92), rgba(11,19,38,.96)) !important; border-radius: 12px; }
+.bf-saga-picker .picker-status { color: #b9c2d8; }
 @media (prefers-reduced-motion: reduce) { .bf-saga-you .bubble, .bf-saga-huginn { animation: none !important; } .bf-saga-send { transition: none; } }
 .bf-saga-prow .chat-input:focus { outline: none; }
 /* ── Novidades: pedra rúnica ─────────────────────────────────────────── */

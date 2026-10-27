@@ -43,8 +43,8 @@ export const PROVIDERS: readonly ProviderDef[] = [
 export const CUSTOM_SERVER_KEY = "openai-compatible-key";
 
 export function providerDef(id: string): ProviderDef {
-  // An unknown id falls back to Claude, as before the MCP provider came first.
-  return PROVIDERS.find((p) => p.id === id) ?? PROVIDERS.find((p) => p.id === "anthropic")!;
+  // Um id desconhecido (ou vazio) cai na IA do PC, como o Rust (chat.rs: "" → cli).
+  return PROVIDERS.find((p) => p.id === id) ?? PROVIDERS[0];
 }
 
 /** The model the chat uses for the active provider. */
@@ -111,4 +111,21 @@ export function urlExposure(raw: string): Exposure {
   if (!url.hostname || url.username || url.password) return "invalid";
   if (isLoopbackHost(url.hostname)) return "local";
   return url.protocol === "https:" ? "remote" : "remote-http";
+}
+
+/**
+ * Trocar de provedor no seletor: aplica o provedor e já fixa um modelo válido
+ * (o salvo, se ainda é oferecido; senão o preferido), numa única gravação.
+ */
+export function switchProvider(settings: Settings, id: ProviderId, offered: string[] | null): Settings {
+  const p = providerDef(id);
+  let next: Settings = { ...settings, chatProvider: p.id };
+  const keep = offered ? pickModel(p, offered, activeModel(next)) : null;
+  if (keep && keep !== activeModel(next)) next = withModel(next, p.id, keep);
+  return next;
+}
+
+/** O nome que o cabeçalho mostra: o rótulo do modelo, não o id cru. */
+export function modelLabel(id: string, list: readonly { id: string; label: string }[] | undefined): string {
+  return list?.find((m) => m.id === id)?.label ?? id;
 }

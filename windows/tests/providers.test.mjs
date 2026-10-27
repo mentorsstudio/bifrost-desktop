@@ -18,7 +18,8 @@ test("the ids and key names match the Rust side and the Mac", () => {
   assert.equal(providerDef("openrouter").key, "openrouter-api-key");
   assert.equal(providerDef("ollama").key, null);
   // An unknown id (an older or newer settings.json) falls back to Claude.
-  assert.equal(providerDef("nope").id, "anthropic");
+  assert.equal(providerDef("nope").id, "cli");
+  assert.equal(providerDef("").id, "cli");
 });
 
 test("Claude's model is the existing setting; the others are kept per provider", () => {
@@ -73,4 +74,22 @@ test("an address says whether what you type leaves this computer", () => {
   assert.equal(urlExposure("ftp://example.com"), "invalid");
   assert.equal(urlExposure("http://user:pw@example.com"), "invalid");
   assert.equal(urlExposure("http://"), "invalid");
+});
+
+import { switchProvider, modelLabel } from "../src/core/providers.ts";
+test("trocar de provedor fixa um modelo válido numa só gravação", () => {
+  const base = { chatProvider: "cli", chatModels: { cli: "claude" }, model: "", ollamaUrl: "http://x", lmstudioUrl: "", customUrl: "" };
+  const a = switchProvider(base, "ollama", ["llama3.2", "qwen"]);
+  assert.equal(a.chatProvider, "ollama");
+  assert.equal(a.chatModels.ollama, "llama3.2");
+  assert.equal(a.chatModels.cli, "claude");
+  const b = switchProvider({ ...base, chatModels: { cli: "claude", ollama: "qwen" } }, "ollama", ["llama3.2", "qwen"]);
+  assert.equal(b.chatModels.ollama, "qwen");
+  const c = switchProvider(base, "cli", ["codex", "gemini"]);
+  assert.equal(c.chatModels.cli, "codex");
+  assert.equal(switchProvider(base, "mcp", null).chatProvider, "mcp");
+});
+test("cabeçalho mostra o rótulo do modelo", () => {
+  assert.equal(modelLabel("codex", [{ id: "codex", label: "Codex CLI" }]), "Codex CLI");
+  assert.equal(modelLabel("x", undefined), "x");
 });

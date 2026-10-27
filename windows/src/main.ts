@@ -1,3 +1,4 @@
+import { keepChatChoice } from "./views/chat";
 // Entry point: boot the bridge, wire the island, start the greeting.
 
 import "./style.css";
@@ -152,7 +153,7 @@ async function main() {
   // The settings window writes preferences; apply them here without a restart.
   await onEvent<Settings>("settings-changed", (s) => {
     const previousMain = State.mainPillId;
-    State.settings = { ...State.settings, ...s };
+    State.settings = keepChatChoice({ ...State.settings, ...s }, State.settings);
     applyLanguage();
     island.applySettings();
     State.loadIntegrationTasks();
