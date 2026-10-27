@@ -12,8 +12,8 @@ const src = (f) => readFileSync(new URL(`../src/${f}`, import.meta.url), "utf8")
 
 const lum = (hx) => { const n = parseInt(hx.slice(1), 16); return ((n >> 16) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 255000; };
 
-test("6+ estilos distintos e 'Seguir o tema' como padrão", () => {
-  assert.equal(C.DEFAULT_CHARACTER, "theme");
+test("6+ estilos distintos e o Clássico (rig novo) como padrão", () => {
+  assert.equal(C.DEFAULT_CHARACTER, "classic");
   assert.equal(C.CHARACTERS[0].name, "Seguir o tema");
   const styles = C.CHARACTERS.filter((c) => c.huginn);
   assert.ok(styles.length >= 6);
@@ -33,7 +33,7 @@ test("seguir o tema devolve o próprio tema; um estilo troca só os corvos", () 
   assert.equal(r.huginn, C.characterById("ember").huginn);
   assert.equal(r.accent, t.accent);
   assert.notEqual(r.id, t.id);
-  assert.equal(C.characterById("nada").id, "theme");
+  assert.equal(C.characterById("nada").id, "classic");
 });
 
 test("escolher guarda, avisa e redesenha os corvos vivos", () => {

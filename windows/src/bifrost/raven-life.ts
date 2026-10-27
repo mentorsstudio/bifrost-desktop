@@ -7,7 +7,7 @@ import type { RavenEngine } from "./raven";
 
 export type LifeLevel = "off" | "calmo" | "normal" | "animado";
 export type LifeActivity = "thinking" | "listening" | "speaking" | null;
-export type IdleAct = "look" | "tilt" | "preen" | "hop" | "walk" | "fly";
+export type IdleAct = "signature" | "look" | "tilt" | "preen" | "hop" | "walk" | "fly";
 export type LifeSignal =
   | { kind: "thinking" | "listening" | "speaking" | "done" }
   | { kind: "chunk" }
@@ -42,7 +42,7 @@ export function effectiveLevel(l: LifeLevel = readLevel()): LifeLevel {
 
 /** O próximo gesto ocioso. Voo só no corvo da área de trabalho, e raro. */
 export function pickIdle(r: number, desktop: boolean): IdleAct {
-  const table: [IdleAct, number][] = [["look", 30], ["tilt", 22], ["preen", 16], ["hop", 14], ["walk", desktop ? 14 : 0], ["fly", desktop ? 4 : 0]];
+  const table: [IdleAct, number][] = [["signature", 45], ["look", 30], ["tilt", 22], ["preen", 16], ["hop", 14], ["walk", desktop ? 14 : 0], ["fly", desktop ? 4 : 0]];
   const total = table.reduce((s, [, w]) => s + w, 0);
   let x = r * total;
   for (const [a, w] of table) { if ((x -= w) < 0) return a; }
@@ -138,7 +138,8 @@ export class RavenLife {
     this.activity = a;
     if (this.level === "off") return;
     if (a === "listening") e.anim("pitch", [[-0.16, 220, fj]]);
-    if (a === "thinking") e.anim("tilt", [[0.14 * this.amp, 320, fj]]);
+    if (a === "thinking") { e.anim("tilt", [[0.14 * this.amp, 320, fj]]); e.brow = 1; }
+    if (a !== "thinking") e.brow = 0;
     if (a === null) { e.anim("tilt", [[0, 260, sw]]); e.beak = 0; }
   }
 
@@ -210,6 +211,8 @@ export class RavenLife {
     const e = this.e;
     const a = this.amp;
     switch (act) {
+      // O laço-assinatura de 6 s do rig novo (Huginn: olhar + sobrancelha; Muninn: aceno).
+      case "signature": e.playSignature(); break;
       case "look": { const d = Math.random() < 0.5 ? -1 : 1; e.anim("yaw", [[0.5 * d * a, 260, fj], [0.5 * d * a, 700, sw], [0, 380, sw]]); break; }
       case "tilt": { const d = Math.random() < 0.5 ? -1 : 1; e.anim("tilt", [[0.16 * d * a, 240, fj], [0.16 * d * a, 620, sw], [0, 320, sw]]); break; }
       case "preen":

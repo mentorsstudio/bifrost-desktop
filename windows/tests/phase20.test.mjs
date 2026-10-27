@@ -16,7 +16,7 @@ test("o '+' recebe Anexar e Converter do Conversor pelo registro", () => {
 test("o Huginn do anel usa o personagem (Mascot sem tema fixo lê ravenTheme)", () => {
   assert.match(src("filee/menu.ts"), /new Mascot\("huginn", ravenBox\)/);
   assert.match(src("bifrost/mascots.ts"), /T: Theme = ravenTheme\(\)/);
-  assert.match(src("bifrost/mascots.ts"), /import \{ onRavenLookChange, ravenTheme \} from "\.\.\/theme\/characters"/);
+  assert.match(src("bifrost/mascots.ts"), /onRavenLookChange, ravenTheme \} from "\.\.\/theme\/characters"/);
 });
 
 test("Ajustes mostra Conversor em Geral e Personagens em Temas", () => {

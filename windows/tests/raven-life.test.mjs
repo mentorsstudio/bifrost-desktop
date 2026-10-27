@@ -11,7 +11,7 @@ test("repertório: voo e passeio só no corvo da área de trabalho", () => {
   assert.ok(!seen.has("fly") && !seen.has("walk"));
   const d = new Set();
   for (let i = 0; i < 1000; i++) d.add(pickIdle(i / 1000, true));
-  for (const a of ["look", "tilt", "preen", "hop", "walk", "fly"]) assert.ok(d.has(a), a);
+  for (const a of ["signature", "look", "tilt", "preen", "hop", "walk", "fly"]) assert.ok(d.has(a), a);
 });
 test("níveis: Calmo espaça mais que Normal, Animado menos; desligado nunca", () => {
   assert.ok(nextGap("calmo", 0.5) > nextGap("normal", 0.5));

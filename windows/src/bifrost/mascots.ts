@@ -5,7 +5,9 @@
 import { reducedMotion } from "./motion";
 import { RAVEN } from "./raven-shape";
 import { type RavenLook, type RavenMark, type Theme } from "../theme/themes";
-import { onRavenLookChange, ravenTheme } from "../theme/characters";
+import { CHARACTERS, currentCharacter, onRavenLookChange, ravenTheme } from "../theme/characters";
+import { currentTheme } from "../theme/themes";
+import { drawRig, rigPalette, REST_POSE, type RigPose } from "./rig";
 
 export type MascotName = "huginn" | "muninn";
 export type MascotState = "idle" | "blink" | "flyIn" | "flyOut" | "thinking" | "listening" | "success" | "error" | "sleeping";
@@ -100,7 +102,7 @@ onRavenLookChange(() => {
   for (const r of LIVE) {
     const m = r.deref();
     if (!m || !m.el.isConnected) { if (!m) LIVE.delete(r); continue; }
-    m.el.innerHTML = mascotSvg(m.name);
+    m.paint();
   }
 });
 
@@ -118,16 +120,63 @@ export class Mascot {
     this.theme = theme ?? null;
     this.el = document.createElement("div");
     this.el.className = `bf-mascot bf-${name}`;
-    this.el.innerHTML = mascotSvg(name, theme);
+    // Fase 22: o rig novo (bifrost/rig.ts) num canvas; o SVG antigo fica só em mascotSvg().
+    this.canvas = document.createElement("canvas");
+    this.canvas.className = "bf-rig";
+    this.canvas.setAttribute("role", "img");
+    this.canvas.setAttribute("aria-label", name === "huginn" ? "Huginn" : "Muninn");
+    this.canvas.style.cssText = "width:100%;height:100%;display:block";
+    this.el.append(this.canvas);
     host?.append(this.el);
+    if (typeof ResizeObserver !== "undefined") new ResizeObserver(() => this.paint()).observe(this.el);
     if (!theme) LIVE.add(new WeakRef(this));
     this.set("idle");
+  }
+
+  private readonly canvas: HTMLCanvasElement;
+  private lid = 0;
+
+  /** O personagem deste corvo: o do tema fixo (prévia da galeria) ou o escolhido. */
+  private characterId(): string {
+    if (!this.theme) return currentCharacter().id;
+    const tail = this.theme.id.split("-").pop() ?? "";
+    return CHARACTERS.some((c) => c.id === tail && c.huginn) ? tail : "theme";
+  }
+
+  pose(): RigPose {
+    const st = this.state;
+    const p: RigPose = { ...REST_POSE, beak: this.name === "muninn" ? 0.5 : 0 };
+    if (st === "sleeping") return { ...p, lid: 1, beak: 0, tilt: 0.12 };
+    if (st === "thinking") return { ...p, browR: 1, px: 0.5, py: -0.5, tilt: 0.07 };
+    if (st === "listening") return { ...p, py: -0.4, browL: 0.4, browR: 0.4 };
+    if (st === "success") return { ...p, beak: 0.8, wingL: 0.5, wingR: 0.5, lid: 0.3 };
+    if (st === "error") return { ...p, lid: 0.35, browL: -0.3, browR: -0.3 };
+    return { ...p, lid: this.lid };
+  }
+
+  paint(): void {
+    const c = this.canvas;
+    const w = this.el.clientWidth || 120, hgt = this.el.clientHeight || w;
+    const dpr = Math.min(3, globalThis.devicePixelRatio || 1);
+    const size = Math.max(16, Math.min(w, hgt));
+    if (c.width !== Math.round(w * dpr)) c.width = Math.round(w * dpr);
+    if (c.height !== Math.round(hgt * dpr)) c.height = Math.round(hgt * dpr);
+    const x = c.getContext("2d");
+    if (!x) return;
+    const id = this.characterId();
+    const t = this.theme ?? ravenTheme();
+    const look = id === "theme" ? null : this.name === "huginn" ? t.huginn : t.muninn;
+    x.setTransform(dpr, 0, 0, dpr, 0, 0);
+    x.clearRect(0, 0, w, hgt);
+    x.translate(w / 2, hgt / 2 + size * 0.05);
+    drawRig(x, this.name, this.pose(), rigPalette(this.name, id, look, (this.theme ?? currentTheme()).accent), (size * 0.8) / 112);
   }
 
   set(state: MascotState): void {
     for (const s of MASCOT_STATES) this.el.classList.remove(`bf-state-${s}`);
     this.el.classList.add(`bf-state-${state}`);
     this.state = state;
+    this.paint();
     if (this.blinkTimer) clearTimeout(this.blinkTimer);
     if (state === "idle" && !reducedMotion()) this.scheduleBlink();
   }
@@ -135,7 +184,8 @@ export class Mascot {
   private scheduleBlink(): void {
     this.blinkTimer = setTimeout(() => {
       this.el.classList.add("bf-blinking");
-      setTimeout(() => this.el.classList.remove("bf-blinking"), 160);
+      this.lid = 1; this.paint();
+      setTimeout(() => { this.el.classList.remove("bf-blinking"); this.lid = 0; this.paint(); }, 160);
       this.scheduleBlink();
     }, 2200 + Math.random() * 3200);
   }

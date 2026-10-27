@@ -24,7 +24,7 @@ const pair = (h: Seed, m: Seed, hm: RavenLook["marks"] = [], mm: RavenLook["mark
 
 export const CHARACTERS: readonly Character[] = [
   { id: "theme", name: "Seguir o tema", tagline: "Os corvos mudam junto com o tema do app.", huginn: null, muninn: null },
-  { id: "classic", name: "Corvos de Odin", tagline: "Preto-azulado e cinza-lua, bico de ouro.", ...pair(
+  { id: "classic", name: "Clássico", tagline: "Huginn preto e Muninn prata, traço de desenho animado.", ...pair(
     { lit: "#3a4256", dark: "#0c0f17", wing: "#1c2130", belly: ["#9aa6c8", "#1c2130"], eye: "#f2f5ff", accent: "#9aa6c8", beak: GOLD, glow: null },
     { lit: "#5b5f6e", dark: "#17181e", wing: "#2c2e38", belly: ["#d5d8e2", "#2c2e38"], eye: "#ffe2a0", accent: "#d5d8e2", beak: GOLD, glow: null }) },
   { id: "snow", name: "Neve", tagline: "Penas brancas de inverno, olhos de gelo.", ...pair(
@@ -47,12 +47,12 @@ export const CHARACTERS: readonly Character[] = [
     { lit: "#6c7480", dark: "#1c2026", wing: "#3c434e", belly: ["#d6e2ec", "#3c434e"], eye: "#fff2c4", accent: "#d6e2ec", beak: ["#d8e4ee", "#7c8ea0"], glow: null }, ["storm"]) },
 ];
 
-export const DEFAULT_CHARACTER: CharacterId = "theme";
+export const DEFAULT_CHARACTER: CharacterId = "classic";
 export const CHARACTER_KEY = "bifrost.character";
 export const CHARACTER_EVENT = "bifrost-character";
 
 export function characterById(id: string | null | undefined): Character {
-  return CHARACTERS.find((c) => c.id === id) ?? CHARACTERS[0];
+  return CHARACTERS.find((c) => c.id === id) ?? CHARACTERS.find((c) => c.id === DEFAULT_CHARACTER)!;
 }
 
 /** O tema com os corvos do personagem por cima (id próprio para caches e gradientes). */
@@ -61,7 +61,7 @@ export function ravenTheme(t: Theme = currentTheme(), c: Character = current): T
   return { ...t, id: `${t.id}-${c.id}` as Theme["id"], huginn: c.huginn, muninn: c.muninn };
 }
 
-let current: Character = CHARACTERS[0];
+let current: Character = characterById(DEFAULT_CHARACTER);
 const subs = new Set<(c: Character) => void>();
 export function currentCharacter(): Character { return current; }
 export function onCharacterChange(fn: (c: Character) => void): () => void { subs.add(fn); return () => subs.delete(fn); }

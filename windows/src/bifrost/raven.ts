@@ -17,6 +17,8 @@ import type { BotEmoteName, BotStateName } from "../core/layout";
 import { drawOutfitBehind, drawOutfitFront, setRavenPainter, type RavenHead } from "./outfits";
 import type { Outfit } from "../huginn/wardrobe";
 import type { RavenLife } from "./raven-life";
+import { drawRig, rigPalette, signature, LOOP_S, REST_POSE, type RigPose } from "./rig";
+import { currentCharacter } from "../theme/characters";
 import { currentTheme, onThemeChange, type RavenLook } from "../theme/themes";
 import { ravenTheme } from "../theme/characters";
 
@@ -184,6 +186,14 @@ export class RavenEngine {
   wingBeat = 0;
   /** Bico aberto (0…1): fala em sincronia com o streaming (vida dos corvos). */
   beak = 0;
+  /** A arte antiga (corvo arredondado) só para comparação nas pranchas. */
+  static legacyArt = false;
+  /** Rig novo (padrão): o laço-assinatura de 6 s começou em (s), ou null. */
+  sigAt: number | null = null;
+  /** Sobrancelha erguida extra (0…1): pensar, pergunta. */
+  brow = 0;
+  playSignature() { if (!reducedMotion()) this.sigAt = clock(); }
+  get signing(): boolean { return this.sigAt != null && clock() - this.sigAt < LOOP_S; }
   /** Repertório de gestos e estados (bifrost/raven-life.ts), se o dono ligou. */
   life: RavenLife | null = null;
   waveUntil = 0;
@@ -507,7 +517,7 @@ export class RavenEngine {
   get busy(): boolean {
     const near = (a: number, b: number) => Math.abs(a - b) <= 0.002;
     return (
-      this.phrases.size > 0 || this.sparks.length > 0 || this.beak > 0.01 || (this.life?.activity != null) || this.isMini || this.isDancing || this.dancingLevel > 0.001 ||
+      this.phrases.size > 0 || this.sparks.length > 0 || this.beak > 0.01 || this.signing || (this.life?.activity != null) || this.isMini || this.isDancing || this.dancingLevel > 0.001 ||
       this.cfg.hop || this.cfg.scan || this.cfg.breathe || this.cfg.snore || this.cfg.sweat || this.wingBeat > 0.01 ||
       !near(this.tgYaw, this.yaw) || !near(this.tgPitch, this.pitch) || !near(this.tgTilt, this.tilt) ||
       !near(this.tgSy, this.sy) || !near(this.tgSx, this.sx) || !near(this.tgEs, this.es) ||
@@ -681,7 +691,7 @@ export class RavenEngine {
     // O corvo (mesmo desenho dos SVGs de Huginn/Muninn) some enquanto a caixa
     // de mensagem aparece: os dois nunca se cruzam por mais que um instante.
     const ravenA = Math.max(0, 1 - m * 1.8);
-    if (ravenA > 0.004) this.figure(x, R, ravenA);
+    if (ravenA > 0.004) (RavenEngine.legacyArt ? this.figure : this.rig).call(this, x, R, ravenA);
     if (m > 0.01) {
       x.save();
       x.globalAlpha *= Math.min(1, m * 1.6);
@@ -695,6 +705,44 @@ export class RavenEngine {
     x.restore();
     if (this.badge && this.badgeS > 0.01 && m < 0.25) this.rune(x, this.badge, R, cx, cy);
     this.drawSparks(x, R, cx, cy);
+  }
+
+  /** O rig novo (bifrost/rig.ts), com a pose tirada do motor e do laço-assinatura. */
+  rigPose(): RigPose {
+    const n = clock();
+    const muninn = this.identity === "muninn";
+    let p: RigPose = { ...REST_POSE, breath: 0.5 - 0.5 * Math.cos((2 * Math.PI * (n - this.born)) / 3) };
+    if (this.sigAt != null) {
+      const t = n - this.sigAt;
+      if (t < LOOP_S) p = signature(this.identity, t); else this.sigAt = null;
+    }
+    const G = this.isMini ? REST : this.currentPose();
+    const flap = Math.sin(n * 26) * this.wingBeat * 0.5 + this.wingBeat * 0.35;
+    const wave = this.hands * (0.9 + Math.sin(n * 14) * 0.25);
+    const eye = this.eyeOverride ?? this.cfg.eye;
+    const shut = eye === "closed" ? 1 : eye === "happy" ? 0.45 : eye === "tired" ? 0.5 : eye === "line" || eye === "flat" ? 0.35 : 0;
+    return {
+      ...p,
+      px: Math.max(-1, Math.min(1, p.px + Math.sin(this.yaw) * 1.3 + this.face * 0.6)),
+      py: Math.max(-1, Math.min(1, p.py + Math.sin(this.pitch) * 1.1)),
+      lid: Math.max(p.lid, shut, 1 - Math.min(1, this.open)),
+      browL: Math.max(p.browL, this.brow * 0.6),
+      browR: Math.max(p.browR, this.brow),
+      beak: Math.max(p.beak, this.beak, muninn && this.state !== "sleeping" ? 0.5 : 0),
+      wingL: p.wingL + flap + G.wing * 0.8,
+      wingR: p.wingR + flap + G.wing * 0.8 + wave,
+    };
+  }
+  private rig(x: CanvasRenderingContext2D, R: number, a: number) {
+    const k = (R * 2.1) / 100;
+    const ch = currentCharacter();
+    const t = ravenTheme();
+    const who = this.identity;
+    const pal = rigPalette(who, ch.id, ch.huginn ? (who === "huginn" ? t.huginn : t.muninn) : null, currentTheme().accent);
+    x.save();
+    x.translate(0, k * 6);
+    drawRig(x, who, this.rigPose(), pal, k * 0.88, { alpha: a, face: this.face });
+    x.restore();
   }
 
   /** O corvo inteiro, nas coordenadas do SVG (viewBox 120) — o mesmo grão macio de
