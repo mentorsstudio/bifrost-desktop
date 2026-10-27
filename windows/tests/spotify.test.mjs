@@ -1,5 +1,5 @@
 // The Spotify pill (Linux) and Huginn's dance: the page's rules in
-// src/core/spotify.ts, the dance in src/mochi/engine.ts, the report handling in
+// src/core/spotify.ts, the dance in src/huginn/engine.ts, the report handling in
 // src/island/spotify.ts and the views in src/views/spotify.ts. The MPRIS side —
 // metadata, position, the bus itself — is tested in src-tauri/src/spotify.rs.
 
@@ -11,7 +11,7 @@ import {
   IDLE_SPOTIFY, SPOTIFY_ID, Spotify, currentArtwork, desktopDances, formatTime, isAd, islandDances,
   musicPlaying, spotifyPosition, volumeLevel, withPlaying,
 } from "../src/core/spotify.ts";
-import { BotEngine, danceTransform, stepDanceLevel } from "../src/mochi/engine.ts";
+import { BotEngine, danceTransform, stepDanceLevel } from "../src/bifrost/raven.ts";
 import { registerSpotifyHandlers } from "../src/island/spotify.ts";
 import { buildSpotifyCard, buildSpotifyPill } from "../src/views/spotify.ts";
 import { DEFAULT_SETTINGS, State } from "../src/core/state.ts";

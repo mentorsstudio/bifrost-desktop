@@ -8,11 +8,12 @@
 import "./pill.css";
 import "../theme/bifrost.css";
 import "../bifrost/nordic.css";
+import "../bifrost/skin.css";
 import "../bifrost/contextmenu";
 import { Bridge, onEvent } from "../core/bridge";
 import { FlowBridge, clock, type PillState } from "../core/flow";
 import type { Settings } from "../core/state";
-import { BotEngine, hexToRGB } from "../mochi/engine";
+import { BotEngine, hexToRGB } from "../bifrost/raven";
 import { resolveLanguage, setLanguage, systemLanguages, t } from "../i18n/i18n";
 import { HUB_ICONS, keyLabel } from "../hub/ui";
 

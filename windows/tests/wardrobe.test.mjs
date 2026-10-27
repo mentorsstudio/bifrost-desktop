@@ -1,4 +1,4 @@
-// Huginn's wardrobe: season → outfit, stored preference → outfit (src/mochi/wardrobe.ts).
+// Huginn's wardrobe: season → outfit, stored preference → outfit (src/huginn/wardrobe.ts).
 // Huginn's own adornments (Bifrost).
 
 import { test } from "node:test";
@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import {
   OUTFIT_SELECTIONS, OUTFIT_LABELS, SeasonCache, easterDate, parseOutfit, resolveOutfit,
   seasonalOutfit, wardrobeHeader,
-} from "../src/mochi/wardrobe.ts";
+} from "../src/huginn/wardrobe.ts";
 import { DEFAULT_SETTINGS } from "../src/core/state.ts";
 
 /** A local calendar day, at noon so no time zone can push it into the next one. */

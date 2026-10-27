@@ -4,11 +4,11 @@
 
 import { h } from "./dom";
 import { State } from "../core/state";
-import { drawWardrobeIcon } from "../mochi/outfits";
+import { drawWardrobeIcon } from "../huginn/outfits";
 import {
   OUTFIT_KEYS, OUTFIT_SELECTIONS, WARDROBE_STRINGS, parseOutfit, resolveOutfit, seasonalOutfit,
   wardrobeHeader, type Outfit, type OutfitSelection,
-} from "../mochi/wardrobe";
+} from "../huginn/wardrobe";
 import type { ViewActions, ViewHost } from "./views";
 import { language, tl } from "../i18n/i18n";
 

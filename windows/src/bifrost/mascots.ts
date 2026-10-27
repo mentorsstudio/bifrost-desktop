@@ -18,33 +18,40 @@ const PALETTE: Record<MascotName, { body: string; wing: string; eye: string; run
 
 export function mascotSvg(name: MascotName): string {
   const p = PALETTE[name];
+  // Camadas, de trás para a frente: sombra · asa de trás · cauda · corpo · peito
+  // · asa da frente · cabeça (crista, olhos, bico). Nada cruza o rosto: a cabeça
+  // é desenhada por último e as asas ficam abaixo da linha do pescoço (y ≥ 58).
+  // Os efeitos ficam num canto livre (x ≥ 90, y ≤ 30), longe da cabeça (x ≤ 78).
+  const ink = "#070b16";
   return `<svg class="bf-raven" viewBox="0 0 120 120" role="img" aria-label="${p.label}">
   <defs>
-    <radialGradient id="g-${name}" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="${p.wing}"/><stop offset="1" stop-color="${p.body}"/></radialGradient>
+    <radialGradient id="g-${name}" cx="50%" cy="35%" r="65%"><stop offset="0" stop-color="${p.wing}"/><stop offset="1" stop-color="${p.body}"/></radialGradient>
     <linearGradient id="gold-${name}" x1="0" x2="1"><stop offset="0" stop-color="#f6d27a"/><stop offset="1" stop-color="#b8862f"/></linearGradient>
   </defs>
-  <g class="bf-raven-shadow"><ellipse cx="60" cy="108" rx="26" ry="4" fill="#000" opacity=".35"/></g>
-  <g class="bf-raven-body">
-    <path class="bf-wing bf-wing-back" d="M38 62 C14 52 8 34 12 24 C24 36 34 42 50 48 Z" fill="${p.wing}"/>
-    <path class="bf-tail" d="M50 88 L40 104 L56 96 L60 106 L64 96 L80 104 L70 88 Z" fill="${p.body}"/>
-    <path d="M60 26 C82 26 92 46 90 66 C88 86 74 96 60 96 C46 96 32 86 30 66 C28 46 38 26 60 26 Z" fill="url(#g-${name})"/>
-    <path class="bf-knot" d="M46 70 q14 10 28 0 M50 78 q10 6 20 0" stroke="url(#gold-${name})" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".8"/>
-    <text x="60" y="88" text-anchor="middle" font-size="11" fill="url(#gold-${name})" class="bf-raven-rune">${p.rune}</text>
-    <path class="bf-crest" d="M56 27 L52 16 L60 24 L62 12 L66 26 Z" fill="${p.wing}"/>
-    <g class="bf-eyes">
-      <ellipse class="bf-eye" cx="50" cy="52" rx="5" ry="6" fill="${p.eye}"/>
-      <ellipse class="bf-eye" cx="70" cy="52" rx="5" ry="6" fill="${p.eye}"/>
-      <circle cx="51.5" cy="50" r="1.6" fill="#fff" opacity=".9"/><circle cx="71.5" cy="50" r="1.6" fill="#fff" opacity=".9"/>
+  <g class="bf-raven-shadow"><ellipse cx="60" cy="110" rx="24" ry="3.5" fill="#000" opacity=".35"/></g>
+  <g class="bf-raven-body" stroke="${ink}" stroke-width="2" stroke-linejoin="round">
+    <path class="bf-wing bf-wing-back" d="M42 62 C30 62 20 70 16 84 C26 82 34 80 42 76 Z" fill="${p.wing}"/>
+    <path class="bf-tail" d="M50 94 L44 108 L56 102 L60 110 L64 102 L76 108 L70 94 Z" fill="${p.body}"/>
+    <ellipse cx="60" cy="76" rx="22" ry="22" fill="url(#g-${name})"/>
+    <text x="60" y="86" text-anchor="middle" font-size="12" stroke="none" fill="url(#gold-${name})" class="bf-raven-rune">${p.rune}</text>
+    <path class="bf-wing bf-wing-front" d="M78 62 C90 62 100 70 104 84 C94 82 86 80 78 76 Z" fill="${p.wing}"/>
+    <g class="bf-head">
+      <path class="bf-crest" d="M54 26 L50 14 L58 22 L61 10 L65 22 L70 15 L67 27 Z" fill="${p.wing}"/>
+      <circle cx="60" cy="40" r="17" fill="url(#g-${name})"/>
+      <g class="bf-eyes" stroke="none">
+        <ellipse class="bf-eye" cx="53" cy="37" rx="3.6" ry="4.2" fill="${p.eye}"/>
+        <ellipse class="bf-eye" cx="67" cy="37" rx="3.6" ry="4.2" fill="${p.eye}"/>
+        <circle cx="54.2" cy="35.6" r="1.2" fill="#fff" opacity=".9"/><circle cx="68.2" cy="35.6" r="1.2" fill="#fff" opacity=".9"/>
+      </g>
+      <path class="bf-beak" d="M56 44 L60 53 L64 44 Q60 42.5 56 44 Z" fill="url(#gold-${name})" stroke-width="1.2"/>
     </g>
-    <path class="bf-beak" d="M54 60 L60 72 L66 60 Q60 57 54 60 Z" fill="url(#gold-${name})"/>
-    <path class="bf-wing bf-wing-front" d="M82 62 C106 52 112 34 108 24 C96 36 86 42 70 48 Z" fill="${p.wing}"/>
   </g>
   <g class="bf-fx">
-    <circle class="bf-dot d1" cx="92" cy="22" r="3"/><circle class="bf-dot d2" cx="100" cy="16" r="3"/><circle class="bf-dot d3" cx="108" cy="10" r="3"/>
-    <path class="bf-check" d="M88 22 l6 6 l12 -14" fill="none" stroke="#5ef2c9" stroke-width="4" stroke-linecap="round"/>
-    <text class="bf-err" x="98" y="26" font-size="22" text-anchor="middle" fill="#ff6b6b">ᚾ</text>
-    <path class="bf-wave" d="M14 50 q-6 10 0 20 M6 44 q-10 16 0 32" fill="none" stroke="#5ef2c9" stroke-width="2.5" stroke-linecap="round"/>
-    <text class="bf-zzz" x="96" y="24" font-size="14" fill="#9aa6c8">z</text>
+    <circle class="bf-dot d1" cx="92" cy="28" r="3"/><circle class="bf-dot d2" cx="101" cy="21" r="3"/><circle class="bf-dot d3" cx="110" cy="14" r="3"/>
+    <path class="bf-check" d="M92 20 l6 6 l13 -14" fill="none" stroke="#5ef2c9" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <text class="bf-err" x="102" y="28" font-size="22" text-anchor="middle" fill="#ff6b6b">ᚾ</text>
+    <path class="bf-wave" d="M10 34 q-5 8 0 16 M3 29 q-8 13 0 26" fill="none" stroke="#5ef2c9" stroke-width="2.5" stroke-linecap="round"/>
+    <text class="bf-zzz" x="96" y="26" font-size="14" fill="#9aa6c8">z</text>
   </g>
 </svg>`;
 }

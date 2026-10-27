@@ -19,7 +19,7 @@ use crate::{chat, claude, log, openai_compat, secrets, Shared};
 pub const MAX_ALLOWED: usize = 50;
 const MAX_MODEL_CHARS: usize = 200;
 
-const PROVIDERS: [&str; 7] = ["anthropic", "google", "openai", "openrouter", "ollama", "lmstudio", "custom"];
+const PROVIDERS: [&str; 8] = ["cli", "anthropic", "google", "openai", "openrouter", "ollama", "lmstudio", "custom"];
 
 pub struct AppChat {
     app: AppHandle,
@@ -90,6 +90,7 @@ fn key_name(provider: &str) -> Option<&'static str> {
 
 pub fn provider_name(provider: &str) -> String {
     match provider {
+        "cli" => "IA do PC".into(),
         "anthropic" => "Anthropic".into(),
         "google" => "Google".into(),
         "openai" => "OpenAI".into(),
@@ -202,6 +203,9 @@ mod tests {
         assert_eq!(key_name("anthropic"), Some("anthropic-api-key"));
         assert_eq!(key_name("openai"), Some("openai-api-key"));
         assert_eq!(key_name("ollama"), None);
+        assert_eq!(key_name("cli"), None);
+        assert_eq!(parse_model_id("cli/claude"), Some(("cli", "claude")));
+        assert_eq!(provider_name("cli"), "IA do PC");
         assert!(is_local("custom") && !is_local("openai"));
     }
 }

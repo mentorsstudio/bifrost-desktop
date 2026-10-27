@@ -6,7 +6,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { NO_UPDATE } from "../src/core/update.ts";
-import { BotEngine } from "../src/mochi/engine.ts";
+import { BotEngine } from "../src/bifrost/raven.ts";
 import { WHATS_NEW_ICONS } from "../src/whats-new/icons.ts";
 import {
   COFFEE_URL, ICON_NAMES, LATER_MS, compareVersions, decideOnLaunch, iconName, localized, releaseFor,

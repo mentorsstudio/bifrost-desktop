@@ -64,6 +64,7 @@ export default defineConfig({
         settings: resolve(__dirname, "settings.html"),
         mochi: resolve(__dirname, "mochi.html"),
         pill: resolve(__dirname, "pill.html"),
+        traymenu: resolve(__dirname, "traymenu.html"),
       },
     },
   },

@@ -8,10 +8,10 @@
 // the window is hidden, so a hidden window costs nothing, and skips the ones
 // scrolled out of sight.
 
-import { BotEngine, hexToRGB } from "../mochi/engine";
+import { BotEngine, hexToRGB } from "../bifrost/raven";
 import { onScreen, shouldAnimate } from "./frames";
 import type { BotEmoteName, BotStateName } from "../core/layout";
-import type { Outfit } from "../mochi/wardrobe";
+import type { Outfit } from "../huginn/wardrobe";
 
 interface Animated {
   el: HTMLCanvasElement;

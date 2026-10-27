@@ -31,7 +31,8 @@ export function toggleModel(allowed: readonly string[], id: string, on: boolean)
  * set. `hasKey` maps a provider id to "its key is saved".
  */
 export function usableProviders(settings: Settings, hasKey: Readonly<Record<string, boolean>>): ProviderDef[] {
-  return PROVIDERS.filter((p) => (p.key ? hasKey[p.id] === true : p.urlField !== null && settings[p.urlField] !== ""));
+  // Bifrost: "IA do PC" (Claude Code / Codex / Gemini instalados) não precisa de chave.
+  return PROVIDERS.filter((p) => p.id === "cli" || (p.key ? hasKey[p.id] === true : p.urlField !== null && settings[p.urlField] !== ""));
 }
 
 /** The ids of `allowed` that belong to `provider`, without the provider part. */

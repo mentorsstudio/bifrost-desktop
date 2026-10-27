@@ -5,7 +5,7 @@
 use std::sync::Mutex;
 
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
-use tauri::tray::TrayIconBuilder;
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::image::Image;
 use tauri::{AppHandle, Emitter, Manager, Wry};
 
@@ -52,16 +52,20 @@ pub fn build(app: &AppHandle) -> tauri::Result<()> {
     let update = MenuItem::with_id(app, "update", "", true, None::<&str>)?;
     app.manage(UpdateItem { menu: menu.clone(), item: update, version: Mutex::new(None) });
 
-    let mut builder = TrayIconBuilder::with_id("bifrost-desktop")
-        .tooltip("Bifrost")
-        .menu(&menu)
-        .on_menu_event(|app: &AppHandle, event| match event.id.as_ref() {
-            "quit" => app.exit(0),
-            "settings" => crate::show_settings_window(app),
-            // The Bifrost window: dictation, notes and every setting.
-            "open" => crate::show_hub(app, None),
-            id => {
-                let _ = app.emit_to(WINDOW_LABEL, "tray", id.to_string());
+    // Bifrost: sem menu nativo. Qualquer clique no ícone abre o menu nórdico
+    // (traymenu.html) perto do cursor; o `menu` acima fica só como fonte dos
+    // rótulos e da entrada de atualização.
+    let mut builder = TrayIconBuilder::with_id("bifrost-desktop").tooltip("Bifrost");
+    // No Linux o ícone (AppIndicator) não entrega cliques: lá fica o menu nativo.
+    if cfg!(not(windows)) {
+        builder = builder.menu(&menu).on_menu_event(|app: &AppHandle, event| activate(app, event.id.as_ref()));
+    }
+    builder = builder
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click { position, button_state: MouseButtonState::Up, button, .. } = event {
+                if matches!(button, MouseButton::Left | MouseButton::Right) {
+                    popup(tray.app_handle(), position.x, position.y);
+                }
             }
         });
 
@@ -165,4 +169,98 @@ mod tests {
         assert_eq!(out[11], 0, "transparency is kept");
         assert_eq!(out.len(), px.len());
     }
+}
+
+// ── Menu nórdico da bandeja ───────────────────────────────────────────────────
+
+pub const POPUP_LABEL: &str = "traymenu";
+const POPUP_W: f64 = 248.0;
+const POPUP_H: f64 = 318.0;
+
+/// O que o menu mostra: id e rótulo, na língua da interface, com a atualização se houver.
+#[derive(serde::Serialize)]
+pub struct PopupItem {
+    id: String,
+    label: String,
+}
+
+pub fn popup_items(app: &AppHandle) -> Vec<PopupItem> {
+    let mut out: Vec<PopupItem> = ITEMS.iter().map(|(id, l)| PopupItem { id: (*id).into(), label: t(l) }).collect();
+    if let Some(update) = app.try_state::<UpdateItem>() {
+        if let Some(v) = update.version.lock().unwrap().clone() {
+            out.insert(1, PopupItem { id: "update".into(), label: update_label(&v) });
+        }
+    }
+    out
+}
+
+/// O que um item faz — o mesmo que o menu nativo fazia.
+pub fn activate(app: &AppHandle, id: &str) {
+    if let Some(w) = app.get_webview_window(POPUP_LABEL) {
+        let _ = w.hide();
+    }
+    match id {
+        "__close" => {}
+        "quit" => app.exit(0),
+        "settings" => crate::show_settings_window(app),
+        "open" => crate::show_hub(app, None),
+        id => {
+            let _ = app.emit_to(WINDOW_LABEL, "tray", id.to_string());
+        }
+    }
+}
+
+/// Abre (ou move) a janela do menu acima do ícone; ela some ao perder o foco.
+fn popup(app: &AppHandle, x: f64, y: f64) {
+    let scale = app.primary_monitor().ok().flatten().map(|m| m.scale_factor()).unwrap_or(1.0);
+    let (lx, ly) = (x / scale, y / scale);
+    let px = (lx - POPUP_W + 24.0).max(8.0);
+    let py = (ly - POPUP_H - 8.0).max(8.0);
+    let win = match app.get_webview_window(POPUP_LABEL) {
+        Some(w) => w,
+        None => {
+            let built = tauri::WebviewWindowBuilder::new(app, POPUP_LABEL, tauri::WebviewUrl::App("traymenu.html".into()))
+                .title("Bifrost")
+                .decorations(false)
+                .transparent(true)
+                .shadow(false)
+                .resizable(false)
+                .skip_taskbar(true)
+                .always_on_top(true)
+                .visible(false)
+                .inner_size(POPUP_W, POPUP_H)
+                .build();
+            match built {
+                Ok(w) => {
+                    let handle = w.clone();
+                    w.on_window_event(move |e| {
+                        if let tauri::WindowEvent::Focused(false) = e {
+                            let _ = handle.hide();
+                        }
+                    });
+                    w
+                }
+                Err(err) => {
+                    crate::log::line(format!("tray popup: {err}"));
+                    return;
+                }
+            }
+        }
+    };
+    let _ = win.set_position(tauri::LogicalPosition::new(px, py));
+    let _ = win.emit("traymenu-open", ());
+    let _ = win.show();
+    let _ = win.set_focus();
+    #[cfg(windows)]
+    crate::webview_drop::disable_native_menus(app);
+}
+
+#[tauri::command]
+pub fn tray_menu_items(app: AppHandle) -> Vec<PopupItem> {
+    popup_items(&app)
+}
+
+#[tauri::command]
+pub fn tray_menu_activate(app: AppHandle, id: String) {
+    activate(&app, &id);
 }

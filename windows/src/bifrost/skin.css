@@ -1,0 +1,64 @@
+/* Bifrost — pele nórdica aplicada por cima das telas (ilha, chat, hub, pílula,
+   boas-vindas). Ferro e ouro nas bordas, títulos como inscrições, runas nos
+   grupos do menu, aurora no foco. Só visual: nenhuma regra muda o layout que
+   os testes e a máquina de estados da ilha usam. */
+
+/* ── Ilha ─────────────────────────────────────────────────────────────── */
+#island {
+  background: linear-gradient(180deg, #05080f, var(--bf-night) 60%, #0a1122);
+  box-shadow: 0 0 0 1px rgba(226, 181, 90, .22), 0 10px 30px rgba(0, 0, 0, .55), 0 0 22px rgba(94, 242, 201, .06);
+  border-radius: 0 0 18px 18px;
+}
+#island::after {
+  content: ""; position: absolute; left: 18%; right: 18%; bottom: -1px; height: 2px; border-radius: 2px;
+  background: var(--bf-bridge); opacity: .55; filter: blur(.3px); pointer-events: none;
+  animation: bf-skin-bridge 6s var(--bf-ease-tide) infinite alternate;
+}
+@keyframes bf-skin-bridge { from { left: 26%; right: 26%; opacity: .35; } to { left: 12%; right: 12%; opacity: .7; } }
+#island .tab.active, #island .tab[aria-selected="true"] { color: var(--bf-gold-2); box-shadow: inset 0 -2px 0 var(--bf-gold); }
+
+/* ── Chat ─────────────────────────────────────────────────────────────── */
+.chat-card {
+  border: 1px solid rgba(226, 181, 90, .28) !important;
+  background:
+    radial-gradient(400px 120px at 50% 110%, rgba(94, 242, 201, .08), transparent 70%),
+    linear-gradient(180deg, rgba(20, 32, 63, .92), rgba(7, 11, 22, .96)) !important;
+}
+.chat-input {
+  border: 1px solid rgba(147, 161, 198, .22) !important;
+  background: rgba(7, 11, 22, .7) !important;
+  transition: border-color var(--bf-quick), box-shadow var(--bf-quick) var(--bf-ease-fjord);
+}
+.chat-input:focus-within { border-color: rgba(94, 242, 201, .55) !important; box-shadow: 0 0 0 3px rgba(94, 242, 201, .12); }
+.chat-row .bubble { border: 1px solid rgba(226, 181, 90, .16); }
+.chat-row .bubble { animation: bf-skin-rise var(--bf-step) var(--bf-ease-raven) both; }
+@keyframes bf-skin-rise { from { opacity: 0; transform: translateY(6px) scale(.98); } }
+.model-btn { border: 1px solid rgba(226, 181, 90, .3) !important; }
+
+/* ── Hub ──────────────────────────────────────────────────────────────── */
+.hub-side { background: linear-gradient(180deg, rgba(58, 38, 24, .25), transparent 40%), var(--bf-night) !important; border-right: 1px solid rgba(226, 181, 90, .14); }
+.hub-brand { font-family: var(--bf-heading-font); letter-spacing: .12em; text-transform: uppercase; color: var(--bf-gold-2); }
+.hub-group { font-family: var(--bf-heading-font); letter-spacing: .22em; color: var(--bf-gold) !important; }
+.hub-group::before { content: "ᚱ "; font-family: var(--bf-rune-font); opacity: .8; }
+.hub-item { transition: background var(--bf-tap), transform var(--bf-quick) var(--bf-ease-raven); }
+.hub-item:hover { transform: translateX(3px); }
+.hub-item.active, .hub-item[aria-current="page"] { box-shadow: inset 2px 0 0 var(--bf-gold); }
+.hub-card, .hub-hero, .hub-panel { border: 1px solid rgba(226, 181, 90, .2) !important; }
+.hub-hero h1, .hub-hero h2, .hub-card h2, .hub-card h3, .hub-page h1 { font-family: var(--bf-heading-font); letter-spacing: .06em; }
+.hub-hero h1, .hub-hero h2 { color: var(--bf-gold-2) !important; }
+.hub-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(226, 181, 90, .45), transparent) !important; }
+.hub-page { animation: bf-skin-page var(--bf-step) var(--bf-ease-fjord) both; }
+@keyframes bf-skin-page { from { opacity: 0; transform: translateY(8px); } }
+
+/* ── Pílula ───────────────────────────────────────────────────────────── */
+.capsule { border: 1px solid rgba(226, 181, 90, .35) !important; box-shadow: 0 8px 24px rgba(0, 0, 0, .5), 0 0 18px rgba(94, 242, 201, .1) !important; }
+.capsule .bars > * { background: linear-gradient(180deg, var(--bf-aurora-1), var(--bf-aurora-2)) !important; }
+.capsule .rec { background: var(--bf-ember) !important; }
+
+/* ── Boas-vindas / novidades ─────────────────────────────────────────── */
+.whatsnew-stat { border: 1px solid rgba(226, 181, 90, .25); }
+
+@media (prefers-reduced-motion: reduce) {
+  #island::after, .chat-row .bubble, .hub-page { animation: none !important; }
+  .hub-item, .chat-input { transition: none !important; }
+}

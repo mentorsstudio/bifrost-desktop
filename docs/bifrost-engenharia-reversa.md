@@ -520,3 +520,18 @@ Credenciais no cofre do sistema (`secrets.rs`): `mcp-token:<nome>` (Hermes VPS e
 * Menu da bandeja continua nativo.
 * Login OAuth dos serviços na nuvem depende do `mcp-remote` (npx). O GitHub remoto pode pedir OAuth que nem todo cliente aceita; nesse caso use o `gh` (já instalado) ou um token como credencial do servidor.
 * Verificação = compilação + suites automatizadas + capturas headless; não houve teste interativo no Windows.
+
+## 10. Fase 2 — paridade (pass/fail) e o que foi reescrito
+
+| Item | Situação | Resultado |
+|---|---|---|
+| Motor do mascote (canvas) | **Reescrito**: `src/bifrost/raven.ts` (RavenEngine) substitui `src/mochi/engine.ts` (apagado); mesma API pública | PASS (475/475 testes TS) |
+| Pasta `src/mochi` → `src/huginn` | Renomeada; imports e `include_str!` do Rust atualizados | PASS (562 testes Rust) |
+| Corvos SVG Huginn/Muninn | **Redesenhados**: camadas limpas (asa de trás · corpo · asa da frente · cabeça por último), contorno único, efeitos fora do rosto, "partindo" visível em laço | PASS (tiras 0/25/50/75% e 32/64/128 px) |
+| Menu da bandeja | **Reescrito**: janela webview nórdica `traymenu.html` + `tray_menu_items`/`tray_menu_activate`; menu nativo só no Linux (AppIndicator não entrega cliques) | PASS (compila; ações = menu antigo) — validar no Windows |
+| Huginn de mesa | Usa o RavenEngine novo; guarda-roupa e clique direito herdados (lógica) | PASS |
+| Ilha / chat / hub / pílula / boas-vindas | **Pele nórdica nova** (`src/bifrost/skin.css`); estrutura, máquina de estados e layout **herdados** | PARCIAL — não reescrito do zero |
+| Roupas (`huginn/outfits.ts`) | Arte herdada, mantida pela paridade do guarda-roupa | HERDADO |
+| Chat do celular com "IA do PC" | `cli` aceito em `chat_backend.rs` e oferecido sem chave em `phone-chat.ts` | PASS (testes) |
+| Nomes de protocolo (`coucou-relay/v1`, `mochiOutfit`, janela `mochi`) | Mantidos | PASS |
+| Menu nativo do WebView2 | Desligado em todas as janelas, inclusive `traymenu` | PASS |

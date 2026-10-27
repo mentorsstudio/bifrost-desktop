@@ -10,8 +10,8 @@ import { State } from "../core/state";
 import { desktopDances } from "../core/spotify";
 import {
   DESKTOP_EVENTS, DesktopMochiController, alertActive, type DesktopSnapshot,
-} from "../mochi/desktop-logic";
-import { SeasonCache, parseOutfit } from "../mochi/wardrobe";
+} from "../huginn/desktop-logic";
+import { SeasonCache, parseOutfit } from "../huginn/wardrobe";
 
 /** Label of the desktop Huginn's window (desktop.rs LABEL). */
 const WINDOW = "mochi";

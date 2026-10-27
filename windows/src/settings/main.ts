@@ -6,6 +6,7 @@
 import "./settings.css";
 import "../theme/bifrost.css";
 import "../bifrost/nordic.css";
+import "../bifrost/skin.css";
 import "../bifrost/contextmenu";
 
 // Céu nórdico atrás da janela inteira: aurora e ponte.

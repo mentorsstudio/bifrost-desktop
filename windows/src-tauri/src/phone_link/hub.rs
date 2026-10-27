@@ -1805,7 +1805,7 @@ mod tests {
 
     #[test]
     fn the_outfit_list_is_the_one_of_the_island() {
-        let ts = include_str!("../../../src/mochi/wardrobe.ts");
+        let ts = include_str!("../../../src/huginn/wardrobe.ts");
         let body = ts.split("export const OUTFIT_SELECTIONS = [").nth(1).unwrap().split("] as const").next().unwrap();
         let ids: Vec<&str> = body.split('"').skip(1).step_by(2).collect();
         assert_eq!(ids, OUTFIT_CHOICES.to_vec());

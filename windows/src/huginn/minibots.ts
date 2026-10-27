@@ -1,7 +1,7 @@
 // Mini Huginns (pills + compact grid) — port of MiniBotCanvasView.
 // Each canvas owns a BotEngine; the island's frame loop ticks every live one.
 
-import { BotEngine, hexToRGB } from "./engine";
+import { BotEngine, hexToRGB } from "../bifrost/raven";
 import type { AgentTask } from "../core/state";
 
 interface MiniBot {

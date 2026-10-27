@@ -1,10 +1,10 @@
-// The launch greeting (src/mochi/greeting.ts): Huginn must never be cut off by
+// The launch greeting (src/huginn/greeting.ts): Huginn must never be cut off by
 // the island while it grows, while he bounces and waves, or while it shrinks
 // back to the compact island.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { GREETING_END, GREETING_W, greetingPose, mochiBounds } from "../src/mochi/greeting.ts";
+import { GREETING_END, GREETING_W, greetingPose, mochiBounds } from "../src/huginn/greeting.ts";
 import { Tracked } from "../src/core/anim.ts";
 import { COMPACT_W, NOTCH_H, NOTCH_W, VIEW_LAYOUTS } from "../src/core/layout.ts";
 

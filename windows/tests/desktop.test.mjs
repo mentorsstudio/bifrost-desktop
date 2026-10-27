@@ -1,4 +1,4 @@
-// Huginn on the desktop: the pure logic and the life cycle (src/mochi/desktop-logic.ts).
+// Huginn on the desktop: the pure logic and the life cycle (src/huginn/desktop-logic.ts).
 // The first half mirrors tests/DesktopMochiTests.swift; the geometry of the
 // window itself (clamping, saved spots, the island's home zone) is tested in
 // src-tauri/src/desktop.rs, where it lives.
@@ -9,7 +9,7 @@ import {
   BODY_RADIUS_FRACTION, DesktopMochiController, PANEL_SIZE, RETRACT_DELAY_MS, RETURN_DELAY_MS,
   agentActive, alertActive, gaze, isOverBody, layerDragTopLeft, lookOrigin, pointerDistance,
   shouldRetractOnLanding, shouldSleep, windowDragTopLeft,
-} from "../src/mochi/desktop-logic.ts";
+} from "../src/huginn/desktop-logic.ts";
 
 // ── shouldSleep ───────────────────────────────────────────────────────────────
 

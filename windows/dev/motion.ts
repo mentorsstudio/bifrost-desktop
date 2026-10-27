@@ -25,7 +25,7 @@ setInterval(() => {
   }
 }, 2200);
 (window as unknown as { menu: () => void }).menu = () =>
-  showMenu(620, 360, [
+  showMenu(window.innerWidth - 230, 12, [
     { label: "Abrir conversa", rune: "ᚺ", run: () => {} },
     { label: "Copiar", rune: "ᚷ", run: () => {} },
     { label: "Colar", rune: "ᛈ", run: () => {} },
