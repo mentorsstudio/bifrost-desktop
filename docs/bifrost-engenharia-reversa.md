@@ -803,3 +803,14 @@ Ferramentas baixadas ficam em `%LOCALAPPDATA%\Bifrost\tools`.
   retângulo da janela. A janela ainda é um quadrado transparente: um clique nos cantos
   fecha o anel em vez de passar direto para o que está embaixo.
 - Sem OCR, pastas vigiadas, CLI nem rotas multi-salto do Filee nesta fase.
+
+### 10.20 — Fase 20: merge do Conversor, correções do app real e ilha flutuante
+
+- **Merge `filee-integration`** (seção 11): Conversor (Forja, Ajustes → Geral → Conversor), anel do gesto Ctrl + botão direito segurado, "Enviar para a IA" no drop. O "+" do chat recebe **Anexar arquivo…** e **Converter arquivo…** pelo registro de anexos (`src/filee/island.ts`). O Huginn do anel é um `Mascot` sem tema fixo, então segue o personagem escolhido.
+- **Hub vazio no app real (crítico)**: no Windows o aviso `hub-visible` podia não chegar e o hub ficava em `bf-hub-hidden` com a janela na tela; essa classe pausava TODAS as animações (`animation-play-state: paused`), e as entradas (`m-rise`, `fill: both`) ficavam presas no quadro 0 — opacidade 0. Confirmado pelo CDP no WebView2 (`getAnimations()` → `paused:0`). Correção: janela oculta leva as animações ao fim (duração 0) em vez de pausar; `.m-rise` tem prazo de 900 ms; foco/ponteiro/teclado provam que a janela está à vista (`watchWindowShown`).
+- **Forma dupla**: a regra unificada de botões da v19 dava borda e fundo próprios às células do segmentado (Semana · Mês · Tudo), e o halo de hover (`::before`, raio 7) aparecia em volta do ink (raio 17) nas abas. Agora: `appearance: none`, foco por `box-shadow` com o raio herdado, células de grupos sem halo/borda, raio da aba = raio do ink.
+- **Colisão**: pílula de status com respiro (16 px à direita), reticências e `title`.
+- **Dicionário**: a runa d'água (120 px) caía no vão entre os cartões → só no Ditado.
+- **Cartão de sessão**: resumo com linha própria (2 linhas + title), botões compactos numa fileira abaixo.
+- **Ilha flutuante**: sem AppBar e sem barra nativa; ao iniciar, uma AppBar temporária é registrada/removida para o Explorer soltar a faixa de versões antigas. Vigia de 500 ms (topmost, volta após Win+D/Explorer, tela cheia real — maximizada não conta). A compacta nunca recolhe. Cliques fora da forma atravessam (cursor poll).
+- **QA visual**: halo de hover com raio diferente, halo dentro de grupo, célula com borda em grupo com contorno, raio do ink × aba, colisão de texto (glifos por `Range`, ≥ 6 px da borda e fora da curva) e página vazia abaixo do cabeçalho; Conversor e anel (abrindo, imagens, hover, sub, PDFs, progresso, pronto, erro) a 100/125/150 %.

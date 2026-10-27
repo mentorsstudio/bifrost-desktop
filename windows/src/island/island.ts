@@ -179,7 +179,7 @@ export class Island {
   private listenFsm(): void {
     this.fsm.homeToPetitDelay = State.settings.autoCloseInterval;
     this.fsm.openOnHover = State.settings.openOnHover;
-    this.fsm.floorPetit = State.settings.notchReserve !== false;
+    this.fsm.floorPetit = true; // Fase 20: a ilha flutuante nunca recolhe.
     this.fsm.onTransition = (from, to) => {
       // A saudação acabou, como quer que tenha sido: ele volta ao seu canto.
       if (from === "bifrost-desktop" && to !== "bifrost-desktop") this.desktop.launch();
@@ -737,7 +737,7 @@ export class Island {
     Sound.setVolume(State.settings.soundVolume);
     this.fsm.homeToPetitDelay = State.settings.autoCloseInterval;
     this.fsm.openOnHover = State.settings.openOnHover;
-    this.fsm.floorPetit = State.settings.notchReserve !== false;
+    this.fsm.floorPetit = true; // Fase 20: a ilha flutuante nunca recolhe.
     if (this.fsm.floorPetit && this.fsm.state === "hidden") this.fsm.forcePetit();
     State.notify();
     this.clockTimer ??= window.setInterval(() => this.updateClock(), 10_000);

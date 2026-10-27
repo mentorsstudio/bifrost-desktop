@@ -54,3 +54,17 @@ test("regra de colisão: pílula de status com respiro e reticências", () => {
   const c = src("../tests/visual/checks.js".replace("../", "../")) ;
   void c;
 });
+
+test("ilha flutuante: sem AppBar reservada nem barra nativa; limpa a reserva antiga ao iniciar", () => {
+  const n = readFileSync(new URL("../src-tauri/src/notch.rs", import.meta.url), "utf8");
+  const win = n.slice(n.indexOf("mod win {"), n.indexOf("/// Liga o vigia"));
+  assert.doesNotMatch(win, /ABM_SETPOS|BifrostNotchBar|WS_EX_LAYERED/);
+  assert.match(win, /fn release_old_reservation\(\)/);
+  assert.match(win, /SHAppBarMessage\(ABM_NEW, &mut d\) != 0 \{ SHAppBarMessage\(ABM_REMOVE/);
+  assert.match(win, /from_millis\(500\)/);
+  assert.match(win, /HWND_TOPMOST/);
+  assert.match(win, /!IsZoomed\(fg\)\.as_bool\(\)/);
+  assert.match(win, /SW_SHOWNOACTIVATE/);
+  assert.match(src("island/island.ts"), /this\.fsm\.floorPetit = true;/);
+  assert.doesNotMatch(src("settings/page-general.ts"), /Reservar a faixa/);
+});

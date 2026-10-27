@@ -12,6 +12,12 @@
 //! (2) `QUNS_BUSY` dava "tela cheia" com qualquer app sem borda e o vigia caía
 //! em `Yield` (deixava de ser topmost e soltava a faixa), (3) nada pintava a
 //! faixa: aparecia o papel de parede.
+//! Fase 20: a ilha FLUTUA. Sem AppBar e sem barra nativa: janelas maximizadas
+//! usam a tela inteira e a ilha fica por cima só no centro da barra de título,
+//! atravessando cliques fora da forma (island.rs). O vigia (500 ms) reafirma o
+//! topmost, traz a ilha de volta depois de Win+D/Explorer e trata a tela cheia.
+//! Ao iniciar, uma AppBar temporária é registrada e removida para o Explorer
+//! soltar a faixa de uma versão antiga.
 //! A parte pura (`strip_rect`, `fullscreen_policy`, `covers_monitor`,
 //! `parse_rgb`) é testada em qualquer SO.
 
@@ -72,131 +78,42 @@ pub fn notch_bar_color(hex: String) {
 #[cfg(windows)]
 mod win {
     use super::*;
-    use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+    use std::sync::atomic::{AtomicBool, Ordering};
     use tauri::Manager;
     use windows::core::w;
-    use windows::Win32::Foundation::{COLORREF, HWND, LPARAM, LRESULT, RECT, WPARAM};
-    use windows::Win32::Graphics::Gdi::{CreateSolidBrush, DeleteObject, FillRect, GetDC, ReleaseDC, InvalidateRect, HBRUSH, HDC};
+    use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, RECT, WPARAM};
     use windows::Win32::System::LibraryLoader::GetModuleHandleW;
     use windows::Win32::UI::Shell::{
-        SHAppBarMessage, SHQueryUserNotificationState, ABE_TOP, ABM_NEW, ABM_QUERYPOS, ABM_REMOVE, ABM_SETPOS,
-        APPBARDATA, QUNS_PRESENTATION_MODE, QUNS_RUNNING_D3D_FULL_SCREEN,
+        SHAppBarMessage, SHQueryUserNotificationState, ABE_TOP, ABM_NEW, ABM_REMOVE, APPBARDATA,
+        QUNS_PRESENTATION_MODE, QUNS_RUNNING_D3D_FULL_SCREEN,
     };
     use windows::Win32::UI::WindowsAndMessaging::*;
 
-    static REGISTERED: AtomicBool = AtomicBool::new(false);
-    static BAR: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
-    static REREGISTER: AtomicBool = AtomicBool::new(false);
-    static TASKBAR_CREATED: AtomicU32 = AtomicU32::new(0);
-    static PAINTED: AtomicU32 = AtomicU32::new(u32::MAX);
-    static BRUSH: std::sync::atomic::AtomicIsize = std::sync::atomic::AtomicIsize::new(0);
+    unsafe extern "system" fn plain(h: HWND, m: u32, w: WPARAM, l: LPARAM) -> LRESULT { DefWindowProcW(h, m, w, l) }
 
-    fn data(hwnd: HWND) -> APPBARDATA {
-        APPBARDATA {
-            cbSize: std::mem::size_of::<APPBARDATA>() as u32,
-            hWnd: hwnd,
-            uCallbackMessage: WM_APP + 0x4E,
-            uEdge: ABE_TOP,
-            rc: RECT::default(),
-            lParam: LPARAM(0),
-        }
-    }
+    static CLEANED: AtomicBool = AtomicBool::new(false);
 
-    fn register(hwnd: HWND, rect: (i32, i32, i32, i32)) -> (i32, i32, i32, i32) {
+    /// Fase 20: a v15–v19 registrava uma AppBar. O Explorer só solta a faixa de
+    /// uma AppBar morta quando recalcula as AppBars; registrar e remover uma AppBar
+    /// temporária força esse recálculo (e uma versão antiga que saiu sem ABM_REMOVE
+    /// não deixa a área útil encolhida). Nada mais é reservado.
+    fn release_old_reservation() {
+        if CLEANED.swap(true, Ordering::Relaxed) { return; }
         unsafe {
-            let mut d = data(hwnd);
-            if !REGISTERED.load(Ordering::Relaxed) {
-                if SHAppBarMessage(ABM_NEW, &mut d) == 0 {
-                    return rect;
-                }
-                REGISTERED.store(true, Ordering::Relaxed);
-            }
-            d.rc = RECT { left: rect.0, top: rect.1, right: rect.2, bottom: rect.3 };
-            SHAppBarMessage(ABM_QUERYPOS, &mut d);
-            // A faixa é do topo do monitor e tem a altura da ilha compacta, sempre.
-            d.rc.top = rect.1;
-            d.rc.bottom = rect.3;
-            SHAppBarMessage(ABM_SETPOS, &mut d);
-            (d.rc.left, d.rc.top, d.rc.right, d.rc.bottom)
-        }
-    }
-
-    fn unregister(hwnd: HWND) {
-        if REGISTERED.swap(false, Ordering::Relaxed) {
-            unsafe {
-                let mut d = data(hwnd);
-                SHAppBarMessage(ABM_REMOVE, &mut d);
-            }
-        }
-    }
-
-    fn brush() -> HBRUSH {
-        let c = BAR_RGB.load(Ordering::Relaxed);
-        if PAINTED.swap(c, Ordering::Relaxed) != c {
-            let old = BRUSH.swap(unsafe { CreateSolidBrush(COLORREF(c)) }.0 as isize, Ordering::Relaxed);
-            if old != 0 { unsafe { let _ = DeleteObject(HBRUSH(old as *mut _).into()); } }
-        }
-        HBRUSH(BRUSH.load(Ordering::Relaxed) as *mut _)
-    }
-
-    fn paint(hwnd: HWND, dc: HDC) {
-        let mut r = RECT::default();
-        unsafe {
-            let _ = GetClientRect(hwnd, &mut r);
-            FillRect(dc, &r, brush());
-        }
-    }
-
-    unsafe extern "system" fn proc(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM) -> LRESULT {
-        let tc = TASKBAR_CREATED.load(Ordering::Relaxed);
-        if tc != 0 && msg == tc {
-            // O Explorer reiniciou: as AppBars somem com ele, registra de novo.
-            REGISTERED.store(false, Ordering::Relaxed);
-            REREGISTER.store(true, Ordering::Relaxed);
-            return LRESULT(0);
-        }
-        match msg {
-            WM_ERASEBKGND => {
-                paint(hwnd, HDC(wp.0 as *mut _));
-                LRESULT(1)
-            }
-            WM_NCHITTEST => LRESULT(HTTRANSPARENT as isize),
-            WM_MOUSEACTIVATE => LRESULT(MA_NOACTIVATE as isize),
-            _ => DefWindowProcW(hwnd, msg, wp, lp),
-        }
-    }
-
-    fn create_bar() -> Option<HWND> {
-        unsafe {
-            TASKBAR_CREATED.store(RegisterWindowMessageW(w!("TaskbarCreated")), Ordering::Relaxed);
-            let inst = GetModuleHandleW(None).ok()?;
-            let wc = WNDCLASSW {
-                lpfnWndProc: Some(proc),
-                hInstance: inst.into(),
-                lpszClassName: w!("BifrostNotchBar"),
-                hCursor: LoadCursorW(None, IDC_ARROW).unwrap_or_default(),
-                ..Default::default()
-            };
+            let Ok(inst) = GetModuleHandleW(None) else { return };
+            let wc = WNDCLASSW { lpfnWndProc: Some(plain), hInstance: inst.into(), lpszClassName: w!("BifrostNotchCleanup"), ..Default::default() };
             RegisterClassW(&wc);
-            // Camada + transparente = cliques atravessam; tool window = fora do Alt+Tab e da barra.
-            let ex = WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_TOPMOST | WS_EX_LAYERED | WS_EX_TRANSPARENT;
-            let h = CreateWindowExW(ex, w!("BifrostNotchBar"), w!("Bifrost notch"), WS_POPUP, 0, 0, 1, 1, None, None, Some(inst.into()), None).ok()?;
-            let _ = SetLayeredWindowAttributes(h, COLORREF(0), 255, LWA_ALPHA);
-            Some(h)
+            let Ok(h) = CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE, w!("BifrostNotchCleanup"), w!(""), WS_POPUP, 0, 0, 1, 1, None, None, Some(inst.into()), None) else { return };
+            let mut d = APPBARDATA { cbSize: std::mem::size_of::<APPBARDATA>() as u32, hWnd: h, uCallbackMessage: WM_APP + 0x4F, uEdge: ABE_TOP, rc: RECT::default(), lParam: LPARAM(0) };
+            if SHAppBarMessage(ABM_NEW, &mut d) != 0 { SHAppBarMessage(ABM_REMOVE, &mut d); }
+            let _ = DestroyWindow(h);
         }
+        crate::log::line("notch: ilha flutuante, sem faixa reservada (AppBar antiga liberada)");
     }
 
-    fn pump() {
-        unsafe {
-            let mut m = MSG::default();
-            while PeekMessageW(&mut m, None, 0, 0, PM_REMOVE).as_bool() {
-                let _ = TranslateMessage(&m);
-                DispatchMessageW(&m);
-            }
-        }
-    }
-
-    /// Tela cheia de verdade: D3D exclusivo, apresentação, ou a janela da frente cobre o monitor todo.
+    /// Tela cheia de verdade: D3D exclusivo, apresentação, ou a janela da frente
+    /// cobre o monitor todo SEM estar maximizada (sem faixa reservada, uma
+    /// maximizada com a barra de tarefas oculta também cobre o monitor).
     fn fullscreen_now(mon: (i32, i32, i32, i32), own: &[HWND]) -> bool {
         unsafe {
             if let Ok(s) = SHQueryUserNotificationState() {
@@ -209,98 +126,57 @@ mod win {
             let cls = String::from_utf16_lossy(&cls[..n]);
             if cls == "Progman" || cls == "WorkerW" || cls == "Shell_TrayWnd" { return false; }
             let mut r = RECT::default();
-            GetWindowRect(fg, &mut r).is_ok() && covers_monitor((r.left, r.top, r.right, r.bottom), mon)
+            GetWindowRect(fg, &mut r).is_ok() && covers_monitor((r.left, r.top, r.right, r.bottom), mon) && !IsZoomed(fg).as_bool()
         }
     }
 
     pub fn start(app: AppHandle) {
         std::thread::spawn(move || {
-            let Some(bar) = create_bar() else {
-                crate::log::line("notch: barra nativa não criada");
-                return;
-            };
-            BAR.store(bar.0 as usize, Ordering::Relaxed);
-            let mut last: Option<(Policy, (i32, i32, i32, i32))> = None;
-            let mut tick = 0u32;
-            let mut color = u32::MAX;
+            release_old_reservation();
+            let mut last: Option<Policy> = None;
             loop {
-                pump();
-                std::thread::sleep(std::time::Duration::from_millis(50));
-                tick += 1;
-                let c = BAR_RGB.load(Ordering::Relaxed);
-                if c != color {
-                    color = c;
-                    unsafe { let _ = InvalidateRect(Some(bar), None, true); }
-                    let dc = unsafe { GetDC(Some(bar)) };
-                    paint(bar, dc);
-                    unsafe { ReleaseDC(Some(bar), dc); }
-                }
-                if tick % 10 != 0 && !REREGISTER.load(Ordering::Relaxed) { continue; }
+                // A cada 500 ms: reafirma o "sempre por cima" e trata a tela cheia.
+                std::thread::sleep(std::time::Duration::from_millis(500));
                 let Some(win) = crate::island::window(&app) else { continue };
                 let Ok(raw) = win.hwnd() else { continue };
                 let island = HWND(raw.0 as *mut _);
-                let (reserve, over, pref) = app
+                let (over, pref) = app
                     .try_state::<crate::Shared>()
                     .map(|s| {
                         let st = s.settings.lock().unwrap();
-                        (st.notch_reserve, st.notch_over_fullscreen, st.screen.clone())
+                        (st.notch_over_fullscreen, st.screen.clone())
                     })
-                    .unwrap_or((true, false, "primary".into()));
+                    .unwrap_or((false, "primary".into()));
                 let Some(m) = crate::island::target_monitor(&app, &pref) else { continue };
-                let rect = strip_rect(m.position().x, m.position().y, m.size().width, m.scale_factor());
-                let mon = (m.position().x, m.position().y, m.position().x + m.size().width as i32, m.position().y + m.size().height as i32);
-                let policy = fullscreen_policy(fullscreen_now(mon, &[bar, island]), over, reserve);
-                let rereg = REREGISTER.swap(false, Ordering::Relaxed);
+                let top = m.position().y;
+                let mon = (m.position().x, top, m.position().x + m.size().width as i32, top + m.size().height as i32);
+                let policy = fullscreen_policy(fullscreen_now(mon, &[island]), over, false);
                 unsafe {
                     match policy {
-                        Policy::OnTop { reserve } => {
-                            // Win+D / minimizar tudo: a ilha volta sem roubar o foco.
+                        Policy::OnTop { .. } => {
+                            // Win+D / minimizar tudo / Explorer reiniciado: a ilha volta sem roubar o foco.
                             if IsIconic(island).as_bool() || !IsWindowVisible(island).as_bool() {
                                 let _ = ShowWindow(island, SW_SHOWNOACTIVATE);
                             }
-                            if reserve {
-                                if rereg || last != Some((policy, rect)) {
-                                    let got = register(bar, rect);
-                                    let _ = SetWindowPos(bar, Some(HWND_TOPMOST), got.0, got.1, got.2 - got.0, got.3 - got.1, SWP_NOACTIVATE | SWP_SHOWWINDOW);
-                                } else {
-                                    let _ = SetWindowPos(bar, Some(HWND_TOPMOST), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
-                                }
-                            } else {
-                                unregister(bar);
-                                let _ = ShowWindow(bar, SW_HIDE);
-                            }
-                            // A ilha mora no topo do monitor, por cima da barra.
                             let mut wr = RECT::default();
-                            let off = GetWindowRect(island, &mut wr).is_ok() && wr.top != rect.1;
-                            if off {
-                                let _ = SetWindowPos(island, Some(HWND_TOPMOST), wr.left, rect.1, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE);
-                            } else {
-                                let _ = SetWindowPos(island, Some(HWND_TOPMOST), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-                            }
+                            let off = GetWindowRect(island, &mut wr).is_ok() && wr.top != top;
+                            let flags = if off { SWP_NOSIZE | SWP_NOACTIVATE } else { SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE };
+                            let _ = SetWindowPos(island, Some(HWND_TOPMOST), wr.left, top, 0, 0, flags);
                         }
                         Policy::Yield => {
-                            unregister(bar);
-                            let _ = ShowWindow(bar, SW_HIDE);
-                            if last.map(|l| l.0) != Some(Policy::Yield) {
+                            if last != Some(Policy::Yield) {
                                 let _ = SetWindowPos(island, Some(HWND_NOTOPMOST), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
                             }
                         }
                     }
                 }
-                if rereg || last != Some((policy, rect)) {
-                    crate::log::line(format!("notch: {policy:?} faixa {rect:?}{}", if rereg { " (explorer reiniciou)" } else { "" }));
-                }
-                last = Some((policy, rect));
+                if last != Some(policy) { crate::log::line(format!("notch: {policy:?} (flutuante)")); }
+                last = Some(policy);
             }
         });
     }
 
-    pub fn stop(_app: &AppHandle) {
-        let b = BAR.load(Ordering::Relaxed);
-        if b != 0 {
-            unregister(HWND(b as *mut _));
-        }
-    }
+    pub fn stop(_app: &AppHandle) {}
 }
 
 /// Liga o vigia do notch (só no Windows).
