@@ -521,20 +521,20 @@ Credenciais no cofre do sistema (`secrets.rs`): `mcp-token:<nome>` (Hermes VPS e
 * Login OAuth dos serviços na nuvem depende do `mcp-remote` (npx). O GitHub remoto pode pedir OAuth que nem todo cliente aceita; nesse caso use o `gh` (já instalado) ou um token como credencial do servidor.
 * Verificação = compilação + suites automatizadas + capturas headless; não houve teste interativo no Windows.
 
-## 10. Paridade (fase 3) — pass/fail e o que é nosso
+## 10. Paridade (fase 4) — pass/fail e o que é nosso
 
-| Item | Situação | Paridade |
-|---|---|---|
-| Mascote em canvas (ilha, pílula, hub, Huginn de mesa, minibots, ícones do guarda-roupa) | **Novo**: `RavenEngine` desenha o mesmo corvo dos SVGs (asa de trás · cauda · corpo · runa · asa da frente · cabeça); o blob redondo não existe mais em nenhum lugar | PASS |
-| Huginn/Muninn SVG | **Novo**, camadas sem colisão, tiras 0/25/50/75% e 32/64/128 px conferidas | PASS |
-| Adornos | **Arte nova**: elmo com asas, manto de pele, amuleto rúnico, coroa de ouro, auréola de aurora, lanterna (`src/bifrost/outfits.ts`); `src/huginn/outfits.ts` apagado; ids guardados mantidos | PASS |
-| Chat da ilha ("Saga") | **Reescrito** (`src/views/chat.ts`, layout `saga.css`): cabeçalho com a IA, falas entalhadas, proa com runa de enviar | PASS (testes do chat) |
-| Faixa das páginas do hub | **Reescrita** (`hero()`): Yggdrasil, runas, galho com Huginn e Muninn em SVG | PASS |
-| Menu da bandeja | **Novo**, webview nórdica | PASS (validar no Windows) |
-| Ícone do app / bandeja | **Novo**: Huginn sobre fiorde e ponte | PASS |
-| Pílula | Corvo novo + pele nórdica; lógica (fases, bandas, voz) herdada | PASS de paridade; lógica herdada |
-| Ilha: casca, máquina de estados (`island/fsm.ts`, `island.ts`) e demais vistas | Pele nórdica; **código herdado** (port TS) | PASS de paridade; **não reescrito** |
-| Boas-vindas / novidades (`huginn/greeting.ts`, `views/whatsnew.ts`) | Corvo novo no lugar do blob; código herdado | PASS de paridade; **não reescrito** |
-| Chat do celular com "IA do PC" | `cli` aceito | PASS |
-| Menu nativo do WebView2 | Bloqueado em todas as janelas | PASS |
-| Nomes de protocolo (`coucou-relay/v1`, `mochiOutfit`, janela `mochi`) | Mantidos de propósito | HERDADO (protocolo) |
+| Área | O que é nosso | Herdado | Paridade |
+|---|---|---|---|
+| Máquina de estados da ilha (`island/fsm.ts`) | **Reescrita** (relógios nomeados, mesmo contrato) | — | PASS (36 testes) |
+| Casca da ilha (`island/island.ts`, 1286 linhas) | Pele nórdica, cartões de aviso/permissão com layout novo em CSS | **Código herdado** (port TS): não reescrito nesta fase | PASS de paridade; não reescrito |
+| Chat da ilha ("Saga") | **Reescrito** (fase 3) | — | PASS |
+| Pílula | **Folha de estilo nova** (placa de fiorde, barras de aurora, botões-runa) | Lógica de fases/bandas/voz/hot-region (`pill/main.ts`) | PASS de paridade; lógica herdada |
+| Saudação (`huginn/greeting.ts`) | **Reescrita**: coreografia "voo de Huginn" própria, céu de aurora com runas, desenhada pelo RavenEngine | — | PASS (4 testes de não-corte) |
+| Novidades (`views/whatsnew.ts`) | **Reescrita** (pedra rúnica, "Sua saga até aqui"); botão de doação de terceiros removido | Regras em `whats-new/*.ts` | PASS |
+| Hub: faixa, painel, estado vazio, marca | **Reescritos** (`hub/hero.ts` sem canvas nem partículas; `frames.ts` removido) | — | PASS |
+| Hub: as 15 páginas | Camada de layout nórdica comum (painéis, rótulos com runa, campos, números) | Estrutura DOM de cada página | PASS de paridade; páginas não redesenhadas uma a uma |
+| Rótulos pt-BR | Escriba (antes "Notetaker"), Ilha, Voz, Caderno, Fluxos, E-mails, Demonstração… | — | PASS |
+| Fonte rúnica | **Noto Sans Runic (OFL)** embutida em todas as janelas e nos canvases | — | PASS |
+| Corvos, adornos, ícones, menu da bandeja | Nossos (fases 2–3) | — | PASS |
+| Menu nativo do WebView2 | Bloqueado | — | PASS |
+| Protocolo (`coucou-relay/v1`, `mochiOutfit`, janela `mochi`) | — | Mantido de propósito | HERDADO (protocolo) |

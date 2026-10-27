@@ -35,3 +35,17 @@
 .bf-stone-rune { flex: 0 0 auto; font: 700 13px var(--bf-rune-font); color: var(--bf-aurora-1); width: 14px; text-align: center; }
 .bf-stone-mark { border: 1px solid rgba(226,181,90,.25); border-left: 3px solid var(--bf-gold); }
 @media (prefers-reduced-motion: reduce) { .bf-stone-line { animation: none !important; } }
+/* ── Cartões de aviso e permissão da ilha ─────────────────────────────── */
+.view.on > .card.wash { border: 1px solid rgba(226,181,90,.28) !important;
+  background: radial-gradient(360px 120px at 0% 50%, var(--wash, rgba(94,242,201,.2)), transparent 70%), linear-gradient(180deg, #111b36, #070b16) !important; }
+.who-row .n { font-family: var(--bf-heading-font); letter-spacing: .06em; color: var(--bf-gold-2) !important; }
+.who-row .n::before { content: "ᚺ "; font-family: var(--bf-rune-font); color: var(--bf-aurora-1); }
+.view .code { border: 1px solid rgba(226,181,90,.25) !important; background: rgba(7,11,22,.7) !important; border-left: 3px solid var(--bf-gold) !important; }
+.view .btn.primary { background: linear-gradient(180deg, #f6d27a, #b8862f) !important; color: #070b16 !important; border: 0 !important;
+  transition: transform var(--bf-quick) var(--bf-ease-raven), box-shadow var(--bf-quick); }
+.view .btn.primary:hover { transform: translateY(-1px); box-shadow: 0 0 14px rgba(246,210,122,.35); }
+.view .btn.secondary { background: rgba(43,50,69,.8) !important; border: 1px solid rgba(147,161,198,.3) !important; color: var(--bf-frost) !important; }
+.view .kbd { border: 1px solid currentColor; opacity: .7; border-radius: 4px; }
+.view.on > .card { animation: bf-card-in var(--bf-step) var(--bf-ease-raven) both; }
+@keyframes bf-card-in { from { opacity: 0; transform: translateY(-6px) scale(.98); } }
+@media (prefers-reduced-motion: reduce) { .view.on > .card { animation: none !important; } }
