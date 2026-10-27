@@ -150,16 +150,23 @@ for who, cfg in CFG.items():
         bump = 1 - 0.035 * np.abs(np.sin(th * 9)) ** 0.6
         behind = (rr <= bump) | (art & ~wmO & (yy > cut))
         behind &= (yy < 650)
+        wtop0 = np.where(wm)[0].min()
+        # o bolso entre a cabeça e o topo da asa também é peito (sem espinho de contorno ali)
+        behind |= wmO & (yy < wtop0 + 70) & (xx < 400)
         behind = nd.binary_opening(nd.binary_closing(behind, iterations=6), iterations=3)
         hole = wmO & behind
         Bc[hole] = body
         # o traço de dentro da asa (asa/peito) que sobrava no peito: vira pena
-        ghost = behind & nd.binary_dilation(wmO, iterations=10) & (L < body.mean() - 18) & ~nd.binary_dilation(~behind, iterations=7)
+        inner = ~nd.binary_dilation(~behind, iterations=7)
+        diff = np.abs(C - body).max(-1)
+        ghost = behind & inner & (nd.binary_dilation(wmO, iterations=4) | (nd.binary_dilation(wmO, iterations=12) & (diff > 6)))
         Bc[ghost] = body
-        ring = behind & ~nd.binary_erosion(behind, iterations=6) & wmO
+        ring = behind & ~nd.binary_erosion(behind, iterations=6) & wmO & (yy > wtop0 + 22)
         Bc[ring] = ink
         bA = np.where(wmO, np.where(behind, 1.0, 0.0), bA)
         bA = np.where(ring, 1.0, bA)
+        pocket = nd.binary_dilation(wmO & (yy < wtop0 + 70) & (xx < 400), iterations=3) & behind
+        bA = np.where(pocket, 1.0, bA); Bc[pocket & ~ring] = body
         bA = np.where(nd.binary_dilation(wmO, iterations=6) & ~behind & ((yy < 660) | (xx > 410)), 0, bA)
         wtop = np.where(wm)[0].min()
         dW = nd.distance_transform_edt(~wm)
@@ -177,6 +184,15 @@ for who, cfg in CFG.items():
     Pc = np.zeros_like(C); Pc[:] = ink
     save(f"{who}-pupils", Pc, pupA)
     save(f"{who}-eyes", np.full_like(C, 255), eyeAll.astype(np.float32))
+    if who == "muninn":
+        # máscara da pálpebra: o olho com o contorno de fora inteiro (+3 px), por olho
+        lm = np.zeros((H, W), bool)
+        for e in eyes:
+            dk = np.abs(C - body).max(-1) > 9  # tinta e o antisserrilhado dela
+            o = nd.binary_fill_holes(nd.binary_dilation(e, iterations=2) | (nd.binary_dilation(e, iterations=14) & dk))
+            o = nd.binary_opening(o, iterations=3)
+            lm |= nd.binary_dilation(o, iterations=7)
+        layers["lidmask"] = (np.full_like(C, 255), cv2.GaussianBlur(lm.astype(np.float32), (0, 0), 1.0))
     for k, (cc, aa) in layers.items(): save(f"{who}-{k}", bleed(cc, aa), aa)
     fits = []
     for e in eyes:
@@ -184,7 +200,10 @@ for who, cfg in CFG.items():
         ring = nd.binary_fill_holes(nd.binary_dilation(e, iterations=2) | (nd.binary_dilation(e, iterations=9) & (cls == "ink")))
         cs, _ = cv2.findContours(ring.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         (fx, fy), (fw, fh), fa = cv2.fitEllipse(max(cs, key=len))
-        fits.append([round(fx, 1), round(fy, 1), round(fw / 2, 1), round(fh / 2, 1), round(float(np.deg2rad(fa)), 3)])
+        # cor da pena em volta (a pálpebra se funde nela)
+        around = nd.binary_dilation(ring, iterations=18) & ~nd.binary_dilation(ring, iterations=6) & np.isin(cls, ["body", "cheek"])
+        lc = np.median(C[around], axis=0) if around.any() else body
+        fits.append([round(fx, 1), round(fy, 1), round(fw / 2, 1), round(fh / 2, 1), round(float(np.deg2rad(fa)), 3), int(lc[0]), int(lc[1]), int(lc[2])])
     ein = []
     for e in eyes:
         ys, xs = np.where(e)

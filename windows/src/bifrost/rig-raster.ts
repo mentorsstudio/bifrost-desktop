@@ -23,6 +23,7 @@ const URLS: Record<string, string> = {
   "muninn-pupils": new URL("./art/muninn-pupils.webp", import.meta.url).href,
   "muninn-eyes": new URL("./art/muninn-eyes.webp", import.meta.url).href,
   "muninn-beakLo": new URL("./art/muninn-beakLo.webp", import.meta.url).href,
+  "muninn-lidmask": new URL("./art/muninn-lidmask.webp", import.meta.url).href,
   "muninn-wing": new URL("./art/muninn-wing.webp", import.meta.url).href,
 };
 
@@ -105,29 +106,33 @@ export function drawRaster(x: C2, who: Who, pose: RigPose, s: number, alpha = 1)
     ge.globalCompositeOperation = "source-over";
     g.drawImage(e, 0, 0);
     if (lid > 0.01 && m.eyeFit) {
-      // Pálpebra: a elipse do olho (ajustada ao contorno de fora) cheia de pena prateada,
-      // o contorno do olho redesenhado por cima no mesmo lugar e UM cílio curvo.
-      const lw = 6.5; // a mesma espessura das linhas dela (px da arte)
-      m.eyeFit.forEach(([fx, fy, a, b, ang], i) => {
-        const [cx, cy, rx, ry] = m.eyes[i];
-        const inner = new Path2D(); inner.ellipse(fx, fy, a - lw * 0.5, b - lw * 0.5, ang, 0, Math.PI * 2);
-        g.save(); g.clip(inner);
-        const xL = cx - rx - 12, xR = cx + rx + 12;
-        const yE = cy - ry - 8 + (ry * 2 + 20) * lid, sagE = ry * 0.32 * Math.min(1, lid * 1.6);
-        g.fillStyle = rgb(m.lid);
-        g.beginPath(); g.moveTo(xL, cy - ry - 16); g.lineTo(xR, cy - ry - 16); g.lineTo(xR, yE - sagE);
-        g.quadraticCurveTo(cx, yE + sagE, xL, yE - sagE); g.closePath(); g.fill();
-        const yC = cy + ry * 0.05, sagC = ry * 0.42;
-        const yl = Math.min(yE, yC), sl = Math.min(sagE, sagC);
-        g.strokeStyle = rgb(m.ink); g.lineWidth = lw; g.lineCap = "round";
-        g.beginPath(); g.moveTo(xL, yl - sl); g.quadraticCurveTo(cx, yl + sl, xR, yl - sl); g.stroke();
-        g.restore();
-        // o contorno do olho, inteiro e limpo, por cima da borda da pálpebra
-        g.save(); g.globalAlpha *= Math.min(1, lid * 2.5);
-        g.strokeStyle = rgb(m.ink); g.lineWidth = lw;
-        g.beginPath(); g.ellipse(fx, fy, a - lw * 0.5, b - lw * 0.5, ang, 0, Math.PI * 2); g.stroke();
-        g.restore();
+      // Piscada de desenho: a pálpebra (cor da pena em volta) cobre o olho INTEIRO, inclusive
+      // o contorno de fora (máscara recortada do desenho, +3 px). A borda de baixo é um arco
+      // "⌣" igual ao de baixo do olho, que desce com a pálpebra; fechado, sobra só esse traço.
+      const lw = 7.5;
+      const l = sc(`${who}-lid`, m.w, m.h), gl = l.getContext("2d")!;
+      gl.globalCompositeOperation = "source-over"; gl.clearRect(0, 0, m.w, m.h);
+      m.eyeFit.forEach(([, , , , , lr, lg, lb], i) => {
+        // geometria do próprio branco do olho (o traço do contorno fica logo fora dele)
+        const [fx, fy, rx, ry] = m.eyes[i];
+        const ae = rx + lw * 0.5, be = ry + lw * 0.5, a = ae + lw * 0.5, b = be + lw * 0.5, ang = 0;
+        const D = (1 - lid) * (2 * be + lw + 14);
+        gl.save(); gl.translate(fx, fy); gl.rotate(ang);
+        const own = new Path2D(); own.ellipse(0, 0, a + 16, b + 16, 0, 0, Math.PI * 2); gl.clip(own); // só o próprio olho
+        const W2 = a + 40, T = -b - 40;
+        const cover = new Path2D();
+        cover.moveTo(-W2, T); cover.lineTo(W2, T); cover.lineTo(W2, -D); cover.lineTo(ae, -D);
+        cover.ellipse(0, -D, ae, be, 0, 0, Math.PI, false);
+        cover.lineTo(-W2, -D); cover.closePath();
+        gl.fillStyle = `rgb(${lr ?? m.lid[0]},${lg ?? m.lid[1]},${lb ?? m.lid[2]})`;
+        gl.fill(cover);
+        gl.strokeStyle = rgb(m.ink); gl.lineWidth = lw; gl.lineCap = "round";
+        gl.beginPath(); gl.ellipse(0, -D, ae, be, 0, 0.2, Math.PI - 0.2, false); gl.stroke();
+        gl.restore();
       });
+      gl.globalCompositeOperation = "destination-in"; gl.drawImage(im("lidmask"), 0, 0);
+      gl.globalCompositeOperation = "source-over";
+      g.drawImage(l, 0, 0);
     }
   } else {
   if (lid > 0.01) {
