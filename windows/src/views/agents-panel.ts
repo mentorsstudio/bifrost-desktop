@@ -145,10 +145,22 @@ export function agentsPanel(a: ViewActions): AgentsPanel {
       if (k === key) return;
       key = k;
       if (found.length === 0 && !scanning && el.isConnected) void scan();
-      list.replaceChildren(...sessions.map((s) => row(s, a, now)), ...extra.map((d) => detectedRow(d, a, now, hooked, () => { key = ""; panel.sync(); })));
-      el.classList.toggle("is-empty", sessions.length + extra.length === 0);
+      // Fase 22: os só instalados viram UMA linha (Claude primeiro), para todos
+      // aparecerem sem rolar; o title traz a última sessão de cada um.
+      const active = extra.filter((d) => d.kind !== "idle");
+      const idle = extra.filter((d) => d.kind === "idle").sort((x, y) => Number(!x.agent.startsWith("claude")) - Number(!y.agent.startsWith("claude")));
+      const rows = [...sessions.map((s) => row(s, a, now)), ...active.map((d) => detectedRow(d, a, now, hooked, () => { key = ""; panel.sync(); }))];
+      if (idle.length) {
+        const lbl = t(DETECTED_LABEL.idle);
+        const line = h("div", { class: "ag-row ag-installed k-idle", title: idle.map((d) => [d.name, d.folder, d.host].filter(Boolean).join(" — ")).join("\n") },
+          h("span", { class: "ag-inst-lbl", text: lbl.charAt(0).toUpperCase() + lbl.slice(1) }),
+          h("span", { class: "ag-inst-names", text: idle.map((d) => d.name).join(" · ") }));
+        rows.push(line);
+      }
+      list.replaceChildren(...rows);
+      el.classList.toggle("is-empty", rows.length === 0);
       // Três ou mais: linhas de uma só altura, para todas caberem sem rolar (Ollama incluído).
-      el.classList.toggle("dense", sessions.length + extra.length >= 3);
+      el.classList.toggle("dense", rows.length >= 3);
     },
   };
   return panel;

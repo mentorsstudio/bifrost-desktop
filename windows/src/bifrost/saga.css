@@ -257,3 +257,7 @@
 .card.has-chips:not(.is-empty) { display: flex; flex-direction: column; }
 .ag-row.k-idle { opacity: .72; }
 .ag-row.k-idle .ag-status { background: transparent; }
+/* Fase 22: uma linha com todos os agentes só instalados (quebra, nunca corta). */
+.ag-row.ag-installed { display: flex; gap: 6px; align-items: baseline; padding: 3px 8px; font-size: 10.5px; border-style: dashed; }
+.ag-installed .ag-inst-lbl { flex: 0 0 auto; color: var(--dim-3); font-weight: 600; }
+.ag-installed .ag-inst-names { min-width: 0; white-space: normal; line-height: 1.35; color: var(--dim-2, #c8ccd6); }
