@@ -123,6 +123,16 @@ async function main() {
     }
     await ctx.close();
   }
+  // Vida dos corvos: nenhuma pose (voo incluído) encosta na borda da janela de 120 px.
+  for (const ch of CHARS) {
+    const ctx = await browser.newContext({ viewport: { width: 1000, height: 330 }, deviceScaleFactor: 1, reducedMotion: "no-preference" });
+    const page = await ctx.newPage();
+    await page.goto(`${BASE}/dev/life.html?character=${ch}`);
+    await page.waitForTimeout(FULL ? 8000 : 5500);
+    const r = await page.evaluate(() => ({ clip: window.__clip, who: window.__clipWho }));
+    add({ scene: "corvo:vida", theme: ch, scale: 1, width: 120 }, r.clip ? r.who.map((w) => ({ kind: "raven-clip", what: w, detail: `${r.clip} quadro(s)` })) : []);
+    await ctx.close();
+  }
   await browser.close();
   const by = {};
   for (const f of found) by[f.kind] = (by[f.kind] || 0) + 1;

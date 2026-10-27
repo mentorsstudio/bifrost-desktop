@@ -842,3 +842,16 @@ Ferramentas baixadas ficam em `%LOCALAPPDATA%\Bifrost\tools`.
 - **Botões nunca cortam.** Session card com rótulos curtos (Pasta / Conversar / Ajustes) e o nome completo em `title`/`aria-label`; a fileira quebra linha e o cartão cresce. Pílulas que não cabem viram só o ícone (`.pill.icon-only`). QA nova: `button-cut`.
 - **Agentes neste PC.** `agents_scan::installed_now()` olha (só leitura, cache de 60 s) PATH, `%LOCALAPPDATA%\Programs`, `%APPDATA%\npm`, `Packages\Claude*`, `~/.local/bin`, `~/.grok`, `%LOCALAPPDATA%\hermes` e as extensões do VS Code/Cursor. Cada agente sai como `app` (rodando) ou `idle` ("instalado"); Claude Code e Codex trazem a última sessão (`cwd` do `.jsonl` mais novo). O painel encolhe e as pílulas sobem.
 - **Mídia.** Marcas do Spotify e do YouTube Music em SVG nó a nó. Sem Spotify, a sessão de mídia do Windows aceita o PWA do YouTube Music (`_crx_cinhimbnkkaeohfgghhklpknlkffjgod`), apps "youtube-music" e abas de navegador com álbum; `PlayerState.source` diz quem toca.
+
+### 10.22 Vida dos corvos
+
+- `src/bifrost/raven-life.ts` (`RavenLife`) roda por cima do `RavenEngine` (`engine.life`, chamado no fim de `update`). Só anima propriedades que o motor já desenha por transform (yaw, tilt, pitch, oy, sx/sy, wingBeat) e o novo `beak` (boca recortada dentro do bico).
+- **À toa:** sorteio de olhar de lado, inclinar a cabeça, ajeitar a asa, pulinho; na área de trabalho também passeio curto e um voo curto que pousa no lugar. O piscar e o olhar para o cursor já eram do motor; o cursor chegando sobre o corpo ganha um aceno.
+- **Cochilo:** depois de N minutos parado (Calmo 4, Normal 3, Animado 6) a ilha cochila e acorda com qualquer sinal. O corvo da área de trabalho mantém o sono próprio (`shouldSleep`).
+- **Estados ligados a eventos reais** (`ravenSignal`, evento Tauri `raven-life` para todas as janelas):
+  - chat: `thinking` no envio, `chunk` a cada `chat-delta` (bico), `success`/`error` no fim;
+  - pílula: `listening` enquanto dita, com o pulso no nível do microfone (`pill-bands`);
+  - sessões de agente: `finished` bate as asas, `error` arrepia as penas e sacode.
+- **Ajuste:** Temas → "Vida dos corvos": Desligado / Calmo / Normal (padrão) / Animado, guardado em `localStorage` (`bifrost.ravenLife`). Movimento reduzido desliga tudo.
+- **Custo:** os laços de quadro existentes continuam mandando (a ilha e a pílula param quando nada se mexe; a vida agenda um único `setTimeout` para o próximo gesto). O corvo da área de trabalho fica a 30 qps acordado e cai para 4 qps dormindo.
+- **QA:** `dev/life.html` (14 estados × personagens). `qa.mjs` falha com `raven-clip` se algum pixel encostar na borda da janela de 120 px.
