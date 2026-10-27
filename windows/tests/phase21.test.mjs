@@ -30,3 +30,11 @@ test("mídia: marca vetorial e YouTube Music pela sessão do Windows", async () 
   assert.match(r("src-tauri/src/spotify.rs"), /fn is_ytmusic_app/);
   assert.doesNotMatch(r("src/views/spotify.ts"), /createMiniBot/);
 });
+test("preset Hermes (VPS): base → /mcp e /task/mcp, credencial no cofre", async () => {
+  const { hermesVpsServers } = await import("../src/core/mcp.ts");
+  assert.deepEqual(hermesVpsServers("https://vps.x/mcp/"), [{ name: "hermes-vps", url: "https://vps.x/mcp" }, { name: "hermes-vps-tarefas", url: "https://vps.x/task/mcp" }]);
+  assert.equal(hermesVpsServers("vps"), null);
+  const ui = r("src/settings/mcp.ts");
+  assert.match(ui, /Hermes \(VPS\)/);
+  assert.match(ui, /mcpSetBasicAuth\(s\.name/);
+});

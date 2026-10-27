@@ -7,7 +7,7 @@ import { formBtn, choice, textField, switchEl } from "../views/kit";
 import {
   Bridge, type McpChat, type McpServerConfig, type McpServerView, type McpStatus,
 } from "../core/bridge";
-import { MCP_NAME, clientSnippet, credentialFromForm, configFromForm, formFromConfig, type McpForm } from "../core/mcp";
+import { hermesVpsServers, MCP_NAME, clientSnippet, credentialFromForm, configFromForm, formFromConfig, type McpForm } from "../core/mcp";
 import type { Settings } from "../core/state";
 import { h, clear } from "../views/dom";
 import { statusDot } from "./parts";
@@ -63,12 +63,17 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
       clear(serversBody);
       serversBody.append(editor(null));
     });
+    const hermes = formBtn("Hermes (VPS)");
+    hermes.addEventListener("click", () => {
+      clear(serversBody);
+      serversBody.append(hermesPreset());
+    });
     const imp = formBtn(t("Import JSON"));
     imp.addEventListener("click", () => {
       clear(serversBody);
       serversBody.append(importer());
     });
-    serversBody.append(h("div", { class: "row" }, add, imp));
+    serversBody.append(h("div", { class: "row" }, add, hermes, imp));
   }
 
   function serverRow(s: McpServerView): HTMLElement {
@@ -129,6 +134,48 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
     const a = h("textarea", { placeholder, rows: "3", spellcheck: "false", style: "flex:1 1 auto;min-width:0;font-family:monospace" }) as HTMLTextAreaElement;
     a.value = value;
     return a;
+  }
+
+  /** Preset Hermes (VPS): URL + usuário/senha (Basic Auth) → /mcp e /task/mcp, credencial no cofre do Windows. */
+  function hermesPreset(): HTMLElement {
+    const url = input("", "https://seu-vps.exemplo.com");
+    const user = input("", t("User (Basic Auth, optional)"));
+    const pass = input("", t("Password (Basic Auth)"), "password");
+    const msg = h("div", {});
+    const show = (n: HTMLElement) => { clear(msg); msg.append(n); };
+    const run = async (save: boolean) => {
+      const list = hermesVpsServers(url.value);
+      if (!list) return show(notice("err", "URL"));
+      const c = credentialFromForm(user.value, pass.value, "");
+      if (typeof c === "string") return show(notice("err", c));
+      show(notice("hint", t("Connecting…")));
+      try {
+        const lines: string[] = [];
+        for (const s of list) {
+          const cfg = configFromForm({ kind: "http", command: "", args: "", env: "", url: s.url, headers: "", disabled: false });
+          if (typeof cfg === "string") throw new Error(cfg);
+          if (c.kind === "basic") await Bridge.mcpSetBasicAuth(s.name, c.user, c.password);
+          if (save) status = await Bridge.mcpSaveServer(s.name, cfg, null);
+          const tools = await Bridge.mcpTest(s.name, cfg);
+          lines.push(`${s.name}: ${t("tools/list OK — {0} tool(s): {1}", { 0: tools.length, 1: tools.map((x) => x.name).join(", ") })}`);
+        }
+        pass.value = user.value = "";
+        if (save) redraw(); else show(notice("ok", lines.join("\n")));
+      } catch (err) {
+        show(notice("err", String(err).replace(/^Error:\s*/, "")));
+      }
+    };
+    const test = formBtn(t("Test connection"));
+    test.addEventListener("click", () => void run(false));
+    const save = formBtn(t("Save"), "primary");
+    save.addEventListener("click", () => void run(true));
+    const cancel = formBtn(t("Cancel"));
+    cancel.addEventListener("click", redraw);
+    return h("div", { class: "bf-card mcp-hermes-preset", style: "display:flex;flex-direction:column;gap:8px" },
+      h("b", { text: "Hermes (VPS)" }),
+      field("URL", url), field(t("User"), user), field(t("Password"), pass),
+      notice("hint", t("Use the Bearer token OR user + password (Basic Auth, e.g. Traefik). The credential goes to the system vault, never to settings.json.")),
+      h("div", { class: "row" }, test, save, cancel), msg);
   }
 
   function editor(existing: McpServerView | null): HTMLElement {

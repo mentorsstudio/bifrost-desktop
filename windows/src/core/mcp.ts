@@ -111,3 +111,10 @@ export function credentialFromForm(user: string, password: string, token: string
   }
   return token.trim() ? { kind: "token", token: token.trim() } : { kind: "none" };
 }
+
+/** Preset "Hermes (VPS)": a base do VPS vira os dois servidores, /mcp e /task/mcp. */
+export function hermesVpsServers(base: string): { name: string; url: string }[] | null {
+  let b = base.trim().replace(/\/+$/, "").replace(/\/task\/mcp$/, "").replace(/\/mcp$/, "");
+  if (!/^https?:\/\/[^/\s]+/i.test(b)) return null;
+  return [{ name: "hermes-vps", url: `${b}/mcp` }, { name: "hermes-vps-tarefas", url: `${b}/task/mcp` }];
+}
