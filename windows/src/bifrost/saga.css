@@ -237,3 +237,11 @@
   box-shadow: inset -1px 0 0 rgba(var(--tk-e2b55a-rgb, 226, 181, 90), .14); }
 .bf-saga-body { padding-left: 98px !important; }
 .mp-pop, .cmp-hint { left: 98px; }
+
+/* Fase 20: o resumo da sessão tem linha própria (2 linhas, com title) e os botões
+   ficam abaixo dele, numa fileira só e compacta — nada se sobrepõe ao texto. */
+.overview .sc-card { grid-template-rows: auto minmax(0, auto) auto auto; align-content: start !important; gap: 6px !important; overflow: hidden; }
+.overview .sc-summary { line-height: 1.38; min-height: 1.38em; max-height: calc(2 * 1.38em); padding-bottom: 1px; }
+.overview .sc-actions { flex-wrap: nowrap !important; gap: 6px; margin-top: 2px; }
+.overview .sc-actions .sc-btn { flex: 0 1 auto; min-width: 0; min-height: 24px; height: 24px; padding: 0 10px; font-size: 11px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
