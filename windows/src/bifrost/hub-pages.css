@@ -35,7 +35,9 @@
 .hub-page[data-page="dictionary"] > .hub-card:first-of-type { border: 1px solid rgba(var(--tk-b47cff-rgb, 180, 124, 255), .35); }
 .hub-page[data-page="dictionary"] .hub-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .hub-page[data-page="dictionary"] .hub-chips > * { border-radius: 4px 12px 4px 12px; }
-.hub-page[data-page="dictionary"] .hub-pair { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
+.hub-page[data-page="dictionary"] .hub-pair { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.hub-page[data-page="dictionary"] .hub-pair > input { width: 100%; min-width: 0; }
+.hub-page[data-page="dictionary"] .hub-pair .arrow { color: var(--bf-gold-2, #f6d27a); opacity: .8; }
 
 /* 5 · Trechos — ᚲ (Kenaz, a tocha que acende o texto): editor em duas colunas */
 .hub-page[data-page="snippets"] { --pg-rune: "ᚲ"; --pg-sky: rgba(var(--tk-ff7a4a-rgb, 255, 122, 74), .2); --pg-accent: var(--tk-ff9a6a, #ff9a6a); }

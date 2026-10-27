@@ -148,3 +148,24 @@ input, textarea, select {
 .hub-stage > .hub-page.m-layer { position: absolute; top: 0; left: 0; right: 0; visibility: hidden; pointer-events: none; contain: layout paint style; }
 /* Sem animações nem camadas próprias enquanto escondida: o compositor não as carrega. */
 .hub-stage > .hub-page.m-layer, .hub-stage > .hub-page.m-layer * { animation: none !important; will-change: auto !important; transition: none !important; }
+
+/* ── Fase 19: uma forma só ──
+   Num grupo com indicador deslizante o indicador É o fundo da aba ativa: a aba
+   não pinta fundo, anel nem sombra própria (era o "quadrado atrás do redondo").
+   O anel de foco fica DENTRO da pílula (offset negativo), no mesmo raio. */
+.m-ink-hub .hub-item.on, .m-ink-tabs .tab.on, .m-ink-seg button.on {
+  background: transparent !important; box-shadow: none !important; border-color: transparent !important;
+}
+:is(.hub-item, .tab, .seg button, [role="tab"], [role="radio"], .chip, .cmp-model, .cmp-icon, .cmp-send, .mp-row, .th-card):focus-visible { outline-offset: -2px; }
+:focus:not(:focus-visible) { outline: none; }
+.m-has-ink > .m-ink { border-radius: 999px; }
+.m-ink-tabs > .m-ink { border-radius: 11px; }
+
+/* Fase 19: os blocos de cada página entram em cascata; a página que sai só esmaece. */
+.m-rise { animation: m-rise-in var(--m-base) var(--m-smooth) both; animation-delay: calc(var(--i, 0) * 32ms + 40ms); }
+@keyframes m-rise-in { from { opacity: 0; transform: translate3d(0, 10px, 0); } }
+/* A página escondida não pode esticar a rolagem (a cauda vazia do Dicionário/Celular/Temas). */
+.hub-stage > .hub-page.m-layer { height: 0; overflow: hidden; }
+@media (prefers-reduced-motion: reduce) { .m-rise { animation: none !important; } }
+#header .m-ink-tabs .tab.on { background: transparent !important; box-shadow: none !important; }
+#header .m-ink-tabs > .m-ink { background: linear-gradient(180deg, rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .22), rgba(var(--tk-6f8dff-rgb, 111, 141, 255), .14)); }

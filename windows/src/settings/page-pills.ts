@@ -65,7 +65,7 @@ export function activePillsSection(connected: Record<string, boolean>): HTMLElem
 
   function draw() {
     const used = S.settings.activeIntegrations.length;
-    slots.textContent = `${used} ${used === 1 ? "pílula ligada" : "pílulas ligadas"}, sem limite — a ferramenta principal fica sempre.`;
+    slots.textContent = `${used === 0 ? "Nenhuma aba ligada" : used === 1 ? "1 aba ligada" : `${used} abas ligadas`}, sem limite — a ferramenta principal fica sempre.`;
     slots.classList.remove("full");
     main.value = S.settings.mainPill;
     clear(groups);

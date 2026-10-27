@@ -91,7 +91,8 @@ body.bf-pair .bf-muninn-perch { opacity: 1; transform: none; pointer-events: aut
 .overview .diff-card { padding: 4px 108px 4px 12px !important; }
 .overview .np-card, .overview .plan-head, .overview .plan-rows { padding-left: 14px !important; padding-right: 108px !important; }
 .overview .sc-ctx { padding-left: 16px !important; padding-right: 108px !important; text-align: left; }
-.overview .jump { left: auto !important; right: 112px !important; }
+/* fase 19: o "↗" solto no meio do cartão saiu — cada linha de agente já tem o seu botão de abrir. */
+.overview .jump { display: none !important; }
 
 /* ── v15: boas-vindas do hub como pedra rúnica ──
    Três colunas simétricas: escudo de Huginn | inscrição centrada | escudo de Muninn.
@@ -115,3 +116,66 @@ body.bf-pair .bf-muninn-perch { opacity: 1; transform: none; pointer-events: aut
 .bf-hero-shield-rune { position: absolute; bottom: -9px; left: 50%; transform: translateX(-50%); padding: 0 6px; font: 600 9px var(--bf-rune-font);
   letter-spacing: .2em; color: var(--bf-gold-2); background: var(--tk-0a1022, #0a1022); border-radius: 4px; white-space: nowrap; }
 @media (max-width: 760px) { .bf-hero { grid-template-columns: 1fr !important; } .bf-hero-shield { display: none; } }
+
+/* ── Fase 19: a ponte cabe em qualquer largura ──
+   Abaixo de ~1180 px o nome da marca e a versão saem, os reinos encolhem o
+   espaçamento e, se ainda faltar, a ponte quebra em duas linhas (nunca corta). */
+.hub-side { flex-wrap: wrap !important; row-gap: 4px !important; }
+.hub-realm { min-width: 0; }
+.hub-group { white-space: nowrap; }
+@media (max-width: 1060px) {
+  .hub-side { gap: 10px !important; padding: 8px 12px 0 !important; }
+  .hub-brand span, .hub-brand .hub-brand-name, .hub-meta .hub-version { display: none !important; }
+  .hub-realm + .hub-realm { padding-left: 10px; }
+  .hub-item { padding: 0 7px !important; }
+  .hub-item.on, .hub-item.active, .hub-item[aria-current="page"] { padding: 0 11px 0 9px !important; }
+  .hub-side .spacer { display: none; }
+  .hub-meta { margin-left: auto; }
+}
+
+/* ── Fase 19: botões e caixas consistentes nas configurações ──
+   Primário: um só tom do tema (sem o degradê arco-íris). Secundário: superfície
+   com fio fino. Mesmo raio, mesma altura. Caixas de seleção desenhadas, no tema. */
+body.settings-window button:not(.hub-item):not(.tab):not(.toggle):not(.switch):not([role="switch"]):not(.color-dot):not(.th-card):not(.mp-row):not(.cmp-icon):not(.cmp-send):not(.cmp-model):not(.cmp-menu-item) {
+  min-height: 30px; padding: 0 14px; border-radius: 9px !important; font-weight: 600; font-size: 12.5px;
+  background: rgba(var(--tk-eef2ff-rgb, 238, 242, 255), .06) !important; color: var(--tk-eef2ff, #eef2ff) !important;
+  border: 1px solid rgba(var(--tk-eef2ff-rgb, 238, 242, 255), .12) !important;
+}
+body.settings-window button.primary, body.settings-window button.hub-btn.primary {
+  background: var(--th-accent, var(--tk-5ef2c9, #5ef2c9)) !important; color: var(--th-on-accent, var(--tk-071022, #071022)) !important;
+  border-color: transparent !important;
+}
+body.settings-window button.danger { background: rgba(var(--tk-ff5c7a-rgb, 255, 92, 122), .14) !important; color: var(--red-text, #ffb3c0) !important; border-color: rgba(var(--tk-ff5c7a-rgb, 255, 92, 122), .3) !important; }
+body.settings-window button:disabled { opacity: .5; }
+body.settings-window input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none; width: 16px; height: 16px; margin: 0; border-radius: 5px; flex: 0 0 16px; position: relative; display: inline-grid; place-items: center;
+  background: rgba(var(--tk-eef2ff-rgb, 238, 242, 255), .06); border: 1px solid rgba(var(--tk-eef2ff-rgb, 238, 242, 255), .28); vertical-align: middle;
+}
+body.settings-window input[type="checkbox"]::after {
+  content: ""; width: 9px; height: 5px; border: solid var(--th-on-accent, #071022); border-width: 0 0 2px 2px; transform: translateY(-1px) rotate(-45deg) scale(0); opacity: 0;
+  transition: transform var(--m-base) var(--m-bouncy), opacity var(--m-fast) var(--m-ease);
+}
+body.settings-window input[type="checkbox"]:checked { background: var(--th-accent, var(--tk-5ef2c9, #5ef2c9)); border-color: transparent; }
+body.settings-window input[type="checkbox"]:checked::after { transform: translateY(-1px) rotate(-45deg) scale(1); opacity: 1; }
+
+/* ── Fase 19: cabeçalho leve nas subpáginas ──
+   A faixa grande (corvos nos escudos + runas) fica só na primeira página de cada
+   reino (Ditado, Geral); nas demais vira uma linha compacta: título + subtítulo. */
+.hub-page:not([data-page="dictation"]):not([data-page="general"]) .bf-hero {
+  grid-template-columns: minmax(0, 1fr) !important; min-height: 0 !important; padding: 14px 20px 16px !important; text-align: start;
+}
+.hub-page:not([data-page="dictation"]):not([data-page="general"]) .bf-hero :is(.bf-hero-shield, .bf-hero-tree, .bf-hero-kicker, .bf-hero-perch) { display: none !important; }
+.hub-page:not([data-page="dictation"]):not([data-page="general"]) .bf-hero-copy { align-items: flex-start !important; }
+.hub-page:not([data-page="dictation"]):not([data-page="general"]) .bf-hero h1 { font-size: 17px !important; margin: 0 0 2px !important; }
+.hub-page:not([data-page="dictation"]):not([data-page="general"]) .bf-hero p { margin: 0 !important; max-width: none; }
+.hub-page:not([data-page="dictation"]):not([data-page="general"]) .bf-hero .actions { justify-content: flex-start; }
+
+/* Fase 19: o painel termina onde o conteúdo termina (sem metade de tela vazia);
+   com conteúdo maior que a janela ele encolhe e a rolagem interna assume. */
+.hub-panel { flex: 0 1 auto !important; min-height: 0 !important; margin-bottom: 14px !important; border-radius: 18px !important; }
+.hub-scroll { padding-bottom: 22px !important; }
+.hub-meta { min-width: 0; flex: 0 1 auto; }
+.hub-meta .hub-status { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 1320px) { .hub-meta .hub-version { display: none !important; } }
+/* Fase 19: avisos/detalhes vazios não ocupam a coluna da direita (o "risquinho" ao lado do interruptor). */
+body.settings-window section > div:empty, body.settings-window section > p:empty { display: none !important; }

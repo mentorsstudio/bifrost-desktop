@@ -74,9 +74,12 @@ export function buildSessionCard(memory: SessionMemory, open: { settings: () => 
       head.replaceChildren(h("i", { class: "sc-dot" }), h("b", { text: agentLabel(task) }), chip);
       (head.firstChild as HTMLElement).style.background = task.color;
       summary.textContent = r?.summary ?? t("No session yet. When it works, its last summary shows up here.");
+      summary.title = r?.summary ?? "";
       summary.classList.toggle("is-empty", !r?.summary);
       const line = contextLine(cwd, null, now, redraw);
       meta.textContent = r ? [line, `${t("last activity")} ${elapsed((now - r.at) / 1000)}`].filter(Boolean).join("  ·  ") : line;
+      meta.title = meta.textContent ?? "";
+      for (const b of [folderBtn, chatBtn, setBtn]) b.title = b.textContent ?? "";
       folderBtn.style.display = cwd ? "" : "none";
     },
   };

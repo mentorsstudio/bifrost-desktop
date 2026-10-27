@@ -7,7 +7,26 @@ import "./hub.css";
 import { Durations, parallax, reducedMotion, stagger, tweenNumber } from "../bifrost/motion";
 
 /** Movimento de entrada da página: listas em cascata e números deslizando. */
+/** Fase 19: os blocos da página entram em cascata (fade + subida), até 12 degraus. */
+export const RISE_SELECTOR = ":scope > :not(.bf-hero):not(.hub-label), #settings-root > *, #settings-root section > *, .hub-card, .card-grid > *, .th-grid > *";
+export function riseIn(page: HTMLElement): number {
+  let i = 0;
+  for (const el of page.querySelectorAll<HTMLElement>(RISE_SELECTOR)) el.classList.remove("m-rise");
+  for (const el of page.querySelectorAll<HTMLElement>(RISE_SELECTOR)) {
+    // Um bloco dentro de outro que já sobe não sobe de novo (seria o dobro do deslocamento).
+    if (el.parentElement?.closest(".m-rise")) continue;
+    const r = el.getBoundingClientRect();
+    // Só o que aparece na primeira tela; o resto chega pelo autoReveal ao rolar.
+    if (r.top > (page.ownerDocument.defaultView?.innerHeight ?? 900) + 40) continue;
+    el.style.setProperty("--i", String(Math.min(i++, 12)));
+    el.classList.add("m-rise");
+    el.addEventListener("animationend", () => el.classList.remove("m-rise"), { once: true });
+  }
+  return i;
+}
+
 export function animatePage(page: HTMLElement): void {
+  riseIn(page);
   for (const list of page.querySelectorAll<HTMLElement>(".hub-stat-row, .hub-notes-list, .hub-list, .hub-grid, ul")) stagger(list);
   for (const b of page.querySelectorAll<HTMLElement>(".hub-stat b")) {
     const raw = (b.textContent ?? "").trim();

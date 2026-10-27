@@ -38,7 +38,7 @@ export function slidingInk(container: HTMLElement, active = ".on", variant = "")
     if (!r.width) return;
     const x = r.left - c.left - container.clientLeft, y = r.top - c.top - container.clientTop;
     const next = { x, y, w: r.width, h: r.height };
-    if (last && Math.abs(last.x - x) < 0.5 && Math.abs(last.y - y) < 0.5 && Math.abs(last.w - r.width) < 0.5) return;
+    if (last && Math.abs(last.x - x) < 0.5 && Math.abs(last.y - y) < 0.5 && Math.abs(last.w - r.width) < 0.5 && Math.abs(last.h - r.height) < 0.5) return;
     ink.style.width = `${r.width}px`;
     ink.style.height = `${r.height}px`;
     ink.style.transform = `translate(${x}px, ${y}px)`;
@@ -55,8 +55,12 @@ export function slidingInk(container: HTMLElement, active = ".on", variant = "")
   const schedule = (animate: boolean) => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => place(animate)); };
   const mo = new MutationObserver(() => schedule(true));
   mo.observe(container, { subtree: true, attributes: true, attributeFilter: ["class", "aria-checked", "aria-selected"] });
+  // Fase 19: a aba ativa muda de largura (o rótulo abre numa transição): o indicador
+  // segue o TAMANHO dela também, não só o do contêiner — senão sobra uma forma atrás.
   const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => schedule(false)) : null;
   ro?.observe(container);
+  container.querySelectorAll<HTMLElement>(active.replace(/\.on\b|\[aria-[a-z]+(=[^\]]*)?\]/g, "") || "*").forEach((e) => ro?.observe(e));
+  container.addEventListener("transitionend", () => schedule(false));
   schedule(false);
   return { el: ink, update: (a = true) => schedule(a), dispose: () => { mo.disconnect(); ro?.disconnect(); ink.remove(); } };
 }
