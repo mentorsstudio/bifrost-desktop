@@ -391,7 +391,7 @@ test("lookup() answers from the merged tables", () => {
 
 const CHECKED = ["src/views", "src/settings", "src/island", "src/upload", "src/recap", "src/huginn/wardrobe.ts", "src/main.ts"];
 /** Literals that are a translated word but are values in the code, not text on screen. */
-const NOT_TEXT = new Set([
+const NOT_TEXT = new Set(["Tool", 
   "file", // the kind of a chat context: { kind: "file" }
   "finished", // a task state and a pill badge
   "working", // a bot state

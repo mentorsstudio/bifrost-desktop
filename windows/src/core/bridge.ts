@@ -726,6 +726,8 @@ export interface McpServerView {
   name: string;
   config: McpServerConfig;
   hasToken: boolean;
+  /** De onde foi importado (Claude Desktop, Cursor…), se veio de outro app. */
+  source?: string | null;
 }
 
 export interface McpChat {

@@ -1,7 +1,8 @@
-// Settings → Chat → "Servidores MCP" (Paulo build): the agents the chat talks
+// Settings → Chat → t("MCP servers") (Paulo build): the agents the chat talks
 // to without keys, how the chat reaches one of them, and Bifrost's own MCP
 // server that lets Grok Bot, Hermes… drive Huginn.
 
+import { t } from "../i18n/i18n";
 import { formBtn, choice, textField, switchEl } from "../views/kit";
 import {
   Bridge, type McpChat, type McpServerConfig, type McpServerView, type McpStatus,
@@ -15,6 +16,13 @@ import { cascade } from "../bifrost/motion";
 
 const notice = (kind: "err" | "ok" | "hint", text: string) =>
   h("div", { class: kind === "hint" ? "hint" : kind === "err" ? "notice err" : "notice", text });
+
+/** "google-flow" → "Google Flow", "n8n-vault" → "n8n Vault": o nome técnico fica no title. */
+export function prettyName(name: string): string {
+  return name.split(/[-_.\s]+/).filter(Boolean)
+    .map((w) => (/^[a-z]+$/.test(w) && !/^n8n$/.test(w) ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
 
 function describe(c: McpServerConfig): string {
   return "url" in c ? c.url : [c.command, ...(c.args ?? [])].join(" ");
@@ -43,19 +51,19 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
   function drawServers() {
     clear(serversBody);
     if (!status) {
-      serversBody.append(notice("hint", "Carregando…"));
+      serversBody.append(notice("hint", t("Loading…")));
       return;
     }
-    if (!status.servers.length) serversBody.append(notice("hint", "Nenhum servidor ainda. Adicione um ou cole um JSON mcpServers."));
+    if (!status.servers.length) serversBody.append(notice("hint", t("No server yet. Add one or paste an mcpServers JSON.")));
     const grid = h("div", { class: "bf-grid mcp-servers" });
     for (const s of status.servers) grid.append(serverRow(s));
     if (status.servers.length) serversBody.append(grid);
-    const add = formBtn("Adicionar servidor", "primary");
+    const add = formBtn(t("Add server"), "primary");
     add.addEventListener("click", () => {
       clear(serversBody);
       serversBody.append(editor(null));
     });
-    const imp = formBtn("Importar JSON");
+    const imp = formBtn(t("Import JSON"));
     imp.addEventListener("click", () => {
       clear(serversBody);
       serversBody.append(importer());
@@ -65,43 +73,44 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
 
   function serverRow(s: McpServerView): HTMLElement {
     const out = h("div", {});
-    const edit = formBtn("Editar");
+    const edit = formBtn(t("Edit"));
     edit.addEventListener("click", () => {
       clear(serversBody);
       serversBody.append(editor(s));
     });
-    const test = formBtn("Testar");
+    const test = formBtn(t("Test"));
     test.addEventListener("click", async () => {
       clear(out);
-      out.append(notice("hint", "Conectando…"));
+      out.append(notice("hint", t("Connecting…")));
       try {
         const tools = await Bridge.mcpTest(s.name, s.config);
         clear(out);
-        out.append(notice("ok", `Conectado — ${tools.length} ferramenta(s): ${tools.map((t) => t.name).join(", ")}`));
+        out.append(notice("ok", t("Connected — {0} tool(s): {1}", { 0: tools.length, 1: tools.map((x) => x.name).join(", ") })));
       } catch (err) {
         clear(out);
         out.append(notice("err", String(err).replace(/^Error:\s*/, "")));
       }
     });
-    const remove = formBtn("Remover", "danger");
+    const remove = formBtn(t("Remove"), "danger");
     remove.addEventListener("click", async () => {
-      if (!confirm(`Remover o servidor ${s.name}?`)) return;
+      if (!confirm(t("Remove the server {0}?", { 0: s.name }))) return;
       status = await Bridge.mcpRemoveServer(s.name);
       redraw();
     });
     const remote = "url" in s.config;
     const on = !s.config.disabled;
     // Remoto (mcp-remote / HTTP): conectar abre o login OAuth no navegador, sem chave.
-    const login = remote && !s.hasToken ? formBtn("Entrar", "primary") : null;
+    const login = remote && !s.hasToken ? formBtn(t("Sign in"), "primary") : null;
     login?.addEventListener("click", () => test.click());
     const badges = h("div", { class: "bf-chips" },
-      h("span", { class: `bf-badge ${on ? "ok" : "off"}`, text: on ? "ligado" : "desligado" }),
-      h("span", { class: "bf-badge", text: remote ? "remoto · HTTP" : "comando · stdio" }),
-      ...(s.hasToken ? [h("span", { class: "bf-badge ok", text: "token salvo" })] : []),
-      ...(detectedNames.has(s.name) ? [h("span", { class: "bf-badge ok", text: "detectado" })] : []));
+      h("span", { class: `bf-badge ${on ? "ok" : "off"}`, text: on ? t("switched on") : t("switched off") }),
+      h("span", { class: "bf-badge", text: remote ? t("remote · HTTP") : t("command · stdio") }),
+      ...(s.hasToken ? [h("span", { class: "bf-badge ok", text: t("token saved") })] : []),
+      ...(detectedNames.has(s.name) ? [h("span", { class: "bf-badge ok", text: t("found") })] : []),
+      ...(s.source ? [h("span", { class: "bf-badge imp", title: s.source, text: t("imported · {0}", { 0: s.source }) })] : []));
     return h("div", { class: `bf-card mcp-server${on ? " on" : ""}` },
       h("div", { class: "row", style: "justify-content:space-between;gap:8px" },
-        h("span", { class: "bf-card-name" }, statusDot(on), h("span", { text: ` ${s.name}` })),
+        h("span", { class: "bf-card-name", title: s.name }, statusDot(on), h("span", { text: ` ${prettyName(s.name)}` })),
         login ?? ""),
       badges,
       h("div", { class: "bf-card-note path", title: describe(s.config), text: describe(s.config) }),
@@ -125,23 +134,23 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
   function editor(existing: McpServerView | null): HTMLElement {
     const f: McpForm = formFromConfig(existing?.config ?? null);
     const name = input(existing?.name ?? "", "ex.: hermes");
-    const kind = h("select", {}, h("option", { value: "stdio", text: "Comando (stdio)" }), h("option", { value: "http", text: "Remoto (Streamable HTTP)" })) as HTMLSelectElement;
+    const kind = h("select", {}, h("option", { value: "stdio", text: t("Command (stdio)") }), h("option", { value: "http", text: t("Remote (Streamable HTTP)") })) as HTMLSelectElement;
     kind.value = f.kind;
     const command = input(f.command, "C:\\Users\\paulo\\AppData\\Local\\hermes\\bin\\hermes.exe");
     const args = input(f.args, "mcp-serve --tools");
-    const env = area(f.env, "VAR=valor (uma por linha)");
+    const env = area(f.env, t("VAR=value (one per line)"));
     const url = input(f.url, "https://mcp.exemplo.com/mcp");
-    const headers = area(f.headers, "Cabeçalho: valor (um por linha)");
-    const token = input("", existing?.hasToken ? "•••• token salvo (deixe vazio para manter)" : "Token Bearer (opcional)", "password");
-    const basicUser = input("", existing?.hasToken ? "(credencial salva — deixe vazio para manter)" : "Usuário (Basic Auth, opcional)");
-    const basicPass = input("", "Senha (Basic Auth)", "password");
+    const headers = area(f.headers, t("Header: value (one per line)"));
+    const token = input("", existing?.hasToken ? t("•••• token saved (leave empty to keep it)") : t("Bearer token (optional)"), "password");
+    const basicUser = input("", existing?.hasToken ? t("(credential saved — leave empty to keep it)") : t("User (Basic Auth, optional)"));
+    const basicPass = input("", t("Password (Basic Auth)"), "password");
     const disabled = textField({ type: "checkbox" }) as HTMLInputElement;
     disabled.checked = f.disabled;
     const msg = h("div", {});
-    const stdioRows = h("div", { style: "display:flex;flex-direction:column;gap:6px" }, field("Comando", command), field("Argumentos", args), field("Ambiente", env));
-    const httpRows = h("div", { style: "display:flex;flex-direction:column;gap:6px" }, field("URL", url), field("Cabeçalhos", headers), field("Token Bearer", token),
-      field("Usuário", basicUser), field("Senha", basicPass),
-      notice("hint", "Use o token Bearer OU usuário + senha (Basic Auth, ex.: Traefik). A credencial vai para o cofre do sistema, nunca para o settings.json."));
+    const stdioRows = h("div", { style: "display:flex;flex-direction:column;gap:6px" }, field(t("Command"), command), field(t("Arguments"), args), field(t("Environment"), env));
+    const httpRows = h("div", { style: "display:flex;flex-direction:column;gap:6px" }, field("URL", url), field(t("Headers"), headers), field(t("Bearer token"), token),
+      field(t("User"), basicUser), field(t("Password"), basicPass),
+      notice("hint", t("Use the Bearer token OR user + password (Basic Auth, e.g. Traefik). The credential goes to the system vault, never to settings.json.")));
     const sync = () => {
       stdioRows.style.display = kind.value === "stdio" ? "" : "none";
       httpRows.style.display = kind.value === "http" ? "" : "none";
@@ -150,7 +159,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
     sync();
 
     const read = (): { name: string; config: McpServerConfig } | string => {
-      if (!MCP_NAME.test(name.value.trim())) return "Nome inválido (letras, números, - _ .).";
+      if (!MCP_NAME.test(name.value.trim())) return t("Invalid name (letters, numbers, - _ .).");
       const cfg = configFromForm({
         kind: kind.value as "stdio" | "http", command: command.value, args: args.value, env: env.value,
         url: url.value, headers: headers.value, disabled: disabled.checked,
@@ -170,20 +179,20 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
       token.value = basicPass.value = basicUser.value = "";
     };
 
-    const test = formBtn("Testar conexão");
+    const test = formBtn(t("Test connection"));
     test.addEventListener("click", async () => {
       const r = read();
       if (typeof r === "string") return show(notice("err", r));
-      show(notice("hint", "Conectando…"));
+      show(notice("hint", t("Connecting…")));
       try {
         await storeToken(r.name);
         const tools = await Bridge.mcpTest(r.name, r.config);
-        show(notice("ok", `tools/list OK — ${tools.length} ferramenta(s): ${tools.map((t) => t.name).join(", ")}`));
+        show(notice("ok", t("tools/list OK — {0} tool(s): {1}", { 0: tools.length, 1: tools.map((x) => x.name).join(", ") })));
       } catch (err) {
         show(notice("err", String(err).replace(/^Error:\s*/, "")));
       }
     });
-    const saveBtn = formBtn("Salvar", "primary");
+    const saveBtn = formBtn(t("Save"), "primary");
     saveBtn.addEventListener("click", async () => {
       const r = read();
       if (typeof r === "string") return show(notice("err", r));
@@ -195,24 +204,24 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
         show(notice("err", String(err).replace(/^Error:\s*/, "")));
       }
     });
-    const clearToken = formBtn("Apagar credencial", "danger");
+    const clearToken = formBtn(t("Delete credential"), "danger");
     clearToken.style.display = existing?.hasToken ? "" : "none";
     clearToken.addEventListener("click", async () => {
       await Bridge.mcpSetToken(existing!.name, "");
       status = await Bridge.mcpStatus();
       redraw();
     });
-    const cancel = formBtn("Cancelar");
+    const cancel = formBtn(t("Cancel"));
     cancel.addEventListener("click", redraw);
 
     return h(
       "div",
       { style: "display:flex;flex-direction:column;gap:6px" },
-      field("Nome", name),
-      field("Tipo", kind),
+      field(t("Name"), name),
+      field(t("Type"), kind),
       stdioRows,
       httpRows,
-      field("Desativado", disabled),
+      field(t("Off"), disabled),
       h("div", { class: "row" }, saveBtn, test, clearToken, cancel),
       msg,
     );
@@ -222,7 +231,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
     const text = area("", '{\n  "mcpServers": {\n    "hermes": { "command": "hermes.exe", "args": ["mcp-serve", "--tools"] }\n  }\n}');
     text.rows = 10;
     const msg = h("div", {});
-    const go = formBtn("Importar", "primary");
+    const go = formBtn(t("Import"), "primary");
     go.addEventListener("click", async () => {
       try {
         status = await Bridge.mcpImport(text.value);
@@ -232,10 +241,10 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
         msg.append(notice("err", String(err).replace(/^Error:\s*/, "")));
       }
     });
-    const cancel = formBtn("Cancelar");
+    const cancel = formBtn(t("Cancel"));
     cancel.addEventListener("click", redraw);
     return h("div", { style: "display:flex;flex-direction:column;gap:6px" },
-      notice("hint", "Cole um JSON no formato mcpServers (o mesmo do Claude Desktop, Cursor e Grok Bot). Tokens não vão no JSON: adicione-os em Editar."),
+      notice("hint", t("Paste a JSON in the mcpServers format (the same as Claude Desktop, Cursor and Grok Bot). Tokens don't go in the JSON: add them under Edit.")),
       text, h("div", { class: "row" }, go, cancel), msg);
   }
 
@@ -245,7 +254,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
     if (!status) return;
     const c: McpChat = { ...status.chat };
     const inUse = settings.chatProvider === "mcp";
-    const use = formBtn(inUse ? "Em uso no chat" : "Usar MCP no chat", inUse ? "plain" : "primary");
+    const use = formBtn(inUse ? t("In use in the chat") : t("Use MCP in the chat"), inUse ? "plain" : "primary");
     use.disabled = inUse;
     use.addEventListener("click", async () => {
       settings.chatProvider = "mcp";
@@ -254,11 +263,11 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
     });
     const server = choice() as HTMLSelectElement;
     for (const s of status.servers) server.append(h("option", { value: s.name, text: s.name }));
-    if (!status.servers.some((s) => s.name === c.server)) server.append(h("option", { value: c.server, text: `${c.server} (não configurado)` }));
+    if (!status.servers.some((s) => s.name === c.server)) server.append(h("option", { value: c.server, text: t("{0} (not set up)", { 0: c.server }) }));
     server.value = c.server;
     const mode = h("select", {},
-      h("option", { value: "task", text: "Tarefa (iniciar + consultar status) — Hermes" }),
-      h("option", { value: "tool", text: "Ferramenta única (a resposta vem na hora)" })) as HTMLSelectElement;
+      h("option", { value: "task", text: t("Task (start + check status) — Hermes") }),
+      h("option", { value: "tool", text: t("Single tool (the answer comes right away)") })) as HTMLSelectElement;
     mode.value = c.mode;
     const tool = input(c.tool, "hermes_task_start");
     const toolList = h("datalist", { id: "mcp-tools" });
@@ -273,25 +282,25 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
     const history = textField({ type: "checkbox" }) as HTMLInputElement;
     history.checked = c.includeHistory;
     const taskRows = h("div", { style: "display:flex;flex-direction:column;gap:6px" },
-      field("Ferramenta de status", statusTool), field("Argumento do id", idArg), field("Tempo máx. (s)", timeout));
+      field(t("Status tool"), statusTool), field(t("ID argument"), idArg), field(t("Max time (s)"), timeout));
     const sync = () => (taskRows.style.display = mode.value === "task" ? "" : "none");
     mode.addEventListener("change", sync);
     sync();
     const msg = h("div", {});
 
-    const loadTools = formBtn("Ver ferramentas");
+    const loadTools = formBtn(t("Show tools"));
     loadTools.addEventListener("click", async () => {
       clear(msg);
       try {
         const tools = await Bridge.mcpListTools(server.value);
         clear(toolList);
         for (const t of tools) toolList.append(h("option", { value: t.name, text: t.description.slice(0, 80) }));
-        msg.append(notice("ok", tools.map((t) => t.name).join(", ") || "Nenhuma ferramenta."));
+        msg.append(notice("ok", tools.map((t) => t.name).join(", ") || t("No tools.")));
       } catch (err) {
         msg.append(notice("err", String(err).replace(/^Error:\s*/, "")));
       }
     });
-    const saveBtn = formBtn("Salvar", "primary");
+    const saveBtn = formBtn(t("Save"), "primary");
     saveBtn.addEventListener("click", async () => {
       clear(msg);
       let extraArgs: Record<string, unknown>;
@@ -299,7 +308,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
         extraArgs = extra.value.trim() ? JSON.parse(extra.value) : {};
         if (typeof extraArgs !== "object" || Array.isArray(extraArgs) || extraArgs === null) throw new Error();
       } catch {
-        msg.append(notice("err", "Argumentos extras: precisa ser um objeto JSON."));
+        msg.append(notice("err", t("Extra arguments: must be a JSON object.")));
         return;
       }
       try {
@@ -311,22 +320,22 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
         // The picker's choice of server would otherwise win over this one.
         settings.chatModels = { ...settings.chatModels, mcp: server.value };
         await save();
-        msg.append(notice("ok", "Salvo."));
+        msg.append(notice("ok", t("Saved.")));
       } catch (err) {
         msg.append(notice("err", String(err).replace(/^Error:\s*/, "")));
       }
     });
 
     chatBody.append(
-      h("div", { class: "row" }, h("label", {}, statusDot(inUse), h("span", { text: " Provedor do chat", style: "margin-left:6px" })), use),
-      field("Servidor", server),
-      field("Modo", mode),
-      field("Ferramenta", tool),
+      h("div", { class: "row" }, h("label", {}, statusDot(inUse), h("span", { text: t(" Chat provider"), style: "margin-left:6px" })), use),
+      field(t("Server"), server),
+      field(t("Mode"), mode),
+      field(t("Tool"), tool),
       toolList,
-      field("Argumento da mensagem", argument),
-      field("Argumentos extras", extra),
+      field(t("Message argument"), argument),
+      field(t("Extra arguments"), extra),
       taskRows,
-      field("Enviar histórico", history),
+      field(t("Send history"), history),
       h("div", { class: "row" }, saveBtn, loadTools),
       msg,
     );
@@ -340,31 +349,31 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
     on.checked = status.serverEnabled;
     const port = input(String(status.serverPort), "47821", "number");
     const msg = h("div", {});
-    const saveBtn = formBtn("Salvar");
+    const saveBtn = formBtn(t("Save"));
     saveBtn.addEventListener("click", async () => {
       clear(msg);
       try {
         status = await Bridge.mcpSetServer(on.checked, Number(port.value) || 47821);
-        msg.append(notice("ok", "Salvo — vale a partir do próximo início do Bifrost."));
+        msg.append(notice("ok", t("Saved — takes effect the next time Bifrost starts.")));
       } catch (err) {
         msg.append(notice("err", String(err).replace(/^Error:\s*/, "")));
       }
     });
-    const copy = formBtn("Copiar config para clientes", "primary");
+    const copy = formBtn(t("Copy config for clients"), "primary");
     copy.addEventListener("click", async () => {
       clear(msg);
       try {
         const token = await Bridge.mcpServerToken();
         await navigator.clipboard.writeText(clientSnippet(status!.serverUrl, token));
-        msg.append(notice("ok", "JSON mcpServers copiado (com o token). Cole no Grok Bot, Hermes, Claude ou Cursor."));
+        msg.append(notice("ok", t("mcpServers JSON copied (with the token). Paste it into Grok Bot, Hermes, Claude or Cursor.")));
       } catch (err) {
         msg.append(notice("err", String(err).replace(/^Error:\s*/, "")));
       }
     });
     ownBody.append(
-      notice("hint", `Endereço: ${status.serverUrl} — só neste computador, com token Bearer. Ferramentas: notify, ask_approval, show_session, update_session, end_session, chat.`),
-      field("Ativado", on),
-      field("Porta", port),
+      notice("hint", t("Address: {0} — only on this computer, with a Bearer token. Tools: notify, ask_approval, show_session, update_session, end_session, chat.", { 0: status.serverUrl })),
+      field(t("On"), on),
+      field(t("Port"), port),
       h("div", { class: "row" }, saveBtn, copy),
       msg,
     );
@@ -380,7 +389,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
     const scan = await Bridge.mcpScan().catch(() => null);
     if (!scan) {
       huginn.set("error");
-      detBody.append(notice("err", "Não consegui ler os programas do PC."));
+      detBody.append(notice("err", t("Couldn't read the programs on this PC.")));
       return;
     }
     detectedNames = new Set(scan.catalog.filter((e) => e.detected).map((e) => e.name));
@@ -389,16 +398,16 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
     setTimeout(() => huginn.set("idle"), 1400);
     const chips = h("div", { class: "bf-chips" });
     for (const p of scan.programs.filter((p) => p.found)) {
-      chips.append(h("span", { class: "bf-badge ok", title: p.path ?? "", text: `${p.name} · detectado` }));
+      chips.append(h("span", { class: "bf-badge ok", title: p.path ?? "", text: t("{0} · found", { 0: p.name }) }));
     }
-    detBody.append(h("div", { class: "bf-card-note", text: "Programas e IAs encontrados neste PC:" }), chips);
+    detBody.append(h("div", { class: "bf-card-note", text: t("Programs and AIs found on this PC:") }), chips);
     const grid = h("div", { class: "bf-grid" });
     const servers = new Map((status?.servers ?? []).map((s) => [s.name, s]));
     const cards: HTMLElement[] = [];
     for (const e of scan.catalog) {
       const mine = servers.get(e.name);
       const on = !!mine && !mine.config.disabled;
-      const sw = switchEl(on, { title: on ? "Desligar" : "Ligar" });
+      const sw = switchEl(on, { title: on ? t("Turn off") : t("Turn on") });
       sw.addEventListener("click", async () => {
         const base = mine?.config ?? e.config;
         status = await Bridge.mcpSaveServer(e.name, { ...base, disabled: on ? true : undefined } as McpServerConfig, mine ? e.name : null);
@@ -406,8 +415,8 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
         void drawDetected();
       });
       const badge = e.origin === "nuvem"
-        ? h("span", { class: "bf-badge cloud", text: "nuvem · OAuth" })
-        : h("span", { class: `bf-badge ${e.detected ? "ok" : "off"}`, text: e.detected ? "detectado" : "não instalado" });
+        ? h("span", { class: "bf-badge cloud", text: t("cloud · OAuth") })
+        : h("span", { class: `bf-badge ${e.detected ? "ok" : "off"}`, text: e.detected ? t("found") : t("not installed") });
       const card = h("div", { class: `bf-card${on ? " on" : ""}` },
         h("div", { class: "row", style: "justify-content:space-between" }, h("span", { class: "bf-card-name", text: e.label }), sw),
         badge,
@@ -419,12 +428,12 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
     for (const i of scan.imported) {
       const card = h("div", { class: "bf-card on" },
         h("span", { class: "bf-card-name", text: i.name }),
-        h("span", { class: "bf-badge imp", text: `importado · ${i.source}` }),
+        h("span", { class: "bf-badge imp", text: t("imported · {0}", { 0: i.source }) }),
       );
       cards.push(card);
       grid.append(card);
     }
-    const rescan = formBtn("Procurar de novo", "primary");
+    const rescan = formBtn(t("Look again"), "primary");
     rescan.addEventListener("click", async () => {
       status = await Bridge.mcpRescan();
       redraw();
@@ -439,18 +448,18 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
       h("div", { class: "row", style: "align-items:center;gap:14px" },
         h("div", { class: "bf-mascot-pair" }, huginn.el, muninn.el),
         h("div", {},
-          h("h2", { class: "bf-title" }, h("span", { class: "bf-rune", text: "ᛉ" }), h("span", { text: "Detectados no seu PC" })),
-          notice("hint", "O Bifrost procura IAs e programas instalados (Claude Code, Codex, Ollama, Docker, Git, OBS…) e já deixa os servidores MCP prontos. Serviços na nuvem usam o servidor MCP oficial com login OAuth no navegador — sem chave."),
+          h("h2", { class: "bf-title" }, h("span", { class: "bf-rune", text: "ᛉ" }), h("span", { text: t("Found on your PC") })),
+          notice("hint", t("Bifrost looks for installed AIs and programs (Claude Code, Codex, Ollama, Docker, Git, OBS…) and gets their MCP servers ready. Cloud services use the official MCP server with an OAuth sign-in in the browser — no key.")),
         ),
       ),
       h("div", { class: "bf-bridge" }),
       detBody);
-  const servers = h("section", { class: "mcp-servers-section" }, h("h2", {}, h("span", { text: "Servidores MCP" })),
-    notice("hint", "Todos os servidores ligados ao Huginn: Hermes, Alethe, Orca, Freya, os detectados no PC e os importados. Os remotos pedem login no navegador ao conectar."), serversBody);
-  const chat = h("section", {}, h("h2", {}, h("span", { text: "Chat via MCP" })),
-    notice("hint", "Como a mensagem chega ao agente. Para o Hermes: modo Tarefa, hermes_task_start / prompt, status hermes_task_status / job_id."), chatBody);
-  const own = h("section", {}, h("h2", {}, h("span", { text: "Servidor MCP do Bifrost" })),
-    notice("hint", "Deixa outros agentes (Grok Bot, Hermes…) mostrarem avisos, pedirem aprovação e abrirem sessões no Huginn."), ownBody);
+  const servers = h("section", { class: "mcp-servers-section" }, h("h2", {}, h("span", { text: t("MCP servers") })),
+    notice("hint", t("Every server connected to Huginn: Hermes, Alethe, Orca, Freya, the ones found on this PC and the imported ones. Remote ones ask you to sign in in the browser when they connect.")), serversBody);
+  const chat = h("section", {}, h("h2", {}, h("span", { text: t("Chat via MCP") })),
+    notice("hint", t("How the message reaches the agent. For Hermes: Task mode, hermes_task_start / prompt, status hermes_task_status / job_id.")), chatBody);
+  const own = h("section", {}, h("h2", {}, h("span", { text: t("Bifrost's MCP server") })),
+    notice("hint", t("Lets other agents (Grok Bot, Hermes…) show notices, ask for approval and open sessions on Huginn.")), ownBody);
   if (which === "chat") return [chat, own];
   if (which === "integrations") return [detected, servers];
   return [detected, servers, chat, own];

@@ -13,3 +13,11 @@ test("visão geral: prioridade do cartão da esquerda", () => {
   assert.equal(leftMode({ ...base, id: "integration_whatsapp" }), "whatsapp");
   assert.equal(leftMode(base), "card");
 });
+
+import { prettyName } from "../src/settings/mcp.ts";
+test("MCP: nomes importados legíveis", () => {
+  assert.equal(prettyName("google-flow"), "Google Flow");
+  assert.equal(prettyName("n8n-vault"), "n8n Vault");
+  assert.equal(prettyName("quartzo-brain"), "Quartzo Brain");
+  assert.equal(prettyName("DaVinci-Resolve"), "DaVinci Resolve");
+});
