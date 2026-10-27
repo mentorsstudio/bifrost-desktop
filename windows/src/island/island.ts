@@ -2,6 +2,7 @@
 // Mirrors IslandRootView.swift + IslandWindowController.swift.
 
 import { Tracked, Spring, clamp } from "../core/anim";
+import { Springs } from "../bifrost/motion";
 import { Bridge, IS_TAURI, onDragDrop } from "../core/bridge";
 import {
   EXPANDED_CORNER, EXPANDED_W, NOTCH_W, PANEL_H, PANEL_W,
@@ -703,9 +704,11 @@ export class Island {
       this.height.curveTowards(h);
       this.radius.curveTowards(r);
     } else {
-      this.width.springTo(w);
-      this.height.springTo(h);
-      this.radius.springTo(r);
+      // Dynamic Island: abre com a mola "bouncy", o raio acompanha com "snappy".
+      const b = Springs.bouncy, sn = Springs.snappy;
+      this.width.springTo(w, b.response, b.damping);
+      this.height.springTo(h, b.response, b.damping);
+      this.radius.springTo(r, sn.response, sn.damping);
     }
     this.ensureRunning();
   }

@@ -10,6 +10,7 @@ import "./pill.css";
 import "../theme/bifrost.css";
 import "../bifrost/nordic.css";
 import "../bifrost/skin.css";
+import "../theme/motion.css";
 import "../bifrost/contextmenu";
 import { Bridge, onEvent } from "../core/bridge";
 import { FlowBridge, clock, type PillState } from "../core/flow";

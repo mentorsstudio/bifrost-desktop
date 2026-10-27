@@ -1,0 +1,95 @@
+/* Sistema de movimento único do Bifrost (padrão Apple: smooth / snappy / bouncy).
+   Só transform e opacity animam (GPU); transições CSS são interrompíveis por natureza.
+   As molas em JS (src/bifrost/motion.ts → Springs) usam os mesmos presets. */
+:root {
+  /* durações padrão (200–500 ms) */
+  --m-fast: 200ms;
+  --m-base: 300ms;
+  --m-slow: 420ms;
+  --m-xslow: 500ms;
+  --m-stagger: 40ms;
+  /* curvas: equivalentes CSS das molas */
+  --m-ease: cubic-bezier(0.25, 0.1, 0.25, 1);          /* padrão do sistema */
+  --m-ease-out: cubic-bezier(0.22, 1, 0.36, 1);        /* entrada */
+  --m-ease-in: cubic-bezier(0.55, 0, 0.75, 0.06);      /* saída */
+  --m-smooth: linear(0, 0.117, 0.379, 0.616, 0.781, 0.884, 0.944, 0.976, 0.992, 1);
+  --m-snappy: linear(0, 0.21, 0.58, 0.85, 0.98, 1.02, 1.01, 1);
+  --m-bouncy: linear(0, 0.18, 0.56, 0.9, 1.08, 1.11, 1.06, 1.01, 0.99, 1);
+  --m-press: 0.96;
+  --m-hover-lift: -1px;
+}
+
+/* Botões, chips, alternadores: escala ao pressionar + retorno visual ao passar o mouse. */
+button, .btn, .icon-btn, .hub-item, .chip, [role="button"], [role="switch"], .toggle, .switch,
+.tm-item, .pill-btn, a.button {
+  transition: transform var(--m-fast) var(--m-snappy), opacity var(--m-fast) var(--m-ease),
+    background-color var(--m-fast) var(--m-ease), border-color var(--m-fast) var(--m-ease),
+    box-shadow var(--m-base) var(--m-ease), color var(--m-fast) var(--m-ease);
+  -webkit-tap-highlight-color: transparent;
+}
+button:hover:not(:disabled), .btn:hover, .chip:hover, [role="button"]:hover { transform: translateY(var(--m-hover-lift)); }
+button:active:not(:disabled), .btn:active, .icon-btn:active, .hub-item:active, .chip:active,
+[role="button"]:active, [role="switch"]:active, .toggle:active, .switch:active, .tm-item:active {
+  transform: scale(var(--m-press)); transition-duration: 90ms;
+}
+/* Interruptores: o botão desliza com mola. */
+.toggle::after, .switch::after, .switch > span, .toggle > span { transition: transform var(--m-base) var(--m-bouncy); }
+
+/* Campos de texto */
+input, textarea, select {
+  transition: border-color var(--m-fast) var(--m-ease), box-shadow var(--m-base) var(--m-ease),
+    background-color var(--m-fast) var(--m-ease);
+}
+
+/* Anel de foco animado */
+:focus-visible {
+  outline: 2px solid var(--bf-aurora-1, #5ef2c9);
+  outline-offset: 2px;
+  animation: m-focus var(--m-base) var(--m-snappy);
+}
+@keyframes m-focus { from { outline-offset: 6px; outline-color: transparent; } }
+
+/* Troca de página (hub/ajustes): entra subindo + fade; sai com fade rápido. */
+.hub-page, .settings-page, #settings-root > section {
+  animation: m-page-in var(--m-slow) var(--m-smooth) both;
+}
+.m-leaving { animation: m-page-out var(--m-fast) var(--m-ease-in) both !important; pointer-events: none; }
+@keyframes m-page-in { from { opacity: 0; transform: translate3d(0, 10px, 0); } }
+@keyframes m-page-out { to { opacity: 0; transform: translate3d(0, -6px, 0); } }
+
+/* Listas: itens entram em cascata (o atraso vem de --i, aplicado por motion.ts). */
+.m-stagger > * { animation: m-item-in var(--m-base) var(--m-snappy) both; animation-delay: calc(var(--i, 0) * var(--m-stagger)); }
+.m-item-leave { animation: m-item-out var(--m-fast) var(--m-ease-in) both !important; }
+@keyframes m-item-in { from { opacity: 0; transform: translate3d(0, 6px, 0) scale(0.98); } }
+@keyframes m-item-out { to { opacity: 0; transform: scale(0.96); } }
+
+/* Menus, modais, popovers: escala + fade a partir da origem. */
+.menu, .popover, .modal, .dialog, [role="menu"], [role="dialog"], .tm-root, .bf-stone {
+  transform-origin: var(--m-origin, top center);
+  animation: m-pop-in var(--m-base) var(--m-bouncy) both;
+}
+.m-closing { animation: m-pop-out var(--m-fast) var(--m-ease-in) both !important; }
+@keyframes m-pop-in { from { opacity: 0; transform: scale(0.92); } }
+@keyframes m-pop-out { to { opacity: 0; transform: scale(0.95); } }
+
+/* Carregamento: brilho de esqueleto (só transform). */
+.bf-skeleton { position: relative; overflow: hidden; background: rgba(147, 161, 198, 0.12); border-radius: 8px; min-height: 12px; }
+.bf-skeleton::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transform: translateX(-100%); animation: m-shimmer 1.4s var(--m-ease) infinite;
+}
+@keyframes m-shimmer { to { transform: translateX(100%); } }
+
+/* Paralaxe do banner do hub: --m-par vem do scroll (motion.ts). */
+.hub-hero, .bf-hero { transform: translate3d(0, calc(var(--m-par, 0) * 1px), 0); will-change: transform; }
+.hub-hero > *, .bf-hero > * { transform: translate3d(0, calc(var(--m-par, 0) * -0.4px), 0); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important; animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important; transition-duration: 1ms !important; scroll-behavior: auto !important;
+  }
+  .hub-hero, .bf-hero, .hub-hero > *, .bf-hero > * { transform: none !important; }
+  .bf-skeleton::after { animation: none !important; }
+}

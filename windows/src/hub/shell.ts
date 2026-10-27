@@ -4,6 +4,19 @@
 // its coloured band. Port of FlowHub.swift.
 
 import "./hub.css";
+import { Durations, parallax, reducedMotion, stagger, tweenNumber } from "../bifrost/motion";
+
+/** Movimento de entrada da página: listas em cascata e números deslizando. */
+export function animatePage(page: HTMLElement): void {
+  for (const list of page.querySelectorAll<HTMLElement>(".hub-stat-row, .hub-notes-list, .hub-list, .hub-grid, ul")) stagger(list);
+  for (const b of page.querySelectorAll<HTMLElement>(".hub-stat b")) {
+    const raw = (b.textContent ?? "").trim();
+    if (!/^[\d.]+$/.test(raw)) continue;
+    const n = Number(raw.replace(/\./g, ""));
+    b.textContent = "0";
+    tweenNumber(b, n);
+  }
+}
 import "../theme/bifrost.css";
 import { h, clear } from "../views/dom";
 import { t } from "../i18n/i18n";
@@ -155,10 +168,19 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
       await opts.renderNotch(def.id, container);
     }
     if (token !== rendering) return;
+    const old = scroll.firstElementChild as HTMLElement | null;
+    if (old && !reducedMotion()) {
+      old.classList.add("m-leaving");
+      await new Promise((r) => setTimeout(r, Durations.fast));
+      if (token !== rendering) return;
+    }
     clear(scroll);
     scroll.append(page_);
+    animatePage(page_);
     scroll.scrollTop = 0;
   }
+
+  parallax(scroll, () => scroll.querySelector<HTMLElement>(".hub-hero"));
 
   // ── The sidebar ──
   const side = h("nav", { class: "hub-side" });

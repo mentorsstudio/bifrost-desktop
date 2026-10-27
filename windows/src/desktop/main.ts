@@ -8,6 +8,7 @@
 // all while he sleeps.
 
 import "../theme/runic.css";
+import "../theme/motion.css";
 import "../bifrost/contextmenu";
 import { Bridge, emitToWindow, onEvent, type DesktopMode } from "../core/bridge";
 import type { BotEmoteName } from "../core/layout";

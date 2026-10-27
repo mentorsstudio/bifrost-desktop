@@ -81,7 +81,7 @@ html, body { font-family: var(--font); letter-spacing: 0.005em; }
   background-size: 200% 100%;
   opacity: 0.85;
   filter: drop-shadow(0 0 6px rgba(157, 123, 255, 0.55));
-  animation: bifrost-aurora 9s ease-in-out infinite;
+  animation: bifrost-aurora 9s var(--m-ease) infinite;
   pointer-events: none;
 }
 @keyframes bifrost-aurora {
