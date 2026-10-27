@@ -24,7 +24,8 @@ const URLS: Record<string, string> = {
   "muninn-eyes": new URL("./art/muninn-eyes.webp", import.meta.url).href,
   "muninn-beakLo": new URL("./art/muninn-beakLo.webp", import.meta.url).href,
   "muninn-wing": new URL("./art/muninn-wing.webp", import.meta.url).href,
-  "muninn-chest": new URL("./art/muninn-chest.webp", import.meta.url).href,
+  "huginn-eyesL": new URL("./art/huginn-eyesL.webp", import.meta.url).href,
+  "muninn-eyesL": new URL("./art/muninn-eyesL.webp", import.meta.url).href,
 };
 
 const imgs = new Map<string, HTMLImageElement>();
@@ -99,6 +100,32 @@ export function drawRaster(x: C2, who: Who, pose: RigPose, s: number, alpha = 1)
   const small = Math.min(...m.eyes.map((q) => q[2]));
   ge.drawImage(im("pupils"), pose.px * small * 0.3, pose.py * small * 0.25);
   const lid = Math.max(0, Math.min(1, pose.lid));
+  if (who === "muninn") {
+    // Muninn: pupilas recortadas pelo olho; a pálpebra vai numa camada própria, recortada
+    // pelo olho um tico maior (sem franja branca), com UM traço de cílio curvo.
+    ge.globalCompositeOperation = "destination-in"; ge.drawImage(im("eyes"), 0, 0);
+    ge.globalCompositeOperation = "source-over";
+    g.drawImage(e, 0, 0);
+    if (lid > 0.01) {
+      const l = sc(`${who}-lid`, m.w, m.h), gl = l.getContext("2d")!;
+      gl.globalCompositeOperation = "source-over"; gl.clearRect(0, 0, m.w, m.h);
+      const lw = 6.5; // a mesma espessura das linhas dela (px da arte)
+      for (const [cx, cy, rx, ry] of m.eyes) {
+        // borda da pálpebra: de cima até ~80% do olho, curva para baixo (sorriso de olho fechado)
+        const yE = cy - ry - 3 + (ry * 1.62 + 3) * lid;
+        const sag = ry * 0.34 * lid;
+        const xL = cx - rx - 6, xR = cx + rx + 6, yS = yE - sag * 0.55;
+        gl.fillStyle = rgb(m.lid);
+        gl.beginPath(); gl.moveTo(xL, cy - ry - 10); gl.lineTo(xR, cy - ry - 10); gl.lineTo(xR, yS);
+        gl.quadraticCurveTo(cx, yE + sag, xL, yS); gl.closePath(); gl.fill();
+        gl.strokeStyle = rgb(m.ink); gl.lineWidth = lw; gl.lineCap = "round";
+        gl.beginPath(); gl.moveTo(xL, yS); gl.quadraticCurveTo(cx, yE + sag, xR, yS); gl.stroke();
+      }
+      gl.globalCompositeOperation = "destination-in"; gl.drawImage(im("eyesL"), 0, 0);
+      gl.globalCompositeOperation = "source-over";
+      g.drawImage(l, 0, 0);
+    }
+  } else {
   if (lid > 0.01) {
     for (const [cx, cy, rx, ry] of m.eyes) {
       // A borda de baixo da pálpebra é o arco de cima do próprio olho, descido: acompanha a curva.
@@ -116,6 +143,7 @@ export function drawRaster(x: C2, who: Who, pose: RigPose, s: number, alpha = 1)
   ge.globalCompositeOperation = "destination-in"; ge.drawImage(im("eyes"), 0, 0);
   ge.globalCompositeOperation = "source-over";
   g.drawImage(e, 0, 0);
+  }
   // Sobrancelha do Huginn (a direita, o "entendi"): sobe e gira um tico.
   if (m.brow) {
     const [bx, by] = m.brow;
@@ -129,7 +157,6 @@ export function drawRaster(x: C2, who: Who, pose: RigPose, s: number, alpha = 1)
     const [sx, sy] = m.shoulder;
     const wa = -Math.max(-0.1, Math.min(RASTER_LIMITS.wing, pose.wingR * 0.25));
     g.save(); g.translate(0, rise * 0.5); g.translate(sx, sy); g.rotate(wa); g.translate(-sx, -sy); g.drawImage(im("wing"), 0, 0); g.restore();
-    g.save(); g.translate(0, rise * 0.5); g.drawImage(im("chest"), 0, 0); g.restore();
   }
 
   // Reduz em meias etapas até perto do tamanho final (nítido em ícones pequenos).

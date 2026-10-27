@@ -39,18 +39,6 @@ jobs:
           key: paulo-windows-cargo-${{ hashFiles('windows/Cargo.lock') }}
           restore-keys: paulo-windows-cargo-
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Front-end tests
-        run: npm test
-
-      - name: Build the hook relay
-        run: cargo build --release -p bifrost-hook
-
-      - name: Rust tests
-        run: cargo test -p bifrost-desktop --lib
-
       # PDFium (BSD-3/Apache-2.0, bblanchon/pdfium-binaries) vai dentro do
       # instalador (tauri.windows.conf.json): PDF → PNG/JPG funciona sem baixar.
       - name: Fetch PDFium for bundling
@@ -66,6 +54,18 @@ jobs:
           Copy-Item (Join-Path $x "bin/pdfium.dll") "$dir/pdfium.dll"
           Copy-Item (Join-Path $x "LICENSE") "$dir/LICENSE"
           Get-ChildItem $dir | Format-Table Name, Length
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Front-end tests
+        run: npm test
+
+      - name: Build the hook relay
+        run: cargo build --release -p bifrost-hook
+
+      - name: Rust tests
+        run: cargo test -p bifrost-desktop --lib
 
       - name: Build and pack the installer
         shell: pwsh

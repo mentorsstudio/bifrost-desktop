@@ -144,25 +144,28 @@ for who, cfg in CFG.items():
         ex, ey, erx, ery = cfg["bodyEll"]
         bodyM = (cls == "body") & (yy > cut - 10)
         Lx = np.full(H, -1)
-        behind = (((xx - ex) / erx) ** 2 + ((yy - ey) / ery) ** 2 <= 1) | (art & ~wmO & (yy > cut))
+        # borda do peito com "penas" (recortada como no desenho, não uma linha lisa)
+        th = np.arctan2((yy - ey) / ery, (xx - ex) / erx)
+        rr = np.hypot((xx - ex) / erx, (yy - ey) / ery)
+        bump = 1 - 0.035 * np.abs(np.sin(th * 9)) ** 0.6
+        behind = (rr <= bump) | (art & ~wmO & (yy > cut))
         behind &= (yy < 650)
         behind = nd.binary_opening(nd.binary_closing(behind, iterations=6), iterations=3)
         hole = wmO & behind
         Bc[hole] = body
-        ring = behind & ~nd.binary_erosion(behind, iterations=5) & wmO
+        ring = behind & ~nd.binary_erosion(behind, iterations=6) & wmO
         Bc[ring] = ink
         bA = np.where(wmO, np.where(behind, 1.0, 0.0), bA)
         bA = np.where(ring, 1.0, bA)
         bA = np.where(nd.binary_dilation(wmO, iterations=6) & ~behind & ((yy < 660) | (xx > 410)), 0, bA)
-        layers["wing"] = (C.copy(), A * (wmO & ~(behind & ~nd.binary_dilation(wm, iterations=8))))
+        wtop = np.where(wm)[0].min()
+        wingA = A * (wmO & ~(behind & ~nd.binary_dilation(wm, iterations=8)) & (yy >= wtop - 6) & ~headM)
+        layers["wing"] = (C.copy(), wingA)
+        bA = np.where((wmO & (yy < wtop - 6)) | (wmO & headM), A, bA)
         # pivô do ombro: o canto de cima, por dentro (escondido pelo peito)
         ys, xs = np.where(wm)
         top = ys.min(); xsTop = xs[ys < top + 30]
         shoulder = [float(xsTop.min() + 18), float(top + 26)]
-        # sobreposição do peito: penas do peito que ficam por cima da raiz da asa
-        sx, sy = shoulder
-        chest = behind & (((xx - sx) ** 2 + (yy - sy) ** 2) < 46 ** 2) & (xx < sx + 10) & ~wm & art
-        layers["chest"] = (Bc.copy(), chest.astype(np.float32))
     headA = A * headM
     if "beakLo" in layers: headA = np.maximum(headA, A * layers["beakLo"][1] * 0)  # (o bico vem por cima)
     save(f"{who}-base", bleed(Bc, bA), bA)
@@ -170,6 +173,9 @@ for who, cfg in CFG.items():
     Pc = np.zeros_like(C); Pc[:] = ink
     save(f"{who}-pupils", Pc, pupA)
     save(f"{who}-eyes", np.full_like(C, 255), eyeAll.astype(np.float32))
+    # máscara da pálpebra: o olho um tico maior (cobre a franja branca, entra só na borda interna da tinta)
+    eyeL = cv2.GaussianBlur(nd.binary_dilation(eyeAll, iterations=3).astype(np.float32), (0, 0), 0.8)
+    save(f"{who}-eyesL", np.full_like(C, 255), eyeL)
     for k, (cc, aa) in layers.items(): save(f"{who}-{k}", bleed(cc, aa), aa)
     ein = []
     for e in eyes:
@@ -177,6 +183,6 @@ for who, cfg in CFG.items():
         ein.append([round(float(xs.mean()), 1), round(float(ys.mean()), 1), float((xs.max() - xs.min()) / 2), float((ys.max() - ys.min()) / 2)])
     meta[who] = {"w": W, "h": H, "pivot": list(cfg["pivot"]), "eyes": ein, "brow": browInfo, "beakRoot": beakRoot, "shoulder": shoulder,
                  "lid": [int(v) for v in P["body"]], "ink": list(P["ink"]), "sticker": list(P["sticker"]), "stickerW": max(7.0, round(sw, 1)),
-                 "layers": ["base", "head", "pupils", "eyes"] + list(layers)}
+                 "layers": ["base", "head", "pupils", "eyes", "eyesL"] + list(layers)}
     print(who, meta[who]["layers"], "adesivo", max(7.0, round(sw, 1)), "ombro", shoulder)
 open(os.path.join(OUT, "meta.ts"), "w").write("// GERADO por tools/cut-ravens.py (camadas recriadas da referência).\nexport const ART_META = " + json.dumps(meta) + " as const;\n")

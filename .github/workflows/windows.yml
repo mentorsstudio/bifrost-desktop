@@ -46,6 +46,22 @@ jobs:
           key: windows-cargo-${{ hashFiles('windows/Cargo.lock') }}
           restore-keys: windows-cargo-
 
+      # PDFium (BSD-3/Apache-2.0, bblanchon/pdfium-binaries) vai dentro do
+      # instalador (tauri.windows.conf.json): PDF → PNG/JPG funciona sem baixar.
+      - name: Fetch PDFium for bundling
+        shell: pwsh
+        run: |
+          $dir = "src-tauri/pdfium"
+          New-Item -ItemType Directory -Force $dir | Out-Null
+          $tgz = Join-Path $env:RUNNER_TEMP "pdfium.tgz"
+          Invoke-WebRequest "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F7881/pdfium-win-x64.tgz" -OutFile $tgz
+          $x = Join-Path $env:RUNNER_TEMP "pdfium"
+          New-Item -ItemType Directory -Force $x | Out-Null
+          tar -xzf $tgz -C $x
+          Copy-Item (Join-Path $x "bin/pdfium.dll") "$dir/pdfium.dll"
+          Copy-Item (Join-Path $x "LICENSE") "$dir/LICENSE"
+          Get-ChildItem $dir | Format-Table Name, Length
+
       - name: Install dependencies
         run: npm ci
 
@@ -66,22 +82,6 @@ jobs:
           if ($tag -ne $pkg)   { $bad += "package.json says $pkg" }
           if ($tag -ne $cargo) { $bad += "Cargo.toml says $cargo" }
           if ($bad) { throw "tag says $tag but $($bad -join '; ')" }
-
-      # PDFium (BSD-3/Apache-2.0, bblanchon/pdfium-binaries) vai dentro do
-      # instalador (tauri.windows.conf.json): PDF → PNG/JPG funciona sem baixar.
-      - name: Fetch PDFium for bundling
-        shell: pwsh
-        run: |
-          $dir = "src-tauri/pdfium"
-          New-Item -ItemType Directory -Force $dir | Out-Null
-          $tgz = Join-Path $env:RUNNER_TEMP "pdfium.tgz"
-          Invoke-WebRequest "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F7881/pdfium-win-x64.tgz" -OutFile $tgz
-          $x = Join-Path $env:RUNNER_TEMP "pdfium"
-          New-Item -ItemType Directory -Force $x | Out-Null
-          tar -xzf $tgz -C $x
-          Copy-Item (Join-Path $x "bin/pdfium.dll") "$dir/pdfium.dll"
-          Copy-Item (Join-Path $x "LICENSE") "$dir/LICENSE"
-          Get-ChildItem $dir | Format-Table Name, Length
 
       # `npm run build` (run by tauri as beforeBuildCommand) builds coucou-hook
       # first, which tauri.conf.json then bundles as a resource. `pack` then
