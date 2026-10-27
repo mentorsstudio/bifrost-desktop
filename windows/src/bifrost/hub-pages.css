@@ -2,94 +2,94 @@
    Cada página tem sua runa-guia, sua cor de céu e uma composição de grade própria.
    Só transform/opacity animam; tokens de motion.css. */
 
-.hub-page { --pg-rune: "ᛒ"; --pg-sky: rgba(145, 181, 160, .16); --pg-accent: var(--bf-aurora-1, #91B5A0); position: relative; }
+.hub-page { --pg-rune: "ᛒ"; --pg-sky: rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .16); --pg-accent: var(--bf-aurora-1, var(--tk-5ef2c9, #5ef2c9)); position: relative; }
 .hub-page::before { /* runa-guia d'água no canto da página */
   content: var(--pg-rune); position: absolute; right: 18px; top: 150px; z-index: 0; pointer-events: none;
   font-family: var(--bf-rune-font); font-size: 120px; line-height: 1; color: var(--pg-accent); opacity: .05;
 }
 .hub-page > * { position: relative; z-index: 1; }
-.hub-page .bf-hero { background: radial-gradient(520px 200px at 80% 0%, var(--pg-sky), transparent 70%), linear-gradient(180deg, #1D3C34, #142D28); }
+.hub-page .bf-hero { background: radial-gradient(520px 200px at 80% 0%, var(--pg-sky), transparent 70%), linear-gradient(180deg, var(--tk-111b36, #111b36), var(--tk-0a1022, #0a1022)); }
 .hub-page .bf-hero-kicker { color: var(--pg-accent); }
 
 /* 1 · Ditado — ᚱ (Raidho, a jornada da voz): cartão de ativação largo + histórico com placar lateral */
-.hub-page[data-page="dictation"] { --pg-rune: "ᚱ"; --pg-sky: rgba(145, 181, 160, .22); }
+.hub-page[data-page="dictation"] { --pg-rune: "ᚱ"; --pg-sky: rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .22); }
 .hub-page[data-page="dictation"] > .hub-glow { border-left: 3px solid var(--pg-accent); }
 .hub-page[data-page="dictation"] .hub-columns { display: grid; grid-template-columns: minmax(0, 1fr) 236px; gap: 18px; align-items: start; }
 .hub-page[data-page="dictation"] .hub-columns > :last-child { position: sticky; top: 12px; }
 
 /* 2 · Escriba — ᛗ (Mannaz, as pessoas da chamada): lista de rolos à esquerda, pergaminho à direita */
-.hub-page[data-page="notes"] { --pg-rune: "ᛗ"; --pg-sky: rgba(145, 181, 160, .22); --pg-accent: #91B5A0; }
+.hub-page[data-page="notes"] { --pg-rune: "ᛗ"; --pg-sky: rgba(var(--tk-e2b55a-rgb, 226, 181, 90), .22); --pg-accent: var(--tk-e2b55a, #e2b55a); }
 .hub-page[data-page="notes"] .hub-notes { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 16px; }
-.hub-page[data-page="notes"] .hub-notes-list { border-right: 1px dashed rgba(145, 181, 160, .25); padding-right: 12px; }
-.hub-page[data-page="notes"] .hub-note-detail { background: linear-gradient(180deg, rgba(145, 181, 160, .06), transparent 40%); border-radius: 14px; padding: 14px; }
+.hub-page[data-page="notes"] .hub-notes-list { border-right: 1px dashed rgba(var(--tk-e2b55a-rgb, 226, 181, 90), .25); padding-right: 12px; }
+.hub-page[data-page="notes"] .hub-note-detail { background: linear-gradient(180deg, rgba(var(--tk-e2b55a-rgb, 226, 181, 90), .06), transparent 40%); border-radius: 14px; padding: 14px; }
 
 /* 3 · Estatísticas — ᛏ (Tiwaz, a medida): placar em 4 pedras, gráfico de largura total */
-.hub-page[data-page="insights"] { --pg-rune: "ᛏ"; --pg-sky: rgba(201, 220, 207, .22); --pg-accent: #C9DCCF; }
+.hub-page[data-page="insights"] { --pg-rune: "ᛏ"; --pg-sky: rgba(var(--tk-6aa8ff-rgb, 106, 168, 255), .22); --pg-accent: var(--tk-6aa8ff, #6aa8ff); }
 .hub-page[data-page="insights"] .hub-stat-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .hub-page[data-page="insights"] .hub-stat { border-radius: 16px 16px 6px 6px; border-top: 3px solid var(--pg-accent); text-align: center; }
 .hub-page[data-page="insights"] .hub-stat b { font-size: 30px; font-variant-numeric: tabular-nums; }
 .hub-page[data-page="insights"] .hub-chart-row { margin-top: 14px; }
 
 /* 4 · Dicionário — ᚨ (Ansuz, a palavra): campo de entrada em destaque e palavras como fichas de pedra */
-.hub-page[data-page="dictionary"] { --pg-rune: "ᚨ"; --pg-sky: rgba(145, 181, 160, .2); --pg-accent: #F0EADB; }
-.hub-page[data-page="dictionary"] > .hub-card:first-of-type { border: 1px solid rgba(145, 181, 160, .35); }
+.hub-page[data-page="dictionary"] { --pg-rune: "ᚨ"; --pg-sky: rgba(var(--tk-b47cff-rgb, 180, 124, 255), .2); --pg-accent: var(--tk-b47cff, #b47cff); }
+.hub-page[data-page="dictionary"] > .hub-card:first-of-type { border: 1px solid rgba(var(--tk-b47cff-rgb, 180, 124, 255), .35); }
 .hub-page[data-page="dictionary"] .hub-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .hub-page[data-page="dictionary"] .hub-chips > * { border-radius: 4px 12px 4px 12px; }
 .hub-page[data-page="dictionary"] .hub-pair { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
 
 /* 5 · Trechos — ᚲ (Kenaz, a tocha que acende o texto): editor em duas colunas */
-.hub-page[data-page="snippets"] { --pg-rune: "ᚲ"; --pg-sky: rgba(240, 234, 219, .2); --pg-accent: #91B5A0; }
+.hub-page[data-page="snippets"] { --pg-rune: "ᚲ"; --pg-sky: rgba(var(--tk-ff7a4a-rgb, 255, 122, 74), .2); --pg-accent: var(--tk-ff9a6a, #ff9a6a); }
 .hub-page[data-page="snippets"] { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 16px; align-content: start; }
 .hub-page[data-page="snippets"] > .bf-hero { grid-column: 1 / -1; }
 .hub-page[data-page="snippets"] .hub-textarea { min-height: 120px; font-family: var(--bf-mono-font, ui-monospace, monospace); }
 
 /* 6 · Estilos — ᛚ (Laguz, a água que toma a forma do app) */
-.hub-page[data-page="styles"] { --pg-rune: "ᛚ"; --pg-sky: rgba(145, 181, 160, .22); --pg-accent: #91B5A0; }
+.hub-page[data-page="styles"] { --pg-rune: "ᛚ"; --pg-sky: rgba(var(--tk-5ec8f2-rgb, 94, 200, 242), .22); --pg-accent: var(--tk-5ec8f2, #5ec8f2); }
 .hub-page[data-page="styles"] .hub-card { border-radius: 22px; }
 .hub-page[data-page="styles"] .hub-row { padding: 6px 0; }
-.hub-page[data-page="styles"] .hub-warn { border-left: 3px solid #C9DCCF; padding-left: 10px; }
+.hub-page[data-page="styles"] .hub-warn { border-left: 3px solid var(--tk-f2b84b, #f2b84b); padding-left: 10px; }
 
 /* 7 · Ajustes — ᛟ (Othala, a casa): uma coluna central, cada ala aberta por um rótulo-pedra */
-.hub-page[data-page="flowsettings"] { --pg-rune: "ᛟ"; --pg-sky: rgba(145, 181, 160, .2); --pg-accent: #91B5A0; }
+.hub-page[data-page="flowsettings"] { --pg-rune: "ᛟ"; --pg-sky: rgba(var(--tk-93a1c6-rgb, 147, 161, 198), .2); --pg-accent: var(--tk-c9d3ea, #c9d3ea); }
 .hub-page[data-page="flowsettings"] > :not(.bf-hero) { width: 100%; max-width: 760px; margin-left: auto; margin-right: auto; box-sizing: border-box; }
 .hub-page[data-page="flowsettings"] > .hub-label { display: flex; align-items: center; gap: 10px; }
-.hub-page[data-page="flowsettings"] > .hub-label::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(145, 181, 160, .35), transparent); }
+.hub-page[data-page="flowsettings"] > .hub-label::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(var(--tk-c9d3ea-rgb, 201, 211, 234), .35), transparent); }
 
 /* 8 · Geral — ᚺ (Hagalaz, o próprio Huginn) */
-.hub-page[data-page="general"] { --pg-rune: "ᚺ"; --pg-sky: rgba(145, 181, 160, .18); }
+.hub-page[data-page="general"] { --pg-rune: "ᚺ"; --pg-sky: rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .18); }
 .hub-page[data-page="general"] #settings-root section { border-left: 3px solid var(--pg-accent); }
 
 /* 9 · Abas ativas — ᛞ (Dagaz, a luz de cada pílula): grupos em mosaico */
-.hub-page[data-page="pills"] { --pg-rune: "ᛞ"; --pg-sky: rgba(240, 234, 219, .18); --pg-accent: #F0EADB; }
-.hub-page[data-page="pills"] #settings-root .pill-group { border-radius: 14px; border: 1px dashed rgba(240, 234, 219, .3); padding: 8px; margin-bottom: 8px; }
+.hub-page[data-page="pills"] { --pg-rune: "ᛞ"; --pg-sky: rgba(var(--tk-f6e36a-rgb, 246, 227, 106), .18); --pg-accent: var(--tk-f6e36a, #f6e36a); }
+.hub-page[data-page="pills"] #settings-root .pill-group { border-radius: 14px; border: 1px dashed rgba(var(--tk-f6e36a-rgb, 246, 227, 106), .3); padding: 8px; margin-bottom: 8px; }
 .hub-page[data-page="pills"] #settings-root section > div:last-child { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
 
 /* 10 · Agentes — ᛖ (Ehwaz, os cavalos que levam o trabalho): seções em cartões altos */
-.hub-page[data-page="agents"] { --pg-rune: "ᛖ"; --pg-sky: rgba(145, 181, 160, .18); --pg-accent: #91B5A0; }
+.hub-page[data-page="agents"] { --pg-rune: "ᛖ"; --pg-sky: rgba(var(--tk-ff6b6b-rgb, 255, 107, 107), .18); --pg-accent: var(--tk-ff8a8a, #ff8a8a); }
 .hub-page[data-page="agents"] #settings-root { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 14px; }
 .hub-page[data-page="agents"] #settings-root section { margin: 0; }
 
 /* 11 · Chat — ᛊ (Sowilo, o sol da conversa) */
-.hub-page[data-page="chat"] { --pg-rune: "ᛊ"; --pg-sky: rgba(145, 181, 160, .22); --pg-accent: #C9DCCF; }
-.hub-page[data-page="chat"] #settings-root section:first-child { border: 1px solid rgba(145, 181, 160, .3); }
+.hub-page[data-page="chat"] { --pg-rune: "ᛊ"; --pg-sky: rgba(var(--tk-f2b84b-rgb, 242, 184, 75), .22); --pg-accent: var(--tk-f2b84b, #f2b84b); }
+.hub-page[data-page="chat"] #settings-root section:first-child { border: 1px solid rgba(var(--tk-f2b84b-rgb, 242, 184, 75), .3); }
 
 /* 12 · OK Bifrost — ᛉ (Algiz, o chamado e a proteção) */
-.hub-page[data-page="voice"] { --pg-rune: "ᛉ"; --pg-sky: rgba(145, 181, 160, .24); --pg-accent: #91B5A0; }
+.hub-page[data-page="voice"] { --pg-rune: "ᛉ"; --pg-sky: rgba(var(--tk-b47cff-rgb, 180, 124, 255), .24); --pg-accent: var(--tk-c89bff, #c89bff); }
 .hub-page[data-page="voice"] > .hub-card, .hub-page[data-page="voice"] > div:not(.bf-hero) { max-width: 720px; margin-left: auto; margin-right: auto; }
 
 /* 13 · Integrações — ᚷ (Gebo, a troca entre serviços): grade de fichas */
-.hub-page[data-page="integrations"] { --pg-rune: "ᚷ"; --pg-sky: rgba(145, 181, 160, .16); --pg-accent: #91B5A0; }
+.hub-page[data-page="integrations"] { --pg-rune: "ᚷ"; --pg-sky: rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .16); --pg-accent: var(--tk-7ff0d0, #7ff0d0); }
 .hub-page[data-page="integrations"] #settings-root { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
 .hub-page[data-page="integrations"] #settings-root section { margin: 0; }
 
 /* 14 · Celular Android — ᛇ (Eihwaz, a ponte entre os mundos) */
-.hub-page[data-page="phone"] { --pg-rune: "ᛇ"; --pg-sky: rgba(201, 220, 207, .2); --pg-accent: #91B5A0; }
+.hub-page[data-page="phone"] { --pg-rune: "ᛇ"; --pg-sky: rgba(var(--tk-6aa8ff-rgb, 106, 168, 255), .2); --pg-accent: var(--tk-8cbcff, #8cbcff); }
 .hub-page[data-page="phone"] #settings-root section { border-radius: 22px 22px 8px 8px; }
 
 /* 15 · Atalhos — ᛃ (Jera, o ciclo das teclas): teclas como pedras */
-.hub-page[data-page="shortcuts"] { --pg-rune: "ᛃ"; --pg-sky: rgba(145, 181, 160, .2); --pg-accent: #91B5A0; }
+.hub-page[data-page="shortcuts"] { --pg-rune: "ᛃ"; --pg-sky: rgba(var(--tk-e2b55a-rgb, 226, 181, 90), .2); --pg-accent: var(--tk-e2b55a, #e2b55a); }
 .hub-page[data-page="shortcuts"] #settings-root section { max-width: 820px; }
-.hub-page[data-page="shortcuts"] #settings-root kbd, .hub-page[data-page="shortcuts"] .keycap { border-radius: 6px; box-shadow: 0 2px 0 rgba(0, 0, 0, .5), inset 0 0 0 1px rgba(145, 181, 160, .4); }
+.hub-page[data-page="shortcuts"] #settings-root kbd, .hub-page[data-page="shortcuts"] .keycap { border-radius: 6px; box-shadow: 0 2px 0 rgba(0, 0, 0, .5), inset 0 0 0 1px rgba(var(--tk-e2b55a-rgb, 226, 181, 90), .4); }
 
 @media (max-width: 980px) {
   .hub-page[data-page="dictation"] .hub-columns, .hub-page[data-page="notes"] .hub-notes,
@@ -99,18 +99,18 @@
 
 /* Botões desativados: legíveis, com o motivo ao lado (não um gradiente apagado). */
 .hub-page button:disabled, .hub-page button.primary:disabled {
-  background: rgba(145, 181, 160, .1) !important; color: #91B5A0 !important;
-  border: 1px dashed rgba(145, 181, 160, .4) !important; box-shadow: none !important;
+  background: rgba(var(--tk-93a1c6-rgb, 147, 161, 198), .1) !important; color: var(--tk-aeb8d0, #aeb8d0) !important;
+  border: 1px dashed rgba(var(--tk-93a1c6-rgb, 147, 161, 198), .4) !important; box-shadow: none !important;
   opacity: 1 !important; cursor: not-allowed; filter: none !important;
 }
-.hub-page .hint.inline { margin: 0 0 0 10px; font-size: 12px; color: #C9DCCF; align-self: center; }
+.hub-page .hint.inline { margin: 0 0 0 10px; font-size: 12px; color: var(--tk-c9a45a, #c9a45a); align-self: center; }
 
 /* Escriba: colunas na altura do conteúdo; sem chamadas, os passos ocupam a coluna. */
 .hub-page[data-page="notes"] .hub-notes { align-items: start; }
 .hub-page[data-page="notes"] .hub-note-detail.is-empty { min-height: 220px; display: flex; flex-direction: column; justify-content: center; }
 .hub-notes-how { display: flex; flex-direction: column; gap: 8px; padding: 12px 2px 4px; }
-.hub-notes-step { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; font-size: 12px; color: #C9DCCF; line-height: 1.35; }
-.hub-notes-step b { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 700 11px var(--bf-heading-font, serif); color: #10231F; background: linear-gradient(180deg, #C9DCCF, #91B5A0); }
+.hub-notes-step { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; font-size: 12px; color: var(--tk-c9d0e0, #c9d0e0); line-height: 1.35; }
+.hub-notes-step b { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 700 11px var(--bf-heading-font, serif); color: var(--tk-1a1205, #1a1205); background: linear-gradient(180deg, var(--tk-f2cf7c, #f2cf7c), var(--tk-c9973f, #c9973f)); }
 
 /* Integrações: catálogo e servidores MCP ocupam a largura toda, em cartões. */
 .hub-page[data-page="integrations"] #settings-root > .bf-section, .hub-page[data-page="integrations"] #settings-root > .mcp-servers-section { grid-column: 1 / -1; }

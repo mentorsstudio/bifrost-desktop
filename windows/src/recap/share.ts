@@ -155,8 +155,8 @@ export function renderShareImage(s: WeeklySummary, hideProjects: boolean): HTMLC
   x.fillStyle = "#070A16";
   x.fillRect(0, 0, W, SHARE_H);
   const glow = x.createRadialGradient(cx, SHARE_H * 0.75, 0, cx, SHARE_H * 0.75, 900);
-  glow.addColorStop(0, "rgba(145, 181, 160,0.30)");
-  glow.addColorStop(0.65, "rgba(145, 181, 160,0)");
+  glow.addColorStop(0, "rgba(157,123,255,0.30)");
+  glow.addColorStop(0.65, "rgba(79,227,193,0)");
   x.fillStyle = glow;
   x.fillRect(0, 0, W, SHARE_H);
 

@@ -6,12 +6,15 @@ import "../theme/bifrost.css";
 import "../bifrost/nordic.css";
 import "./traymenu.css";
 import "../theme/motion.css";
-import "../theme/freya.css";
+import "../theme/themes.css";
+import "../theme/themes";
 import "../theme/aurora";
 import "../bifrost/contextmenu";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { Mascot } from "../bifrost/mascots";
+import { THEMES, chooseTheme, currentTheme, onThemeChange } from "../theme/themes";
+import { THEME_TXT, fmt } from "../theme/strings";
 
 export interface TrayItem { id: string; label: string }
 
@@ -52,7 +55,34 @@ export function renderTray(root: HTMLElement, items: TrayItem[], run: (id: strin
     buttons.push(b);
     if (BREAK_AFTER.has(it.id)) root.append(Object.assign(document.createElement("div"), { className: "bf-tray-sep" }));
   }
+  root.append(themeStrip());
   return buttons;
+}
+
+/** Fase 18: troca de tema direto da bandeja — uma runa por reino. */
+export function themeStrip(): HTMLElement {
+  const row = document.createElement("div");
+  row.className = "bf-tray-themes";
+  row.setAttribute("role", "radiogroup");
+  row.setAttribute("aria-label", THEME_TXT.trayLabel);
+  const chips = THEMES.map((t, i) => {
+    const b = document.createElement("button");
+    b.className = "bf-tray-theme";
+    b.setAttribute("role", "radio");
+    b.title = fmt(THEME_TXT.menuTheme, t.name);
+    b.setAttribute("aria-label", b.title);
+    b.textContent = t.rune;
+    b.style.setProperty("--i", String(i));
+    b.style.setProperty("--chip", t.accent);
+    b.style.setProperty("--chip-2", t.aurora[1]);
+    b.addEventListener("click", () => chooseTheme(t.id));
+    row.append(b);
+    return [t.id, b] as const;
+  });
+  const mark = (id: string) => { for (const [cid, b] of chips) { b.classList.toggle("on", cid === id); b.setAttribute("aria-checked", String(cid === id)); } };
+  mark(currentTheme().id);
+  onThemeChange((t) => mark(t.id));
+  return row;
 }
 
 async function open() {

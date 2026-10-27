@@ -175,7 +175,7 @@ mod tests {
 
 pub const POPUP_LABEL: &str = "traymenu";
 const POPUP_W: f64 = 248.0;
-const POPUP_H: f64 = 318.0;
+const POPUP_H: f64 = 400.0;
 
 /// O que o menu mostra: id e rótulo, na língua da interface, com a atualização se houver.
 #[derive(serde::Serialize)]

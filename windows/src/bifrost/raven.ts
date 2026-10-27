@@ -16,6 +16,7 @@ import { Sound } from "../core/sound";
 import type { BotEmoteName, BotStateName } from "../core/layout";
 import { drawOutfitBehind, drawOutfitFront, setRavenPainter, type RavenHead } from "./outfits";
 import type { Outfit } from "../huginn/wardrobe";
+import { currentTheme, onThemeChange, type RavenLook } from "../theme/themes";
 
 export type EyeShape =
   | "pill" | "wide" | "dot" | "line" | "flat" | "happy" | "closed"
@@ -47,27 +48,30 @@ const css = (c: RGB, a = 1) => `rgba(${Math.round(c[0] * 255)},${Math.round(c[1]
 const mix = (a: RGB, b: RGB, t: number): RGB => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 const clock = () => performance.now() / 1000;
 
-// Paleta do fiorde.
-const FEATHER_LIT = hex("#2B5246");
-const FEATHER_DARK = hex("#10231F");
-const HUGINN = { lit: hex("#2B5246"), dark: hex("#142D28") };
-const MUNINN = { lit: hex("#A9C6B4"), dark: hex("#6C907D") };
-const EYE = "rgb(240,234,219)";
-const EYE_HALO = "rgba(145, 181, 160,0.9)";
-const MUNINN_EYE = "rgb(20,45,40)";
-const MUNINN_HALO = "rgba(145, 181, 160,0.85)";
-const GOLD_A = "#F0EADB";
-const GOLD_B = "#91B5A0";
-
-// Fase 17: cada estado com tom próprio dentro da família Freya; erro e limite usam
-// tons de aviso dessaturados (o manual Freya não define cor semântica de erro).
-export const ERROR_TONE = "#D08A7E";
-export const LIMIT_TONE = "#C8B67E";
-const TONE = {
-  idle: hex("#F0EADB"), working: hex("#C9DCCF"), thinking: hex("#F0EADB"), searching: hex("#A9C6B4"),
-  approval: hex("#F0EADB"), question: hex("#91B5A0"), error: hex(ERROR_TONE), finished: hex("#9FD3B1"),
-  ratelimit: hex(LIMIT_TONE), sleeping: hex("#6E8F7E"), dizzy: hex("#C9DCCF"),
-};
+// Fase 18: a paleta vem do tema ativo (src/theme/themes.ts) e troca ao vivo.
+interface Pal { hl: { lit: RGB; dark: RGB }; mn: { lit: RGB; dark: RGB }; H: RavenLook; M: RavenLook }
+let palFor = "";
+let PAL: Pal;
+function pal(): Pal {
+  const t = currentTheme();
+  if (palFor !== t.id) {
+    PAL = { hl: { lit: hex(t.huginn.lit), dark: hex(t.huginn.dark) }, mn: { lit: hex(t.muninn.lit), dark: hex(t.muninn.dark) }, H: t.huginn, M: t.muninn };
+    palFor = t.id;
+  }
+  return PAL;
+}
+/** Tom de erro e de limite do tema ativo (sinais funcionais, dessaturados). */
+export const errorTone = () => currentTheme().error;
+export const limitTone = () => currentTheme().limit;
+function tones() {
+  const t = currentTheme(), o = t.tones;
+  return {
+    idle: hex(o.idle), working: hex(o.working), thinking: hex(o.thinking), searching: hex(o.searching),
+    approval: hex(o.approval), question: hex(o.question), error: hex(t.error), finished: hex(o.finished),
+    ratelimit: hex(t.limit), sleeping: hex(o.sleeping), dizzy: hex(o.dizzy),
+  };
+}
+const TONE = tones();
 const calm = { hop: false, scan: false, breathe: false, snore: false, sweat: false, gaze: null, lean: 0 };
 export const BOT_STATES: Record<BotStateName, Mood> = {
   idle: { ...calm, color: TONE.idle, tint: 0, eye: "pill", badge: null },
@@ -82,6 +86,16 @@ export const BOT_STATES: Record<BotStateName, Mood> = {
   sleeping: { ...calm, color: TONE.sleeping, tint: 0.32, eye: "closed", badge: null, breathe: true, snore: true },
   dizzy: { ...calm, color: TONE.dizzy, tint: 0.7, eye: "spiral", badge: null },
 };
+onThemeChange(() => {
+  const n = tones();
+  for (const [k, m] of Object.entries(BOT_STATES) as [BotStateName, Mood][]) {
+    const c = n[k as keyof typeof n];
+    if (!c) continue;
+    m.color = c;
+    if (m.badge) m.badge = { ...m.badge, color: c };
+  }
+  Object.assign(TONE, n);
+});
 export const STATE_SOUND: Partial<Record<BotStateName, string>> = {
   working: "work", thinking: "think", searching: "search", approval: "approval", question: "question",
   error: "error", finished: "finish", ratelimit: "rate", sleeping: "sleep", dizzy: "dizzy",
@@ -542,8 +556,8 @@ export class RavenEngine {
       this.tgSy = 1 + Math.sin(t * 1.8) * a;
       this.tgSx = 1 - Math.sin(t * 1.8) * a * 0.57;
     } else if (this.isMini) {
-      this.tgSy = 1 + Math.sin(t * 2.2) * 0.04;
-      this.tgSx = 1 - Math.sin(t * 2.2) * 0.02;
+      this.tgSy = 1 + Math.sin(t * 2.2 / currentTheme().tempo) * 0.04;
+      this.tgSx = 1 - Math.sin(t * 2.2 / currentTheme().tempo) * 0.02;
     } else {
       this.tgSy = this.tgSx = 1;
     }
@@ -689,7 +703,7 @@ export class RavenEngine {
     const wave = this.hands * (0.7 + Math.sin(t * 14) * 0.3);
     const gx = Math.sin(this.yaw) * 3 * (1 - Math.abs(this.face) * 0.5) + this.face * 3.2;
     const gy = Math.sin(this.pitch) * 2.4 + P.bob;
-    const base = muninn ? MUNINN : HUGINN;
+    const PP = pal(); const L = muninn ? PP.M : PP.H; const base = muninn ? PP.mn : PP.hl;
     const lit = this.bodyColor ? mix(this.bodyColor, base.lit, 0.45) : base.lit;
     const dark = this.bodyColor ? mix(this.bodyColor, base.dark, 0.7) : base.dark;
     const tint = this.tint * 0.55;
@@ -711,7 +725,7 @@ export class RavenEngine {
     // Sem contorno preto: só um aro de luz finíssimo, para o corvo não "colar" no fundo.
     // Fase 17: aro de luz Marfim (Huginn) / Pinheiro (Muninn) para ler em qualquer fundo.
     x.lineWidth = muninn ? 1.1 : 1.5;
-    x.strokeStyle = muninn ? "rgba(20, 45, 40,0.45)" : "rgba(240, 234, 219,0.62)";
+    x.strokeStyle = L.rim;
     const H = RAVEN.head;
     const footLift = (s: number) => (s < 0 ? P.footL : P.footR) + P.tuck * 3.2;
     const head: RavenHead = { x: 60 + gx * 0.4, y: H.cy + gy * 0.4 + this.physDy * 2, r: H.r, chestY: 82, bodyR: 28, footX: 60 + RAVEN.feet.dx, footY: RAVEN.feet.y - footLift(1), spread: Math.min(1, P.wing / 1.5) };
@@ -722,12 +736,12 @@ export class RavenEngine {
       // Cauda: só as pontas aparecem abaixo do corpo, por trás dos pés.
       const tail = new Path2D(RAVEN.tail);
       x.fillStyle = css(dark); x.fill(tail); x.stroke(tail);
-      x.fillStyle = GOLD_B;
+      x.fillStyle = L.beak[1];
       for (const s of [-1, 1]) { x.beginPath(); x.ellipse(60 + s * RAVEN.feet.dx * (1 - 0.25 * P.tuck), RAVEN.feet.y - footLift(s), 4.2 * (1 - 0.35 * P.tuck), 2.2, 0, 0, Math.PI * 2); x.fill(); }
     }
     // Topete do Huginn (atrás do corpo, nasce do alto da cabeça); balança com mola.
-    if (!this.isMini && !muninn && !(dressed && (this.outfit === "helm" || this.outfit === "starCrown"))) {
-      const sw = this.physDx * 0.3 + Math.sin(t * 1.7) * 0.05 + (this.state === "sleeping" ? -0.14 : 0) + P.crest + this.face * 0.12;
+    if (!this.isMini && !muninn && !L.marks.includes("crown") && !L.marks.includes("helm") && !(dressed && (this.outfit === "helm" || this.outfit === "starCrown"))) {
+      const sw = this.physDx * 0.3 + Math.sin(t * 1.7 / currentTheme().tempo) * 0.05 + (this.state === "sleeping" ? -0.14 : 0) + P.crest + this.face * 0.12;
       x.save(); x.translate(60, 22); x.rotate(sw); x.translate(-60, -22);
       x.fillStyle = css(lit); x.fill(new Path2D(RAVEN.crest));
       x.restore();
@@ -744,11 +758,11 @@ export class RavenEngine {
       const p = new Path2D(side < 0 ? RAVEN.wingL : RAVEN.wingR);
       x.fillStyle = fill; x.fill(p); x.stroke(p);
       if (quill) {
-        x.strokeStyle = muninn ? "rgba(207, 214, 234,0.5)" : "rgba(145, 181, 160,0.5)";
+        x.strokeStyle = L.quill; x.globalAlpha *= 0.55;
         x.lineWidth = 1.3; x.lineCap = "round";
         x.beginPath(); x.moveTo(60 + side * 26.6, 70); x.bezierCurveTo(60 + side * 29.4, 76, 60 + side * 29.6, 83, 60 + side * 28, 88.6); x.stroke();
         // Fase 17: pontas de pena na base da asa (três traços curtos).
-        x.strokeStyle = muninn ? "rgba(20, 45, 40,0.4)" : "rgba(240, 234, 219,0.42)";
+        x.globalAlpha /= 0.55; x.strokeStyle = L.tips;
         x.lineWidth = 1;
         for (const [ox, oy] of [[-3.2, 89], [-1, 91.6], [1.6, 93.2]] as const) {
           const bx = 60 + side * (30 + ox);
@@ -761,23 +775,23 @@ export class RavenEngine {
       for (const side of [-1, 1] as const) wingAt(side, wingAngle(side, P.feather), P.wingLen * 0.94, css(mix(dark, lit, 0.25)), false);
     }
     const body = new Path2D(RAVEN.body);
-    if (!muninn && !this.isMini) { x.save(); x.shadowColor = "rgba(145, 181, 160,0.55)"; x.shadowBlur = R * 0.18; x.fillStyle = feather(20, 103); x.fill(body); x.restore(); }
+    if (L.glow && !this.isMini) { x.save(); x.shadowColor = L.glow; x.shadowBlur = R * 0.18; x.fillStyle = feather(20, 103); x.fill(body); x.restore(); }
     x.fillStyle = feather(20, 103); x.fill(body); x.stroke(body);
     // Peito: aurora (Huginn) ou prata (Muninn), e o brilho macio do alto da cabeça.
     const belly = new Path2D(RAVEN.belly);
     const bg = x.createRadialGradient(60, 72, 1, 60, 82, 18);
-    bg.addColorStop(0, muninn ? "rgba(207, 214, 234,0.32)" : "rgba(145, 181, 160,0.22)");
-    bg.addColorStop(1, muninn ? "rgba(207, 214, 234,0.06)" : "rgba(201, 220, 207,0.06)");
+    bg.addColorStop(0, css(hex(L.belly[0]), muninn ? 0.34 : 0.28));
+    bg.addColorStop(1, css(hex(L.belly[1]), 0.08));
     x.fillStyle = bg; x.fill(belly);
     const gloss = x.createRadialGradient(52, 33, 0.5, 54, 36, 15);
     gloss.addColorStop(0, "rgba(255, 255, 255,0.2)"); gloss.addColorStop(1, "rgba(255, 255, 255,0)");
     x.fillStyle = gloss; x.fill(body);
     if (!this.isMini && !(dressed && this.outfit === "runeBand")) {
       x.save();
-      x.fillStyle = GOLD_A; x.globalAlpha *= 0.9;
+      x.fillStyle = L.runeInk; x.globalAlpha *= 0.9;
       x.font = '700 11px "Bifrost Runic","Segoe UI Historic","Segoe UI Symbol",serif';
       x.textAlign = "center"; x.textBaseline = "middle";
-      x.fillText(muninn ? "ᛗ" : "ᚨ", 60, 84);
+      x.fillText(L.rune, 60, 84);
       x.restore();
     }
     if (!this.isMini) for (const side of [-1, 1] as const) wingAt(side, wingAngle(side), P.wingLen, feather(60, 95), true);
@@ -785,19 +799,19 @@ export class RavenEngine {
     x.save();
     x.translate(gx, gy);
     if (muninn && !this.isMini && !(dressed && (this.outfit === "helm" || this.outfit === "starCrown"))) {
-      x.fillStyle = "rgba(207, 214, 234,0.85)"; x.fill(new Path2D(RAVEN.moon));
+      x.fillStyle = L.markColor; x.globalAlpha *= 0.88; x.fill(new Path2D(RAVEN.moon)); x.globalAlpha /= 0.88;
     }
     const flush = Math.max(this.blush, this.tint * 0.4);
     if (flush > 0.02) {
-      x.fillStyle = `rgba(145, 181, 160,${0.4 * flush})`;
+      x.fillStyle = css(hex(L.quill), 0.4 * flush);
       for (const ex of [45.5, 74.5]) { x.beginPath(); x.ellipse(ex, 54.5, 3.6, 2, 0, 0, Math.PI * 2); x.fill(); }
     }
     let shape: EyeShape = this.eyeOverride ?? this.cfg.eye;
     if (this.isDancing && this.dancingLevel > 0.15 && (this.state === "idle" || this.state === "finished")) shape = "happy";
     x.save();
     x.clip(body);
-    x.fillStyle = x.strokeStyle = muninn ? MUNINN_EYE : EYE;
-    x.shadowColor = this.tint > 0.2 ? css(this.col, 0.9) : muninn ? MUNINN_HALO : EYE_HALO;
+    x.fillStyle = x.strokeStyle = L.eye;
+    x.shadowColor = this.tint > 0.2 ? css(this.col, 0.9) : L.halo;
     x.shadowBlur = Math.max(2, R * 0.12);
     const big = this.isMini ? 1.6 : 1;
     for (const side of [-1, 1]) {
@@ -823,8 +837,9 @@ export class RavenEngine {
     x.restore();
     if (!this.isMini) {
       const beak = new Path2D(RAVEN.beak);
-      const g = x.createLinearGradient(56, 51, 64, 61); g.addColorStop(0, GOLD_A); g.addColorStop(1, GOLD_B);
+      const g = x.createLinearGradient(56, 51, 64, 61); g.addColorStop(0, L.beak[0]); g.addColorStop(1, L.beak[1]);
       x.fillStyle = g; x.fill(beak);
+      drawMarks(x, L, muninn, dressed ? this.outfit : "none", t);
     }
     x.restore();
     if (dressed) drawOutfitFront(x, this.outfit, head, st);
@@ -858,11 +873,11 @@ export class RavenEngine {
   private plumage(x: CanvasRenderingContext2D, body: Path2D, R: number, rx: number, ry: number) {
     const g = x.createLinearGradient(rx * 0.6, -ry, -rx * 0.7, ry);
     if (this.bodyColor) {
-      g.addColorStop(0, css(mix(this.bodyColor, FEATHER_LIT, 0.45)));
-      g.addColorStop(1, css(mix(this.bodyColor, FEATHER_DARK, 0.7)));
+      g.addColorStop(0, css(mix(this.bodyColor, pal().hl.lit, 0.45)));
+      g.addColorStop(1, css(mix(this.bodyColor, pal().hl.dark, 0.7)));
     } else {
-      g.addColorStop(0, css(FEATHER_LIT));
-      g.addColorStop(1, css(FEATHER_DARK));
+      g.addColorStop(0, css(pal().hl.lit));
+      g.addColorStop(1, css(pal().hl.dark));
     }
     x.fillStyle = g;
     x.fill(body);
@@ -876,8 +891,8 @@ export class RavenEngine {
     }
     // Brilho de aurora no alto e sombra na borda.
     const hl = x.createRadialGradient(rx * 0.3, -ry * 0.5, 0, rx * 0.3, -ry * 0.5, R * 0.5);
-    hl.addColorStop(0, "rgba(145, 181, 160,0.18)");
-    hl.addColorStop(1, "rgba(145, 181, 160,0)");
+    hl.addColorStop(0, css(hex(pal().H.quill), 0.18));
+    hl.addColorStop(1, css(hex(pal().H.quill), 0));
     x.fillStyle = hl;
     x.fill(body);
     const sh = x.createRadialGradient(0, 0, R * 0.6, 0, 0, R * 1.3);
@@ -894,7 +909,7 @@ export class RavenEngine {
     const chew = this.isChewing ? Math.sin(clock() * 30) * R * 0.02 : 0;
     x.save();
     x.fillStyle = "rgba(5, 8, 18,0.85)";
-    x.strokeStyle = "rgba(240, 234, 219,0.5)";
+    x.strokeStyle = pal().H.rim;
     x.lineWidth = Math.max(0.6, R * 0.02);
     rounded(x, -w / 2, R * 0.38 - h / 2 + chew, w, h, h / 2);
     x.fill();
@@ -911,9 +926,9 @@ export class RavenEngine {
     }
     x.save();
     x.clip(body);
-    x.fillStyle = x.strokeStyle = EYE;
+    x.fillStyle = x.strokeStyle = pal().H.eye;
     if (!this.isMini) {
-      x.shadowColor = this.tint > 0.2 ? css(this.col, 0.9) : EYE_HALO;
+      x.shadowColor = this.tint > 0.2 ? css(this.col, 0.9) : pal().H.halo;
       x.shadowBlur = Math.max(2, R * 0.24);
     }
     for (const side of [-1, 1]) {
@@ -947,7 +962,7 @@ export class RavenEngine {
     // Fase 17: quadrado arredondado (ícone Freya), nunca círculo.
     x.beginPath();
     x.roundRect(-r, -r, r * 2, r * 2, r * 0.42);
-    x.fillStyle = "rgba(16, 35, 31,0.94)";
+    x.fillStyle = css(hex(currentTheme().night), 0.94);
     x.fill();
     x.lineWidth = Math.max(1, R * 0.05);
     x.strokeStyle = css(b.color, 0.95);
@@ -1017,11 +1032,11 @@ export class RavenEngine {
       x.rotate(s.spin + s.age);
       const sz = s.size * R;
       switch (s.kind) {
-        case "heart": x.fillStyle = "#91B5A0"; heart(x, sz); x.fill(); break;
-        case "star": x.fillStyle = GOLD_A; star(x, sz, sz * 0.45); x.fill(); break;
-        case "spark": x.strokeStyle = "#91B5A0"; x.lineWidth = sz * 0.25; x.beginPath(); x.moveTo(-sz, 0); x.lineTo(sz, 0); x.moveTo(0, -sz); x.lineTo(0, sz); x.stroke(); break;
-        case "sweat": x.fillStyle = "#91B5A0"; x.beginPath(); x.ellipse(0, 0, sz * 0.45, sz * 0.7, 0, 0, Math.PI * 2); x.fill(); break;
-        case "z": x.rotate(-(s.spin + s.age)); x.fillStyle = "#91B5A0"; x.font = `600 ${sz * 2.2}px "Bifrost Runic", "DejaVu Sans", sans-serif`; x.fillText(SLEEP_RUNE, 0, 0); break;
+        case "heart": x.fillStyle = currentTheme().tones.dizzy; heart(x, sz); x.fill(); break;
+        case "star": x.fillStyle = currentTheme().accent; star(x, sz, sz * 0.45); x.fill(); break;
+        case "spark": x.strokeStyle = currentTheme().aurora[1]; x.lineWidth = sz * 0.25; x.beginPath(); x.moveTo(-sz, 0); x.lineTo(sz, 0); x.moveTo(0, -sz); x.lineTo(0, sz); x.stroke(); break;
+        case "sweat": x.fillStyle = currentTheme().tones.working; x.beginPath(); x.ellipse(0, 0, sz * 0.45, sz * 0.7, 0, 0, Math.PI * 2); x.fill(); break;
+        case "z": x.rotate(-(s.spin + s.age)); x.fillStyle = currentTheme().tones.sleeping; x.font = `600 ${sz * 2.2}px "Bifrost Runic", "Segoe UI Symbol", sans-serif`; x.fillText(SLEEP_RUNE, 0, 0); break;
       }
       x.restore();
     }
@@ -1077,8 +1092,8 @@ function eyeShape(x: CanvasRenderingContext2D, shape: EyeShape, w: number, h: nu
         if (a === 0) x.moveTo(Math.cos(aa) * r, Math.sin(aa) * r); else x.lineTo(Math.cos(aa) * r, Math.sin(aa) * r);
       }
     }); break;
-    case "heart": { const f = x.fillStyle; x.fillStyle = "#91B5A0"; heart(x, w * 1.2); x.fill(); x.fillStyle = f; break; }
-    case "star": { const f = x.fillStyle; x.fillStyle = GOLD_A; x.rotate(t * 1.5 * side); star(x, w * 1.05, w * 0.46); x.fill(); x.fillStyle = f; break; }
+    case "heart": { const f = x.fillStyle; x.fillStyle = currentTheme().tones.dizzy; heart(x, w * 1.2); x.fill(); x.fillStyle = f; break; }
+    case "star": { const f = x.fillStyle; x.fillStyle = currentTheme().accent; x.rotate(t * 1.5 * side); star(x, w * 1.05, w * 0.46); x.fill(); x.fillStyle = f; break; }
     case "tired": rounded(x, -w / 2, -h * 0.02, w, h * 0.38, w / 2); x.fill(); break;
     case "wink":
       if (side < 0) stroke(w * 0.36, () => x.arc(0, -h * 0.08, w * 0.78, Math.PI * 0.15, Math.PI * 0.85));
@@ -1118,3 +1133,65 @@ setRavenPainter((c, size, outfit) => {
   e.draw(c, size, size);
   c.restore();
 });
+
+/**
+ * Fase 18: a marca do tema, por cima da cabeça (coroa, brasa, geada, folha, elmo, raio).
+ * Tudo simétrico em torno de x = 60, entre a testa e os olhos — nunca toca olhos/bico.
+ */
+function drawMarks(x: CanvasRenderingContext2D, L: RavenLook, muninn: boolean, outfit: string, t: number) {
+  if (outfit === "helm" || outfit === "starCrown") return;
+  x.save();
+  x.lineJoin = "round"; x.lineCap = "round";
+  for (const m of L.marks) {
+    switch (m) {
+      case "crown": {
+        const y = muninn ? 31.5 : 28;
+        x.fillStyle = L.markColor; x.strokeStyle = "rgba(0,0,0,0.25)"; x.lineWidth = 0.6;
+        x.beginPath(); x.moveTo(51, y + 5); x.lineTo(51, y); x.lineTo(54.5, y + 2.6); x.lineTo(60, y - 2.4); x.lineTo(65.5, y + 2.6); x.lineTo(69, y); x.lineTo(69, y + 5);
+        x.quadraticCurveTo(60, y + 6.4, 51, y + 5); x.closePath(); x.fill(); x.stroke();
+        x.fillStyle = "rgba(255,255,255,0.7)"; x.beginPath(); x.arc(60, y + 2.6, 0.9, 0, Math.PI * 2); x.fill();
+        break;
+      }
+      case "ember": {
+        // duas brasas nas maçãs do rosto, que tremulam de leve
+        const k = 0.75 + 0.25 * Math.sin(t * 6.3);
+        const g = x.createRadialGradient(60, 47, 0, 60, 47, 5);
+        g.addColorStop(0, L.markColor); g.addColorStop(1, "rgba(255,120,40,0)");
+        x.globalAlpha *= k; x.fillStyle = g;
+        x.beginPath(); x.moveTo(60, 41); x.bezierCurveTo(63.2, 44, 63.4, 48.6, 60, 50.4); x.bezierCurveTo(56.6, 48.6, 56.8, 44, 60, 41); x.fill();
+        x.globalAlpha /= k;
+        break;
+      }
+      case "frost": {
+        x.strokeStyle = L.markColor; x.lineWidth = 1.1; x.globalAlpha *= 0.9;
+        const cx = 60, cy = 44, r = 3.6;
+        for (let i = 0; i < 3; i++) { const a = (i * Math.PI) / 3; x.beginPath(); x.moveTo(cx - Math.cos(a) * r, cy - Math.sin(a) * r); x.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); x.stroke(); }
+        x.globalAlpha /= 0.9;
+        break;
+      }
+      case "leaf": {
+        x.fillStyle = L.markColor; x.globalAlpha *= 0.92;
+        x.beginPath(); x.moveTo(60, 40.5); x.bezierCurveTo(63.6, 42.6, 63.6, 47, 60, 49.5); x.bezierCurveTo(56.4, 47, 56.4, 42.6, 60, 40.5); x.fill();
+        x.strokeStyle = "rgba(0,0,0,0.25)"; x.lineWidth = 0.6; x.beginPath(); x.moveTo(60, 41.6); x.lineTo(60, 48.6); x.stroke();
+        x.globalAlpha /= 0.92;
+        break;
+      }
+      case "helm": {
+        // faixa do elmo na testa + protetor de nariz entre os olhos (acima do bico)
+        x.fillStyle = L.markColor; x.strokeStyle = "rgba(0,0,0,0.3)"; x.lineWidth = 0.6;
+        x.beginPath(); x.moveTo(44, 38); x.quadraticCurveTo(60, 31, 76, 38); x.lineTo(75, 41.4); x.quadraticCurveTo(60, 35, 45, 41.4); x.closePath(); x.fill(); x.stroke();
+        x.beginPath(); x.roundRect(58.6, 37, 2.8, 13, 1.4); x.fill(); x.stroke();
+        break;
+      }
+      case "storm": {
+        const k = 0.7 + 0.3 * Math.max(0, Math.sin(t * 2.1));
+        x.fillStyle = L.markColor; x.globalAlpha *= k;
+        x.beginPath(); x.moveTo(61.4, 39.5); x.lineTo(57.2, 45.6); x.lineTo(60, 45.6); x.lineTo(58.6, 50.2); x.lineTo(62.8, 44); x.lineTo(60, 44); x.closePath(); x.fill();
+        x.globalAlpha /= k;
+        break;
+      }
+      default: break;
+    }
+  }
+  x.restore();
+}

@@ -9,7 +9,8 @@
 
 import "../theme/runic.css";
 import "../theme/motion.css";
-import "../theme/freya.css";
+import "../theme/themes.css";
+import "../theme/themes";
 import "../theme/aurora";
 import "../bifrost/contextmenu";
 import { Bridge, emitToWindow, onEvent, type DesktopMode } from "../core/bridge";

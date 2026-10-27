@@ -32,6 +32,7 @@ export const HUB_ICONS: Record<string, string> = {
   dots: "M6 12h.01M12 12h.01M18 12h.01",
   lock: "M6.5 11h11v9h-11zM8.5 11V8a3.5 3.5 0 0 1 7 0v3",
   window: "M3.5 5h17v14h-17zM3.5 9h17",
+  palette: "M12 3.5a8.5 8.5 0 1 0 0 17c1.2 0 1.8-.8 1.8-1.7 0-1.3-1-1.6-1-2.6 0-.9.7-1.5 1.6-1.5h2.1a4 4 0 0 0 4-4c0-4-3.8-7.2-8.5-7.2zM7.5 12h.01M9.5 8h.01M14.5 8h.01",
 };
 
 export function icon(name: string): SVGSVGElement {

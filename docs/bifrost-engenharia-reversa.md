@@ -665,3 +665,28 @@ Fonte: Freya Branding v1 (`/workspace/freya-branding/kit`). Bifrost não usa o l
 - **Estados distintos:** selos quadrados arredondados com glifo próprio — thinking=órbita, searching=lupa, approval=!, question=▶, error=ᚾ pulsante, finished=check, ratelimit=ampulheta que gira — e tinta contida no corpo.
 - **Erro:** o manual Freya não define cor semântica de erro. Adotados tons funcionais dessaturados: `--fy-error #D08A7E`, `--fy-error-text #E6B6AC`, `--fy-limit #C8B67E`; --red/--hub-red/--bf-blood apontam para eles (cards, textos, hover de perigo da bandeja, wash dos cards).
 - **Animações CSS dos corvos SVG suavizadas:** respiração 5,2 s ±0,8 px; flap, tilt, lean, fly-in, shake e pop com amplitude menor; hop toca uma vez. reduced-motion continua desligando tudo.
+
+### 10.18 Fase 18 — Motor de temas nórdicos e movimento em toda parte
+
+- **Volta do visual colorido:** a identidade Freya da v16 foi revertida (folhas CSS, logo, ícones, instalador e fontes voltam ao estilo v13–v15: noite de fiorde, aurora verde-água→violeta, ouro). Ficam as melhorias da v17: aro de luz, bico, cauda e pontas de pena, selos de estado com glifo, tom de erro funcional e animações calmas.
+- **Motor de temas (`src/theme/themes.ts`):** um tema = famílias de cor (noite, tinta, névoa, ouro, brasa, verde-água, céu, violeta, rosa, vermelho), aurora/ponte, acento, erro/limite/ok, tons de estado e a identidade dos dois corvos (corpo, peito, olhos, halo, aro, bico, runa, marcas e ritmo de respiração). `scripts`: `tok.py` trocou cada cor literal das folhas por `var(--tk-<hex>, <hex>)` (`css-families.ts` lista as 177 cores por família); o motor recolore cada literal no tema preservando a hierarquia claro/escuro. Bifröst não sobrescreve nada (só calibra o vermelho de erro), então é idêntico ao visual antigo.
+- **Ao vivo e sincronizado:** cada janela (ilha, hub/ajustes, pílula, bandeja, mochi) importa o motor; a escolha fica em `localStorage` (`bifrost.theme`, compartilhado pelo WebView2) e é avisada às outras janelas pelo evento Tauri `bifrost-theme` (e pelo evento `storage`). Canvas dos corvos lê o tema a cada quadro; corvos SVG se redesenham ao trocar. A troca usa View Transitions (cruzamento de 500 ms; desligado com prefers-reduced-motion).
+- **Temas:** Bifröst (padrão), Asgard (azul real e ouro; coroa), Muspelheim (brasa e obsidiana; olhos e marca de brasa), Niflheim (geada e geleira; floco de gelo), Yggdrasil (paleta Freya; folha), Valhalla (aço, carmesim e latão; elmo com protetor nasal), Ragnarök (escuridão e aurora de tempestade; raio). Cada um com runa própria (ᚱ ᛟ ᚲ ᛁ ᛒ ᛏ ᚺ). Testes garantem contraste AA (texto ≥ 7:1, secundário/erro/botão ≥ 4,5:1) e marcas simétricas sem tocar olhos, bico, crista ou lua.
+- **Galeria (Ajustes → Temas):** cartões arredondados com prévia viva no próprio tema (ilha, aurora correndo, Huginn e Muninn animando); clique aplica com cruzamento. Bandeja ganhou uma fileira de runas para trocar o tema (janela 248×400).
+- **Movimento:** mixins únicos em `motion.css` (press 0,97 com mola de volta, hover que sobe 1 px com halo do tema só em opacity, transições com tokens) para todo botão, aba, rádio e cartão; teste impede `:active` fora do mixin e elementos clicáveis sem papel. `interact.ts`: indicador de aba que desliza com mola (FLIP só transform) na ilha, no hub e nos controles segmentados; troca de vista da ilha com cruzamento e deslize na direção da aba; páginas do hub cruzam e deslizam conforme a ordem; FLIP no seletor do chat; o que aparece nos ajustes entra com fade; menu de contexto abre da origem do clique com itens em cascata; avisos deslizam; caixas/rádios com "pop".
+
+#### 10.18.x — O notch de verdade (correção urgente)
+
+**Sintoma (v17):** a faixa reservada no alto mostrava o papel de parede, a ilha não aparecia dentro dela e às vezes deixava de ficar por cima.
+
+**Causas:**
+1. A máquina de estados recolhia a ilha para `hidden` (0 px; janela de 240×6 lógicos) depois do ocioso — dentro da faixa não sobrava nada visível.
+2. `SHQueryUserNotificationState` devolvia `QUNS_BUSY` com apps sem borda (Electron maximizado): o vigia caía em `Yield`, tirava o topmost e soltava a AppBar — o log mostrava Yield/OnTop alternando a cada poucos segundos.
+3. Ninguém pintava a faixa: a AppBar só reserva área.
+
+**Correção:**
+- `notch.rs` cria uma **barra nativa Win32** (sem webview) da largura do monitor, altura `NOTCH_H × escala` (DPI), cor `night` do tema (comando `notch_bar_color`, trocado ao vivo), `WS_EX_LAYERED|TRANSPARENT|NOACTIVATE|TOOLWINDOW` + `HTTRANSPARENT`: cliques atravessam.
+- A AppBar passa a ser a barra; a ilha fica no topo do monitor, `HWND_TOPMOST` acima da barra, reafirmada a cada 500 ms; Win+D/minimizar → `SW_SHOWNOACTIVATE`; `TaskbarCreated` (Explorer reiniciado) → registra de novo.
+- Tela cheia só quando há D3D exclusivo/apresentação ou a janela da frente cobre o monitor inteiro (`covers_monitor`); maximizadas param abaixo da faixa.
+- `fsm.floorPetit`: com a reserva ligada a compacta é o piso, nunca recolhe. Orelhas côncavas (`#island::before/::after`) fundem a ilha na barra como o recorte do MacBook.
+- Testes: `covers_monitor`, `parse_rgb`, piso da FSM.

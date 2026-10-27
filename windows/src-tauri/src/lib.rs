@@ -1064,6 +1064,7 @@ pub fn run() {
         .manage(recap::load())
         .invoke_handler(tauri::generate_handler![
             boot,
+            notch::notch_bar_color,
             agents_detect,
             agents_focus,
             git_branch,

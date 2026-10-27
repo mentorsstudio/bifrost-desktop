@@ -1,0 +1,24 @@
+/* Fase 18 — camada comum a todos os temas (o motor em themes.ts troca as variáveis).
+   Importada por último em toda janela. Bifröst (padrão) = o visual colorido v13–v15. */
+
+/* A aurora que corre: as pontes deslizam devagar (aurora.ts anima o background-position). */
+.bf-bridge, #island::after, .hub-side::after, .bf-hero::after, .bf-ai-card.found::after, .bf-card.on::after,
+.capsule::after, .bf-aurora-line {
+  background-size: 220% 100% !important;
+  animation: th-aurora-breathe 4.5s var(--m-ease) infinite;
+}
+@keyframes th-aurora-breathe { 0%, 100% { opacity: .8; } 50% { opacity: 1; } }
+
+/* Erros aparecem em toda parte, no tom de erro do tema. */
+.error, .err, .is-error, .danger, .bf-tray-item.danger:hover, .hub-error, .field-error, .toast.error, .status.error, [data-tone="error"] {
+  color: var(--th-error-text, #ffb0a8) !important;
+}
+.bf-tray-item.danger:hover { background: rgba(var(--th-error-rgb, 240, 116, 111), .14) !important; }
+
+/* Troca de tema: o navegador cruza as duas pinturas (View Transitions). */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--m-xslow); animation-timing-function: var(--m-ease); }
+
+@media (prefers-reduced-motion: reduce) {
+  .bf-bridge, #island::after, .hub-side::after, .bf-hero::after, .bf-ai-card.found::after, .bf-card.on::after, .capsule::after, .bf-aurora-line { animation: none !important; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none !important; }
+}

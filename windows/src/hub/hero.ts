@@ -36,27 +36,27 @@ const m = (color: string, size: number, start: number, extra: Partial<RavenSpec>
 });
 
 export const THEMES: Record<string, Theme> = {
-  dictation: { color: "#91B5A0", cast: [m("#F5F6F8", 66, 0.2), m("#91B5A0", 52, 0.65), m("#91B5A0", 44, 0.95, { outfit: "starCrown" })] },
-  notes: { color: "#91B5A0", cast: [m("#91B5A0", 58, 0.1, { outfit: "runeBand" }), m("#91B5A0", 50, 0.5), m("#91B5A0", 46, 0.9)] },
-  insights: { color: "#91B5A0", cast: [m("#91B5A0", 62, 0.3, { outfit: "starCrown" }), m("#91B5A0", 48, 0.75), m("#F5F6F8", 40, 1)] },
-  dictionary: { color: "#91B5A0", cast: [m("#91B5A0", 60, 0.2, { outfit: "runeBand" }), m("#F5F6F8", 48, 0.8, { outfit: "helm" })] },
-  snippets: { color: "#91B5A0", cast: [m("#91B5A0", 56, 0.15, { state: "working" }), m("#91B5A0", 46, 0.6), m("#F5F6F8", 40, 0.95)] },
-  styles: { color: "#91B5A0", cast: [m("#91B5A0", 60, 0.25, { outfit: "auroraHalo" }), m("#F5F6F8", 48, 0.7, { outfit: "starCrown" }), m("#91B5A0", 42, 1, { outfit: "helm" })] },
+  dictation: { color: "#FB923C", cast: [m("#F5F6F8", 66, 0.2), m("#FB923C", 52, 0.65), m("#F472B6", 44, 0.95, { outfit: "starCrown" })] },
+  notes: { color: "#3B9EFF", cast: [m("#3B9EFF", 58, 0.1, { outfit: "runeBand" }), m("#34D399", 50, 0.5), m("#A78BFA", 46, 0.9)] },
+  insights: { color: "#34D399", cast: [m("#F7B32B", 62, 0.3, { outfit: "starCrown" }), m("#34D399", 48, 0.75), m("#F5F6F8", 40, 1)] },
+  dictionary: { color: "#A78BFA", cast: [m("#A78BFA", 60, 0.2, { outfit: "runeBand" }), m("#F5F6F8", 48, 0.8, { outfit: "helm" })] },
+  snippets: { color: "#F7B32B", cast: [m("#F7B32B", 56, 0.15, { state: "working" }), m("#FB923C", 46, 0.6), m("#F5F6F8", 40, 0.95)] },
+  styles: { color: "#F472B6", cast: [m("#F472B6", 60, 0.25, { outfit: "auroraHalo" }), m("#F5F6F8", 48, 0.7, { outfit: "starCrown" }), m("#22D3EE", 42, 1, { outfit: "helm" })] },
   flowsettings: { color: "#8E939C", cast: [m("#F5F6F8", 56, 0.3), m("#8E939C", 46, 0.95, { state: "sleeping", roams: false })] },
-  general: { color: "#8E939C", cast: [m("#F5F6F8", 60, 0.4, { outfit: "frostScarf" }), m("#91B5A0", 46, 0.85)] },
+  general: { color: "#8E939C", cast: [m("#F5F6F8", 60, 0.4, { outfit: "frostScarf" }), m("#FB923C", 46, 0.85)] },
   pills: {
-    color: "#C9DCCF",
-    cast: [m("#C9DCCF", 44, 0.05), m("#91B5A0", 44, 0.3), m("#91B5A0", 44, 0.55), m("#91B5A0", 44, 0.8), m("#91B5A0", 44, 1)],
+    color: "#F5A524",
+    cast: [m("#F5A524", 44, 0.05), m("#3B9EFF", 44, 0.3), m("#34D399", 44, 0.55), m("#E07950", 44, 0.8), m("#A78BFA", 44, 1)],
   },
   agents: {
-    color: "#91B5A0",
-    cast: [m("#91B5A0", 56, 0.1, { state: "working", roams: false }), m("#91B5A0", 50, 0.5, { state: "thinking", roams: false }), m("#91B5A0", 50, 0.9)],
+    color: "#3B9EFF",
+    cast: [m("#3B9EFF", 56, 0.1, { state: "working", roams: false }), m("#E07950", 50, 0.5, { state: "thinking", roams: false }), m("#34D399", 50, 0.9)],
   },
-  chat: { color: "#91B5A0", cast: [m("#91B5A0", 58, 0.3, { state: "thinking", roams: false }), m("#F5F6F8", 48, 0.85)] },
-  integrations: { color: "#91B5A0", cast: [m("#91B5A0", 54, 0.15), m("#91B5A0", 46, 0.55), m("#91B5A0", 42, 0.95)] },
-  phone: { color: "#91B5A0", cast: [m("#91B5A0", 56, 0.25), m("#F5F6F8", 46, 0.8, { outfit: "helm" })] },
-  voice: { color: "#91B5A0", cast: [m("#91B5A0", 60, 0.3), m("#F5F6F8", 48, 0.85, { outfit: "runeBand" })] },
-  shortcuts: { color: "#91B5A0", cast: [m("#91B5A0", 56, 0.2, { outfit: "runeBand" }), m("#F5F6F8", 46, 0.8)] },
+  chat: { color: "#E07950", cast: [m("#E07950", 58, 0.3, { state: "thinking", roams: false }), m("#F5F6F8", 48, 0.85)] },
+  integrations: { color: "#7C5CFF", cast: [m("#7C5CFF", 54, 0.15), m("#22D3EE", 46, 0.55), m("#F7B32B", 42, 0.95)] },
+  phone: { color: "#3DDC84", cast: [m("#3DDC84", 56, 0.25), m("#F5F6F8", 46, 0.8, { outfit: "helm" })] },
+  voice: { color: "#F97316", cast: [m("#F97316", 60, 0.3), m("#F5F6F8", 48, 0.85, { outfit: "runeBand" })] },
+  shortcuts: { color: "#6366F1", cast: [m("#6366F1", 56, 0.2, { outfit: "runeBand" }), m("#F5F6F8", 46, 0.8)] },
 };
 
 /** Yggdrasil entalhada: tronco, galhos e raízes, em traço de ouro. */

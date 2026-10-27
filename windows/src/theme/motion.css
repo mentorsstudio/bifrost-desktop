@@ -15,25 +15,53 @@
   --m-smooth: linear(0, 0.117, 0.379, 0.616, 0.781, 0.884, 0.944, 0.976, 0.992, 1);
   --m-snappy: linear(0, 0.21, 0.58, 0.85, 0.98, 1.02, 1.01, 1);
   --m-bouncy: linear(0, 0.18, 0.56, 0.9, 1.08, 1.11, 1.06, 1.01, 0.99, 1);
-  --m-press: 0.96;
+  --m-press: 0.97;
   --m-hover-lift: -1px;
 }
 
-/* Botões, chips, alternadores: escala ao pressionar + retorno visual ao passar o mouse. */
-button, .btn, .icon-btn, .hub-item, .chip, [role="button"], [role="switch"], .toggle, .switch,
-.tm-item, .pill-btn, a.button {
-  transition: transform var(--m-fast) var(--m-snappy), opacity var(--m-fast) var(--m-ease),
+/* ── Mixins compartilhados (fase 18) ──
+   PRESS: tudo que é clicável afunda para 0,97 e volta com mola.
+   LIFT/GLOW: ao passar o mouse sobe 1 px e acende um brilho do tema (só opacity).
+   TRANSITION: as mesmas curvas e durações em todo botão e aba. */
+button, .btn, .icon-btn, .hub-item, .chip, [role="button"], [role="switch"], [role="tab"], [role="radio"], .tab, .seg button,
+.toggle, .switch, .tm-item, .pill-btn, a.button, .th-card, .bf-tray-item, .bf-tray-theme, .bf-menu-item, .m-press {
+  transition: transform var(--m-base) var(--m-bouncy), opacity var(--m-fast) var(--m-ease),
     background-color var(--m-fast) var(--m-ease), border-color var(--m-fast) var(--m-ease),
     box-shadow var(--m-base) var(--m-ease), color var(--m-fast) var(--m-ease);
   -webkit-tap-highlight-color: transparent;
 }
-button:hover:not(:disabled), .btn:hover, .chip:hover, [role="button"]:hover { transform: translateY(var(--m-hover-lift)); }
-button:active:not(:disabled), .btn:active, .icon-btn:active, .hub-item:active, .chip:active,
-[role="button"]:active, [role="switch"]:active, .toggle:active, .switch:active, .tm-item:active {
-  transform: scale(var(--m-press)); transition-duration: 90ms;
+button:hover:not(:disabled), .btn:hover, .chip:hover, [role="button"]:hover, .th-card:hover, .m-press:hover { transform: translateY(var(--m-hover-lift)); }
+button:active:not(:disabled), .btn:active, .icon-btn:active, .hub-item:active, .chip:active, [role="tab"]:active, [role="radio"]:active, .tab:active, .seg button:active,
+[role="button"]:active, [role="switch"]:active, .toggle:active, .switch:active, .tm-item:active, .th-card:active, .bf-tray-item:active, .bf-tray-theme:active, .bf-menu-item:active, .ag-row:active, .np-icon:active, .np-play:active, .send-btn:active, .m-press:active {
+  transform: scale(var(--m-press)) !important; transition-duration: 90ms;
 }
+/* Brilho de hover: um halo do tema num ::before, que só muda a opacidade. */
+:where(button, .btn, [role="button"], [role="tab"], .th-card, .m-press) { position: relative; isolation: isolate; }
+:where(button, .btn, [role="button"], [role="tab"], .th-card, .m-press)::before {
+  content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; z-index: -1;
+  box-shadow: 0 0 0 1px rgba(var(--th-a1-rgb, 94, 242, 201), .22), 0 6px 18px -8px rgba(var(--th-a1-rgb, 94, 242, 201), .7);
+  opacity: 0; transition: opacity var(--m-base) var(--m-ease);
+}
+:where(button, .btn, [role="button"], [role="tab"], .th-card, .m-press):hover:not(:disabled)::before { opacity: 1; }
 /* Interruptores: o botão desliza com mola. */
 .toggle::after, .switch::after, .switch > span, .toggle > span { transition: transform var(--m-base) var(--m-bouncy); }
+/* Caixas e rádios: marcam com um "pop" de mola. */
+input[type="checkbox"], input[type="radio"] { accent-color: var(--th-accent, #f6d27a); transition: transform var(--m-fast) var(--m-bouncy); }
+input[type="checkbox"]:checked, input[type="radio"]:checked { animation: m-check-pop var(--m-base) var(--m-bouncy); }
+input[type="checkbox"]:active, input[type="radio"]:active { transform: scale(.9); }
+@keyframes m-check-pop { 0% { transform: scale(.8); } 60% { transform: scale(1.12); } 100% { transform: none; } }
+
+/* Indicador de aba que desliza (interact.ts → slidingInk): FLIP só com transform. */
+.m-has-ink { position: relative; isolation: isolate; }
+.m-ink { position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none; transform-origin: 0 0; opacity: 0;
+  border-radius: 999px; background: var(--tab-on, rgba(255, 255, 255, .1)); transition: opacity var(--m-fast) var(--m-ease); }
+.m-has-ink > .on, .m-has-ink .tab.on, .m-has-ink .seg button.on, .m-ink-seg > button.on { background: transparent !important; }
+.m-ink-tabs > .m-ink { border-radius: 11px; }
+.m-ink-seg > .m-ink { background: var(--tk-252830, #252830); }
+.m-ink-hub > .m-ink { border-radius: 17px;
+  background: linear-gradient(180deg, rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .16), rgba(var(--tk-6f8dff-rgb, 111, 141, 255), .1));
+  box-shadow: inset 0 0 0 1px rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .35), 0 6px 14px -8px rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .6); }
+.m-ink-hub .hub-item.on { box-shadow: none !important; }
 
 /* Campos de texto */
 input, textarea, select {
@@ -43,7 +71,7 @@ input, textarea, select {
 
 /* Anel de foco animado */
 :focus-visible {
-  outline: 2px solid var(--bf-aurora-1, #91B5A0);
+  outline: 2px solid var(--bf-aurora-1, var(--tk-5ef2c9, #5ef2c9));
   outline-offset: 2px;
   animation: m-focus var(--m-base) var(--m-snappy);
 }
@@ -62,8 +90,8 @@ input, textarea, select {
 /* O que está fora da tela não é diagramado nem pintado até chegar perto. */
 .hub-page > :not(.bf-hero):not(.hub-label) { content-visibility: auto; contain-intrinsic-size: auto 260px; }
 .m-leaving { animation: m-page-out var(--m-fast) var(--m-ease-in) both !important; pointer-events: none; z-index: 0; }
-@keyframes m-page-in { from { opacity: 0; transform: translate3d(0, 10px, 0); } }
-@keyframes m-page-out { to { opacity: 0; transform: translate3d(0, -6px, 0); } }
+@keyframes m-page-in { from { opacity: 0; transform: translate3d(calc(var(--m-dir, 0) * 18px), 8px, 0) scale(.99); } }
+@keyframes m-page-out { to { opacity: 0; transform: translate3d(calc(var(--m-dir, 0) * -12px), -4px, 0) scale(.99); } }
 
 /* Listas: itens entram em cascata (o atraso vem de --i, aplicado por motion.ts). */
 .m-stagger > * { animation: m-item-in var(--m-base) var(--m-snappy) both; animation-delay: calc(var(--i, 0) * var(--m-stagger)); }
@@ -78,13 +106,20 @@ input, textarea, select {
 }
 .m-closing { animation: m-pop-out var(--m-fast) var(--m-ease-in) both !important; }
 @keyframes m-pop-in { from { opacity: 0; transform: scale(0.92); } }
+/* Menu de contexto: os itens entram em cascata atrás da caixa. */
+.bf-menu.m-stagger > * { animation-delay: calc(60ms + var(--i, 0) * 22ms); }
+/* Balões e avisos: deslizam para dentro (e para fora com .m-closing). */
+.notice, .toast, .bf-toast, .update-banner { animation: m-toast-in var(--m-slow) var(--m-bouncy) both; }
+.notice.m-closing, .toast.m-closing { animation: m-toast-out var(--m-fast) var(--m-ease-in) both !important; }
+@keyframes m-toast-in { from { opacity: 0; transform: translate3d(0, -8px, 0) scale(.97); } }
+@keyframes m-toast-out { to { opacity: 0; transform: translate3d(0, -6px, 0) scale(.97); } }
 @keyframes m-pop-out { to { opacity: 0; transform: scale(0.95); } }
 
 /* Carregamento: brilho de esqueleto (só transform). */
-.bf-skeleton { position: relative; overflow: hidden; background: rgba(145, 181, 160, 0.12); border-radius: 8px; min-height: 12px; }
+.bf-skeleton { position: relative; overflow: hidden; background: rgba(var(--tk-93a1c6-rgb, 147, 161, 198), 0.12); border-radius: 8px; min-height: 12px; }
 .bf-skeleton::after {
   content: ""; position: absolute; inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(240, 234, 219, 0.1), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
   transform: translateX(-100%); animation: m-shimmer 1.4s var(--m-ease) infinite;
 }
 @keyframes m-shimmer { to { transform: translateX(100%); } }

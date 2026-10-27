@@ -3,18 +3,18 @@
    look as the Mac's Bifrost window (FlowHub.swift). */
 
 :root {
-  --hub-panel: #10231F;
-  --hub-card: #142D28;
-  --hub-field: #142D28;
-  --hub-line: rgba(240, 234, 219, 0.07);
-  --hub-text: #F0EADB;
-  --hub-body: #F0EADB;
-  --hub-secondary: #91B5A0;
-  --hub-muted: #91B5A0;
-  --hub-accent: #C9DCCF;
-  --hub-on-accent: #10231F;
-  --hub-green: #91B5A0;
-  --hub-red: #91B5A0;
+  --hub-panel: #0e0f11;
+  --hub-card: #18191c;
+  --hub-field: #1f2024;
+  --hub-line: rgba(255, 255, 255, 0.07);
+  --hub-text: #f5f6f8;
+  --hub-body: #e1e3e6;
+  --hub-secondary: #8e939c;
+  --hub-muted: #6b7079;
+  --hub-accent: var(--tk-fb923c, #fb923c);
+  --hub-on-accent: var(--tk-170c04, #170c04);
+  --hub-green: var(--tk-34d399, #34d399);
+  --hub-red: var(--tk-ff453a, #ff453a);
 }
 
 body.hub-window {
@@ -73,7 +73,7 @@ body.hub-window {
   height: 32px;
   border-radius: 9px;
   background: transparent;
-  color: #C9DCCF;
+  color: #c7cad0;
   font: 500 13.5px var(--font);
   text-align: start;
 }
@@ -91,16 +91,12 @@ body.hub-window {
 }
 
 .hub-item:hover:not(:disabled) {
-  background: rgba(240, 234, 219, 0.05);
-  transform: none;
-}
-
-.hub-item:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
   transform: none;
 }
 
 .hub-item.on {
-  background: rgba(240, 234, 219, 0.09);
+  background: rgba(255, 255, 255, 0.09);
   color: var(--hub-text);
   font-weight: 600;
 }
@@ -116,7 +112,7 @@ body.hub-window {
   gap: 8px;
   padding: 10px 12px;
   border-radius: 11px;
-  background: rgba(240, 234, 219, 0.05);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--hub-secondary);
   font-size: 12px;
   line-height: 1.3;
@@ -175,7 +171,7 @@ body.hub-window {
   border-radius: 18px;
   overflow: hidden;
   flex: 0 0 auto;
-  border: 1px solid var(--hero-line, rgba(240, 234, 219, 0.1));
+  border: 1px solid var(--hero-line, rgba(255, 255, 255, 0.1));
 }
 
 .hub-hero.compact {
@@ -221,7 +217,7 @@ body.hub-window {
 
 .hub-hero p {
   font-size: 14px;
-  color: #C9DCCF;
+  color: #b7bbc2;
   max-width: 420px;
 }
 
@@ -290,7 +286,7 @@ body.hub-window {
   display: inline-flex;
   align-items: center;
   border-radius: 7px;
-  background: rgba(240, 234, 219, 0.08);
+  background: rgba(255, 255, 255, 0.08);
   white-space: nowrap;
 }
 
@@ -298,7 +294,7 @@ button.hub-btn {
   border-radius: 10px;
   padding: 8px 14px;
   font: 600 12.5px var(--font);
-  background: rgba(240, 234, 219, 0.09);
+  background: rgba(255, 255, 255, 0.09);
   color: var(--hub-text);
 }
 
@@ -308,12 +304,12 @@ button.hub-btn.primary {
 }
 
 button.hub-btn.primary:hover:not(:disabled) {
-  background: #C9DCCF;
+  background: var(--tk-fdab63, #fdab63);
 }
 
 button.hub-btn.danger {
-  background: rgba(145, 181, 160, 0.14);
-  color: #C9DCCF;
+  background: rgba(var(--tk-ff453a-rgb, 255, 69, 58), 0.14);
+  color: var(--tk-ff8a80, #ff8a80);
 }
 
 button.hub-btn.small {
@@ -329,8 +325,8 @@ button.hub-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(240, 234, 219, 0.06);
-  color: #C9DCCF;
+  background: rgba(255, 255, 255, 0.06);
+  color: #c7cad0;
 }
 
 button.hub-icon svg {
@@ -349,7 +345,7 @@ button.hub-icon svg {
   font: 400 13px var(--font);
   color: var(--hub-text);
   background: var(--hub-field);
-  border: 1px solid rgba(240, 234, 219, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 9px;
   padding: 7px 10px;
   outline: none;
@@ -358,7 +354,7 @@ button.hub-icon svg {
 .hub-input:focus,
 .hub-textarea:focus,
 .hub-select:focus {
-  border-color: rgba(201, 220, 207, 0.6);
+  border-color: rgba(var(--tk-fb923c-rgb, 251, 146, 60), 0.6);
 }
 
 .hub-textarea {
@@ -371,7 +367,7 @@ button.hub-icon svg {
   display: inline-flex;
   padding: 2px;
   border-radius: 9px;
-  background: rgba(240, 234, 219, 0.06);
+  background: rgba(255, 255, 255, 0.06);
   gap: 2px;
 }
 
@@ -379,12 +375,12 @@ button.hub-icon svg {
   border-radius: 7px;
   padding: 5px 14px;
   background: transparent;
-  color: #C9DCCF;
+  color: #c7cad0;
   font: 500 12.5px var(--font);
 }
 
 .hub-segmented button.on {
-  background: rgba(240, 234, 219, 0.14);
+  background: rgba(255, 255, 255, 0.14);
   color: var(--hub-text);
 }
 
@@ -393,7 +389,7 @@ button.hub-icon svg {
   height: 17px;
   flex: 0 0 17px;
   border-radius: 50%;
-  border: 1.5px solid #416A59;
+  border: 1.5px solid #5a5f68;
 }
 
 .hub-radio.on {
@@ -404,7 +400,7 @@ button.hub-icon svg {
   width: 120px;
   height: 6px;
   border-radius: 3px;
-  background: rgba(240, 234, 219, 0.1);
+  background: rgba(255, 255, 255, 0.1);
   overflow: hidden;
 }
 
@@ -426,9 +422,9 @@ button.hub-icon svg {
 .hub-warn {
   border-radius: 12px;
   padding: 12px 14px;
-  background: rgba(201, 220, 207, 0.1);
-  border: 1px solid rgba(201, 220, 207, 0.22);
-  color: #C9DCCF;
+  background: rgba(var(--tk-f7b32b-rgb, 247, 179, 43), 0.1);
+  border: 1px solid rgba(var(--tk-f7b32b-rgb, 247, 179, 43), 0.22);
+  color: var(--tk-f5d28a, #f5d28a);
   font-size: 12.5px;
 }
 
@@ -491,7 +487,7 @@ button.hub-icon svg {
   font-size: 11px;
   padding: 1px 7px;
   border-radius: 5px;
-  background: rgba(240, 234, 219, 0.07);
+  background: rgba(255, 255, 255, 0.07);
   color: var(--hub-secondary);
   max-width: 100%;
   overflow: hidden;
@@ -542,7 +538,7 @@ button.hub-icon svg {
   position: relative;
   border-radius: 14px;
   overflow: hidden;
-  border: 1px solid var(--glow-line, rgba(240, 234, 219, 0.1));
+  border: 1px solid var(--glow-line, rgba(255, 255, 255, 0.1));
 }
 
 .hub-glow canvas {
@@ -634,7 +630,7 @@ button.hub-icon svg {
   align-items: flex-end;
   gap: 4px;
   height: 180px;
-  border-bottom: 1px dashed rgba(201, 220, 207, 0.35);
+  border-bottom: 1px dashed rgba(var(--tk-fb923c-rgb, 251, 146, 60), 0.35);
 }
 
 .hub-bars i {
@@ -674,7 +670,7 @@ button.hub-icon svg {
 .hub-app-bar .track {
   height: 5px;
   border-radius: 3px;
-  background: rgba(240, 234, 219, 0.08);
+  background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
 }
 
@@ -699,7 +695,7 @@ button.hub-icon svg {
   gap: 6px;
   padding: 5px 6px 5px 12px;
   border-radius: 999px;
-  background: rgba(240, 234, 219, 0.07);
+  background: rgba(255, 255, 255, 0.07);
   font-size: 13px;
 }
 
@@ -798,7 +794,7 @@ button.hub-icon svg {
 }
 
 .hub-note-item.on {
-  background: rgba(240, 234, 219, 0.08);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .hub-note-item .t {
@@ -838,7 +834,7 @@ button.hub-icon svg {
   gap: 7px;
   padding: 4px 10px 4px 4px;
   border-radius: 999px;
-  background: rgba(240, 234, 219, 0.06);
+  background: rgba(255, 255, 255, 0.06);
   font-size: 13px;
   color: var(--hub-text);
 }
@@ -851,7 +847,7 @@ button.hub-icon svg {
   align-items: center;
   justify-content: center;
   font: 700 11px var(--font);
-  color: #10231F;
+  color: #0b0c0e;
 }
 
 .hub-line {
@@ -900,7 +896,7 @@ button.hub-icon svg {
   height: 8px;
   border-radius: 50%;
   background: var(--hub-red);
-  box-shadow: 0 0 6px rgba(145, 181, 160, 0.7);
+  box-shadow: 0 0 6px rgba(var(--tk-ff453a-rgb, 255, 69, 58), 0.7);
 }
 
 @media (max-width: 1000px) {

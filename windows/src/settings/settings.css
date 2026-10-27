@@ -10,15 +10,15 @@
     "Microsoft YaHei", "Noto Sans", "Noto Sans Devanagari", "Noto Sans Bengali", "Noto Sans Arabic",
     "Noto Sans CJK SC", "Noto Sans SC", "Droid Sans Fallback", sans-serif;
   --mono: "Cascadia Mono", "Consolas", ui-monospace, monospace;
-  --ink: #F0EADB;
-  --dim: #C9DCCF;
-  --dim-2: #91B5A0;
-  --bg: #10231F;
-  --card: #10231F;
-  --hairline: rgba(240, 234, 219, 0.07);
-  --green: #91B5A0;
-  --red: #91B5A0;
-  --amber: #C9DCCF;
+  --ink: #f5f6f8;
+  --dim: #9398a1;
+  --dim-2: #6b7079;
+  --bg: #0b0c0e;
+  --card: #141518;
+  --hairline: rgba(255, 255, 255, 0.07);
+  --green: #22c55e;
+  --red: var(--tk-f4505e, #f4505e);
+  --amber: var(--tk-f5a524, #f5a524);
 }
 
 * {
@@ -107,23 +107,19 @@ button {
   padding: 7px 14px;
   border: 0;
   border-radius: 999px;
-  background: rgba(240, 234, 219, 0.09);
+  background: rgba(255, 255, 255, 0.09);
   color: var(--ink);
   cursor: pointer;
   transition: background 0.14s, transform 0.08s;
 }
 
 button:hover:not(:disabled) {
-  background: rgba(240, 234, 219, 0.15);
-}
-
-button:active:not(:disabled) {
-  transform: scale(0.96);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 button.primary {
   background: var(--ink);
-  color: #10231F;
+  color: #0b0c0e;
 }
 
 button.primary:hover:not(:disabled) {
@@ -131,8 +127,8 @@ button.primary:hover:not(:disabled) {
 }
 
 button.danger {
-  background: rgba(145, 181, 160, 0.16);
-  color: #C9DCCF;
+  background: rgba(var(--tk-f4505e-rgb, 244, 80, 94), 0.16);
+  color: var(--tk-ff8d97, #ff8d97);
 }
 
 button:disabled {
@@ -153,7 +149,7 @@ code,
   width: 36px;
   height: 20px;
   border-radius: 10px;
-  background: rgba(240, 234, 219, 0.15);
+  background: rgba(255, 255, 255, 0.15);
   flex: 0 0 36px;
   padding: 0;
 }
@@ -183,7 +179,7 @@ input[type="range"] {
   appearance: none;
   height: 4px;
   border-radius: 2px;
-  background: rgba(240, 234, 219, 0.2);
+  background: rgba(255, 255, 255, 0.2);
   width: 140px;
 }
 
@@ -200,7 +196,7 @@ input[type="text"],
 input[type="password"],
 select {
   font: 400 12.5px var(--font);
-  background: rgba(240, 234, 219, 0.07);
+  background: rgba(255, 255, 255, 0.07);
   border: 1px solid var(--hairline);
   border-radius: 8px;
   color: var(--ink);
@@ -214,19 +210,19 @@ input::placeholder {
 input:focus,
 select:focus {
   outline: none;
-  border-color: rgba(240, 234, 219, 0.28);
+  border-color: rgba(255, 255, 255, 0.28);
 }
 
 /* The popup is drawn by the OS: give it an explicit pair of colours rather than
    inheriting white on white. */
 select option {
-  background-color: #142D28;
+  background-color: #1a1c20;
   color: var(--ink);
 }
 
 .diff {
   font: 400 11.5px/1.5 var(--mono);
-  background: #10231F;
+  background: var(--tk-08090b, #08090b);
   border: 1px solid var(--hairline);
   border-radius: 10px;
   padding: 10px 12px;
@@ -237,11 +233,11 @@ select option {
 }
 
 .diff .add {
-  color: #C9DCCF;
+  color: #86efac;
 }
 
 .diff .del {
-  color: #C9DCCF;
+  color: var(--tk-ff8d97, #ff8d97);
 }
 
 .diff .ctx {
@@ -255,18 +251,18 @@ select option {
 }
 
 .notice.ok {
-  background: rgba(145, 181, 160, 0.12);
-  color: #C9DCCF;
+  background: rgba(34, 197, 94, 0.12);
+  color: #86efac;
 }
 
 .notice.err {
-  background: rgba(145, 181, 160, 0.14);
-  color: #C9DCCF;
+  background: rgba(var(--tk-f4505e-rgb, 244, 80, 94), 0.14);
+  color: var(--tk-ff8d97, #ff8d97);
 }
 
 .notice.warn {
-  background: rgba(201, 220, 207, 0.13);
-  color: #C9DCCF;
+  background: rgba(var(--tk-f5a524-rgb, 245, 165, 36), 0.13);
+  color: var(--tk-fbc06a, #fbc06a);
 }
 
 /* Active pills — one group per catalog category, one row per pill. */
@@ -302,7 +298,7 @@ select option {
 }
 
 .color-dot:focus-visible {
-  outline: 2px solid rgba(240, 234, 219, 0.5);
+  outline: 2px solid rgba(255, 255, 255, 0.5);
   outline-offset: 2px;
 }
 
@@ -385,7 +381,7 @@ select option {
   min-width: 118px;
   padding: 5px 10px;
   border-radius: 8px;
-  background: rgba(240, 234, 219, 0.07);
+  background: rgba(255, 255, 255, 0.07);
   border: 1px solid var(--hairline);
   color: var(--ink);
   text-align: center;
@@ -393,7 +389,7 @@ select option {
 }
 
 .keycap.recording {
-  border-color: rgba(240, 234, 219, 0.4);
+  border-color: rgba(255, 255, 255, 0.4);
   color: var(--dim);
 }
 
@@ -406,20 +402,20 @@ select option {
   font: 500 10.5px var(--font);
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(240, 234, 219, 0.08);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--dim);
   white-space: nowrap;
   flex: 0 0 auto;
 }
 
 .tag.warn {
-  background: rgba(201, 220, 207, 0.13);
-  color: #C9DCCF;
+  background: rgba(var(--tk-f5a524-rgb, 245, 165, 36), 0.13);
+  color: var(--tk-fbc06a, #fbc06a);
 }
 
 .tag.err {
-  background: rgba(145, 181, 160, 0.14);
-  color: #C9DCCF;
+  background: rgba(var(--tk-f4505e-rgb, 244, 80, 94), 0.14);
+  color: var(--tk-ff8d97, #ff8d97);
 }
 
 /* Arabic: the window reads right to left (main.ts sets <html dir="rtl">);

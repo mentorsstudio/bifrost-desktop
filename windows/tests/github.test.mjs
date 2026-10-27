@@ -110,7 +110,7 @@ test("default branch CI sums up the recent repos", () => {
   assert.deepEqual(mainCISummary([repo("a/b", "unknown")]), { failing: false, color: "#6B7079", value: "unknown" });
   assert.deepEqual(mainCISummary([repo("a/b", "success")]), { failing: false, color: "#22C55E", value: "all green" });
   assert.deepEqual(mainCISummary([repo("a/b", "success"), repo("a/c", "pending")]),
-    { failing: false, color: "#C9DCCF", value: "running" });
+    { failing: false, color: "#F5A524", value: "running" });
   assert.deepEqual(mainCISummary([repo("a/b", "failure"), repo("a/c", "failure"), repo("a/d", "pending")]),
     { failing: true, color: "#F4505E", value: "2 failing" });
   assert.equal(ciWord("success"), "passing");

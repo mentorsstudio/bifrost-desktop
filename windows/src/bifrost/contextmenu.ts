@@ -20,13 +20,14 @@ export function closeMenu(): void {
 export function showMenu(x: number, y: number, items: MenuItem[]): HTMLElement {
   closeMenu();
   const menu = document.createElement("div");
-  menu.className = "bf-menu";
+  menu.className = "bf-menu m-stagger";
   menu.setAttribute("role", "menu");
   for (const it of items) {
     const b = document.createElement("button");
     b.className = "bf-menu-item";
     b.setAttribute("role", "menuitem");
     b.disabled = !!it.disabled;
+    b.style.setProperty("--i", String(menu.childElementCount));
     b.innerHTML = `<span class="bf-menu-rune">${it.rune ?? "᛫"}</span><span></span>`;
     (b.lastChild as HTMLElement).textContent = it.label;
     b.addEventListener("click", async () => {
@@ -38,8 +39,12 @@ export function showMenu(x: number, y: number, items: MenuItem[]): HTMLElement {
   document.body.append(menu);
   const w = menu.offsetWidth || 180;
   const h = menu.offsetHeight || items.length * 30;
-  menu.style.left = `${Math.max(4, Math.min(x, innerWidth - w - 4))}px`;
-  menu.style.top = `${Math.max(4, Math.min(y, innerHeight - h - 4))}px`;
+  const left = Math.max(4, Math.min(x, innerWidth - w - 4));
+  const top = Math.max(4, Math.min(y, innerHeight - h - 4));
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
+  // Abre em escala a partir do ponto do clique.
+  menu.style.setProperty("--m-origin", `${Math.round(x - left)}px ${Math.round(y - top)}px`);
   open = menu;
   return menu;
 }

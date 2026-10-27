@@ -32,6 +32,11 @@ import type { ViewCommand } from "./shortcuts";
 import { Updates } from "./update";
 import { islandActions } from "./actions";
 import { DropFlow } from "./drop";
+import { slideSwap } from "../theme/interact";
+
+/** A ordem das abas da ilha, para saber de que lado a vista nova entra. */
+const TAB_ORDER: Partial<Record<IslandViewName, number>> = { overview: 0, empty: 0, prompt: 1, upload: 2, settings: 3 };
+const tabOrder = (v: IslandViewName) => TAB_ORDER[v] ?? 0;
 import {
   BOT_OVERHANG, BOT_SIDE, clockText, countdownWidth, gazeX, gazeY, insideWithMargin, islandRect, modeRank,
   onRaven, ravenCanvasBox, rectMoved, targetShape, type Rect,
@@ -100,6 +105,7 @@ export class Island {
   private dizzyTimer: number | null = null;
   private viewBeforeDizzy: IslandViewName = "overview";
   private syncedView: IslandViewName | null = null;
+  private shownView: IslandViewName | null = null;
   private quietReveal = false;
   private clockTimer?: number;
 
@@ -172,6 +178,7 @@ export class Island {
   private listenFsm(): void {
     this.fsm.homeToPetitDelay = State.settings.autoCloseInterval;
     this.fsm.openOnHover = State.settings.openOnHover;
+    this.fsm.floorPetit = State.settings.notchReserve !== false;
     this.fsm.onTransition = (from, to) => {
       // A saudação acabou, como quer que tenha sido: ele volta ao seu canto.
       if (from === "bifrost-desktop" && to !== "bifrost-desktop") this.desktop.launch();
@@ -679,10 +686,16 @@ export class Island {
 
     this.header.sync();
     document.body.classList.toggle("bf-pair", State.tasks.filter((t) => t.source !== "n8n" && (t.sessionCwd || t.sessionId || t.state !== "idle")).length >= 2);
+    const prevView = this.shownView;
     for (const [name, view] of this.views) {
       const on = name === State.view;
       view.el.classList.toggle("on", on);
       if (on) view.sync();
+    }
+    // Fase 18: trocar de aba cruza as vistas e desliza na direção da aba.
+    if (prevView !== State.view) {
+      if (prevView && expanded) slideSwap(this.views.get(prevView)?.el ?? null, this.views.get(State.view)?.el ?? null, tabOrder(State.view) - tabOrder(prevView));
+      this.shownView = State.view;
     }
     // Só o chat tem campo de texto: é a única hora em que a ilha pega o teclado.
     if (this.syncedView !== State.view) {
@@ -723,6 +736,8 @@ export class Island {
     Sound.setVolume(State.settings.soundVolume);
     this.fsm.homeToPetitDelay = State.settings.autoCloseInterval;
     this.fsm.openOnHover = State.settings.openOnHover;
+    this.fsm.floorPetit = State.settings.notchReserve !== false;
+    if (this.fsm.floorPetit && this.fsm.state === "hidden") this.fsm.forcePetit();
     State.notify();
     this.clockTimer ??= window.setInterval(() => this.updateClock(), 10_000);
   }

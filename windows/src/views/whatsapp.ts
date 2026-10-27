@@ -160,6 +160,7 @@ export function buildWhatsAppCard(host: WhatsAppCardHost): WhatsAppCard {
     if (ignoring === c.id) {
       r.append(h("span", { class: "wa-spacer" }), h("span", {
         class: "link-btn wa-ignore",
+        role: "button",
         text: t("Ignore this chat"),
         onclick: (e: Event) => {
           e.stopPropagation();

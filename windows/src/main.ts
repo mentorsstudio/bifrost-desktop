@@ -8,7 +8,9 @@ import "./bifrost/skin.css";
 import "./bifrost/saga.css";
 import "./theme/motion.css";
 import "./bifrost/realm.css";
-import "./theme/freya.css";
+import "./theme/themes.css";
+import { currentTheme, onThemeChange } from "./theme/themes";
+import { invoke as invokeNative } from "@tauri-apps/api/core";
 import "./theme/aurora";
 import "./bifrost/contextmenu";
 import { Bridge, IS_TAURI, onEvent } from "./core/bridge";
@@ -202,3 +204,10 @@ async function main() {
 }
 
 void main();
+
+// Fase 18 — a barra do notch (janela nativa no Rust) pinta com o escuro do tema.
+if (IS_TAURI) {
+  const tint = () => void invokeNative("notch_bar_color", { hex: currentTheme().night }).catch(() => undefined);
+  tint();
+  onThemeChange(tint);
+}

@@ -22,6 +22,8 @@ export class IslandStateMachine {
   pinned = false;
   /** Passar o cursor abre de vez (Configurações → Geral). */
   openOnHover = false;
+  /** Fase 18 — com a faixa do notch reservada a ilha nunca recolhe: a compacta é o piso. */
+  floorPetit = false;
   /** Folga depois que o cursor sai de uma ilha aberta pelo cursor. */
   hoverCloseDelay = 0.6;
   /** Quando a ilha aberta vai fechar (relógio performance.now), ou null. */
@@ -139,6 +141,7 @@ export class IslandStateMachine {
   }
 
   private go(next: FsmState) {
+    if (next === "hidden" && this.floorPetit) next = "petit";
     if (next === this.state) return;
     const from = this.state;
     this.state = next;

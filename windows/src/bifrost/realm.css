@@ -11,7 +11,7 @@
   width: auto !important; flex: 0 0 auto !important; flex-direction: row !important; align-items: stretch;
   gap: 18px !important; padding: 10px 22px 0 !important; overflow: visible !important;
   border-right: 0 !important; position: relative; z-index: 2;
-  background: linear-gradient(180deg, rgba(16, 35, 31, .96), rgba(16, 35, 31, .82)) !important;
+  background: linear-gradient(180deg, rgba(var(--tk-0a1024-rgb, 10, 16, 36), .96), rgba(var(--tk-0a1024-rgb, 10, 16, 36), .82)) !important;
 }
 .hub-side::after { /* a ponte: aurora com marcas rúnicas sob a navegação */
   content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
@@ -19,20 +19,20 @@
 }
 .hub-brand { padding: 0 6px 10px 0 !important; align-self: center; font-size: 15px !important; }
 .hub-realm { display: flex; flex-direction: column; gap: 4px; padding-bottom: 8px; }
-.hub-realm + .hub-realm { padding-left: 18px; border-left: 1px solid rgba(145, 181, 160, .18); }
+.hub-realm + .hub-realm { padding-left: 18px; border-left: 1px solid rgba(var(--tk-e2b55a-rgb, 226, 181, 90), .18); }
 .hub-group { padding: 0 2px !important; font-size: 9.5px !important; }
 .hub-rail { display: flex; gap: 2px; }
 .hub-item {
   width: auto !important; height: 34px !important; padding: 0 9px !important; gap: 7px !important;
   border-radius: 17px !important; justify-content: center;
-  transition: background var(--m-fast) var(--m-ease), transform var(--m-fast) var(--m-snappy) !important;
+  transition: background var(--m-fast) var(--m-ease), transform var(--m-base) var(--m-bouncy) !important;
 }
 .hub-item span { max-width: 0; overflow: hidden; white-space: nowrap; opacity: 0;
   transition: opacity var(--m-base) var(--m-ease); }
-.hub-item:hover { transform: translateY(-1px) !important; background: rgba(145, 181, 160, .08) !important; }
+.hub-item:hover { transform: translateY(-1px) !important; background: rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .08) !important; }
 .hub-item.on, .hub-item.active, .hub-item[aria-current="page"] {
-  padding: 0 14px 0 11px !important; background: linear-gradient(180deg, rgba(145, 181, 160, .16), rgba(145, 181, 160, .1)) !important;
-  box-shadow: inset 0 0 0 1px rgba(145, 181, 160, .35), 0 6px 14px -8px rgba(145, 181, 160, .6) !important; color: #F0EADB !important;
+  padding: 0 14px 0 11px !important; background: linear-gradient(180deg, rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .16), rgba(var(--tk-6f8dff-rgb, 111, 141, 255), .1)) !important;
+  box-shadow: inset 0 0 0 1px rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .35), 0 6px 14px -8px rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .6) !important; color: var(--tk-eafff8, #eafff8) !important;
 }
 .hub-item.on span, .hub-item.active span, .hub-item[aria-current="page"] span { max-width: 140px; opacity: 1; }
 .hub-side .spacer { flex: 1 1 auto; }
@@ -46,11 +46,11 @@
 #header { position: relative; }
 #header .tabs {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 2px !important; gap: 2px !important;
-  border-radius: 13px; background: rgba(16, 35, 31, .7); box-shadow: inset 0 0 0 1px rgba(145, 181, 160, .28);
+  border-radius: 13px; background: rgba(var(--tk-050812-rgb, 5, 8, 18), .7); box-shadow: inset 0 0 0 1px rgba(var(--tk-e2b55a-rgb, 226, 181, 90), .28);
 }
 #header .tab { border-radius: 11px !important; width: 34px !important; transition: background var(--m-fast) var(--m-ease), color var(--m-fast) var(--m-ease); }
-#header .tab.on { background: linear-gradient(180deg, rgba(145, 181, 160, .22), rgba(145, 181, 160, .14)) !important; color: #F0EADB !important; box-shadow: none !important; }
-#header .header-actions { gap: 10px !important; padding-left: 12px; border-left: 1px solid rgba(145, 181, 160, .22); height: 18px; align-items: center; }
+#header .tab.on { background: linear-gradient(180deg, rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .22), rgba(var(--tk-6f8dff-rgb, 111, 141, 255), .14)) !important; color: var(--tk-eafff8, #eafff8) !important; box-shadow: none !important; }
+#header .header-actions { gap: 10px !important; padding-left: 12px; border-left: 1px solid rgba(var(--tk-e2b55a-rgb, 226, 181, 90), .22); height: 18px; align-items: center; }
 
 /* ── Ajustes: livro-razão com comentário ─────────────────────────────────
    Em vez de "rótulo à esquerda, controle, dica embaixo" (o formulário do Coucou),
@@ -60,21 +60,21 @@ body.settings-window section:has(> .row) {
   display: grid !important; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); column-gap: 22px; row-gap: 8px; align-items: center;
 }
 body.settings-window section:has(> .row) > * { grid-column: 1 / -1; }
-body.settings-window section:has(> .row) > .row { grid-column: 1; margin: 0 !important; padding: 8px 10px; border-radius: 10px; background: rgba(16, 35, 31, .35); }
-body.settings-window section:has(> .row) > .row + .hint { grid-column: 2; margin: 0 !important; padding: 2px 0 2px 12px; border-left: 2px solid rgba(145, 181, 160, .35); line-height: 1.4; }
+body.settings-window section:has(> .row) > .row { grid-column: 1; margin: 0 !important; padding: 8px 10px; border-radius: 10px; background: rgba(var(--tk-050812-rgb, 5, 8, 18), .35); }
+body.settings-window section:has(> .row) > .row + .hint { grid-column: 2; margin: 0 !important; padding: 2px 0 2px 12px; border-left: 2px solid rgba(var(--tk-e2b55a-rgb, 226, 181, 90), .35); line-height: 1.4; }
 body.settings-window section:has(> .row) > .row:not(:has(+ .hint)) { grid-column: 1 / -1; }
 body.settings-window section > h2 { display: flex; align-items: center; gap: 8px; }
-body.settings-window section > h2::before { content: "ᛟ"; font-family: var(--bf-rune-font); color: var(--bf-gold-2, #F0EADB); font-size: 12px; }
+body.settings-window section > h2::before { content: "ᛟ"; font-family: var(--bf-rune-font); color: var(--bf-gold-2, var(--tk-f6d27a, #f6d27a)); font-size: 12px; }
 
 /* ── v14: cartões da ilha em composição própria ─────────────────────────
    O Huginn pousa à DIREITA do cartão (o Coucou põe o mascote à esquerda).
    O texto lê da esquerda, as ações formam uma régua sob ele, alinhadas ao poleiro. */
 .view.on > .card.wash {
-  background: radial-gradient(360px 140px at 100% 60%, var(--wash, rgba(145, 181, 160,.2)), transparent 70%),
-              linear-gradient(180deg, #1D3C34, #142D28) !important; }
+  background: radial-gradient(360px 140px at 100% 60%, var(--wash, rgba(var(--tk-5ef2c9-rgb, 94, 242, 201),.2)), transparent 70%),
+              linear-gradient(180deg, var(--tk-111b36, #111b36), var(--tk-070b16, #070b16)) !important; }
 .view > .card.wash::before { content: ""; position: absolute; top: 14px; bottom: 14px; right: 104px; width: 1px;
-  background: linear-gradient(180deg, transparent, rgba(145, 181, 160,.35), transparent); pointer-events: none; }
-.view > .card .stack > .actions { justify-content: flex-start; border-top: 1px solid rgba(145, 181, 160,.16); padding-top: 8px; }
+  background: linear-gradient(180deg, transparent, rgba(var(--tk-e2b55a-rgb, 226, 181, 90),.35), transparent); pointer-events: none; }
+.view > .card .stack > .actions { justify-content: flex-start; border-top: 1px solid rgba(var(--tk-e2b55a-rgb, 226, 181, 90),.16); padding-top: 8px; }
 .view > .card > .fold { right: 112px; }
 .view > .card .stack .who-row { padding-left: 0; }
 /* Visão geral espelhada: painel de agentes à esquerda, cartão do Huginn à direita. */
@@ -105,13 +105,13 @@ body.bf-pair .bf-muninn-perch { opacity: 1; transform: none; pointer-events: aut
 .bf-hero .actions { justify-content: center; }
 .bf-hero-tree { right: auto !important; left: 50% !important; transform: translateX(-50%); opacity: .7; }
 .bf-hero-shield { position: relative; z-index: 1; justify-self: center; width: 118px; height: 118px; border-radius: 50%;
-  display: grid; place-items: center; border: 2px solid rgba(145, 181, 160,.55);
-  background: radial-gradient(circle at 50% 40%, rgba(145, 181, 160,.14), rgba(20, 45, 40,.85) 70%);
-  box-shadow: inset 0 0 0 6px rgba(20, 45, 40,.6), inset 0 0 0 7px rgba(145, 181, 160,.25), 0 6px 18px rgba(0, 0, 0,.4); }
-.bf-hero-shield.r { background: radial-gradient(circle at 50% 40%, rgba(201, 220, 207,.16), rgba(20, 45, 40,.85) 70%); }
+  display: grid; place-items: center; border: 2px solid rgba(var(--tk-e2b55a-rgb, 226, 181, 90),.55);
+  background: radial-gradient(circle at 50% 40%, rgba(var(--tk-5ef2c9-rgb, 94, 242, 201),.14), rgba(var(--tk-070b16-rgb, 7, 11, 22),.85) 70%);
+  box-shadow: inset 0 0 0 6px rgba(var(--tk-070b16-rgb, 7, 11, 22),.6), inset 0 0 0 7px rgba(var(--tk-e2b55a-rgb, 226, 181, 90),.25), 0 6px 18px rgba(0,0,0,.4); }
+.bf-hero-shield.r { background: radial-gradient(circle at 50% 40%, rgba(var(--tk-9a6bff-rgb, 154, 107, 255),.16), rgba(var(--tk-070b16-rgb, 7, 11, 22),.85) 70%); }
 .bf-hero.compact .bf-hero-shield { width: 88px; height: 88px; }
 .bf-hero-shield .bf-mascot { position: static !important; width: 78px !important; height: 78px !important; }
 .bf-hero.compact .bf-hero-shield .bf-mascot { width: 58px !important; height: 58px !important; }
 .bf-hero-shield-rune { position: absolute; bottom: -9px; left: 50%; transform: translateX(-50%); padding: 0 6px; font: 600 9px var(--bf-rune-font);
-  letter-spacing: .2em; color: var(--bf-gold-2); background: #142D28; border-radius: 4px; white-space: nowrap; }
+  letter-spacing: .2em; color: var(--bf-gold-2); background: var(--tk-0a1022, #0a1022); border-radius: 4px; white-space: nowrap; }
 @media (max-width: 760px) { .bf-hero { grid-template-columns: 1fr !important; } .bf-hero-shield { display: none; } }

@@ -88,7 +88,7 @@ export function integrationsSection(present: Record<string, boolean>): HTMLEleme
           input.placeholder = value ? CHAT_STRINGS.stored : field.placeholder;
           dotEl.style.background = value ? "#22c55e" : "#f4505e";
         } catch {
-          dotEl.style.background = "#C9DCCF";
+          dotEl.style.background = "#f5a524";
         }
       });
       rows.append(

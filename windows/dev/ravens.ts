@@ -1,7 +1,8 @@
 // Prancha dos corvos para capturas (só desenvolvimento): SVG (Huginn/Muninn × estados)
 // e motor de canvas (estados × adornos). ?only=svg|states|outfits|anim  &m=huginn|muninn
 import "../src/bifrost/nordic.css";
-import "../src/theme/freya.css";
+import "../src/theme/themes.css";
+import "../src/theme/themes";
 import "../src/theme/aurora";
 import { Mascot, MASCOT_STATES, type MascotName } from "../src/bifrost/mascots";
 import { BotEngine, BOT_STATES } from "../src/bifrost/raven";

@@ -177,19 +177,19 @@ export function botPosition(
 export function botGlowColor(s: BotStateName): string {
   switch (s) {
     case "working":
-      return "#91B5A0";
+      return "#3B9EFF";
     case "thinking":
-      return "#C9DCCF";
+      return "#A78BFA";
     case "searching":
-      return "#A9C6B4";
+      return "#6366F1";
     case "approval":
-      return "#C9DCCF";
+      return "#F5A524";
     case "error":
-      return "#D08A7E";
+      return "#F4505E";
     case "finished":
-      return "#91B5A0";
+      return "#34D399";
     case "ratelimit":
-      return "#C9DCCF";
+      return "#F59E0B";
     default:
       return "#FFFFFF";
   }
@@ -208,10 +208,20 @@ export function botGlowOpacity(s: BotStateName): number {
 }
 
 // Project colours (IslandConst.projectColors)
-// v16: sem as cores de projetos herdadas do app original; cada projeto ganha um tom da família Freya.
-const PROJECT_COLORS: Record<string, string> = {};
+const PROJECT_COLORS: Record<string, string> = {
+  korus: "#FF5A4E",
+  "sbe hub": "#2EC4A0",
+  "morning ai brief": "#F29B38",
+  "publication ig": "#7C5CFF",
+  "ig post": "#7C5CFF",
+  "louisraille.fr": "#38BDF8",
+  louisraille: "#38BDF8",
+  "notch buddy": "#EC4899",
+  "notch-buddy": "#EC4899",
+  notchbuddy: "#EC4899",
+};
 
-const FALLBACK_COLORS = ["#91B5A0", "#C9DCCF", "#6E8F7E", "#A9C6B4"];
+const FALLBACK_COLORS = ["#22C55E", "#EAB308", "#60A5FA", "#E879F9"];
 
 export function colorForProject(name: string): string {
   const key = name.toLowerCase().trim();
@@ -231,17 +241,17 @@ export type Wash = "red" | "green" | "pink" | "amber" | "cyan" | "indigo" | "sof
 export function washRGBA(wash: Wash): string {
   switch (wash) {
     case "red":
-      return "rgba(208, 138, 126, 0.5)";
+      return "rgba(244,80,94,0.55)";
     case "green":
-      return "rgba(145,181,160,0.5)";
+      return "rgba(52,211,153,0.5)";
     case "pink":
-      return "rgba(201,220,207,0.45)";
+      return "rgba(244,114,182,0.55)";
     case "amber":
-      return "rgba(201,220,207,0.4)";
+      return "rgba(245,165,36,0.42)";
     case "cyan":
-      return "rgba(145,181,160,0.38)";
+      return "rgba(34,211,238,0.38)";
     case "indigo":
-      return "rgba(65,106,89,0.6)";
+      return "rgba(99,102,241,0.5)";
     case "soft":
       return "rgba(255,255,255,0.08)";
     default:

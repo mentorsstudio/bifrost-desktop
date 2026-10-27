@@ -1,9 +1,9 @@
 html, body.bf-traymenu { margin: 0; background: transparent; overflow: hidden; font-family: var(--font, "Segoe UI", sans-serif); user-select: none; }
 #menu {
   margin: 6px; padding: 8px; border-radius: 16px; color: var(--bf-frost);
-  background: linear-gradient(180deg, rgba(20, 45, 40, .98), rgba(20, 45, 40, .98));
-  border: 1px solid rgba(145, 181, 160, .45);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(240, 234, 219, .12);
+  background: linear-gradient(180deg, rgba(var(--tk-14203f-rgb, 20, 32, 63), .98), rgba(var(--tk-070b16-rgb, 7, 11, 22), .98));
+  border: 1px solid rgba(var(--tk-e2b55a-rgb, 226, 181, 90), .45);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(var(--tk-f6d27a-rgb, 246, 210, 122), .12);
   opacity: 0; transform: translateY(10px) scale(.96); transform-origin: 85% 100%;
   transition: opacity var(--bf-quick) var(--bf-ease-fjord), transform var(--bf-step) var(--bf-ease-raven);
 }
@@ -23,10 +23,10 @@ html, body.bf-traymenu { margin: 0; background: transparent; overflow: hidden; f
 #menu.in .bf-tray-item:nth-of-type(4) { transition-delay: 90ms; }
 #menu.in .bf-tray-item:nth-of-type(5) { transition-delay: 120ms; }
 #menu.in .bf-tray-item:nth-of-type(n+6) { transition-delay: 150ms; }
-.bf-tray-item:hover { background: rgba(145, 181, 160, .12); transform: translateX(3px) !important; }
+.bf-tray-item:hover { background: rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .12); transform: translateX(3px) !important; }
 .bf-tray-item.update { color: var(--bf-aurora-2); }
-.bf-tray-item.danger:hover { background: rgba(145, 181, 160, .14); }
-.bf-tray-sep { height: 1px; margin: 6px 8px; background: linear-gradient(90deg, transparent, rgba(145, 181, 160, .4), transparent); }
+.bf-tray-item.danger:hover { background: rgba(var(--tk-ff6b6b-rgb, 255, 107, 107), .14); }
+.bf-tray-sep { height: 1px; margin: 6px 8px; background: linear-gradient(90deg, transparent, rgba(var(--tk-e2b55a-rgb, 226, 181, 90), .4), transparent); }
 
 /* ── v14: o menu da bandeja vira um tabuleiro de runas ──
    Duas colunas de pedras (runa grande em cima, nome embaixo); o "Sair" fica sozinho
@@ -37,9 +37,20 @@ html, body.bf-traymenu { margin: 0; background: transparent; overflow: hidden; f
 .bf-tray-head .bf-pair-row { display: flex; gap: 6px; }
 .bf-tray-head .bf-mascot { width: 34px; height: 34px; }
 .bf-tray-item { flex-direction: column; gap: 3px; padding: 9px 4px; margin: 0; text-align: center; font-size: 11.5px;
-  border: 1px solid rgba(145, 181, 160, .16); background: rgba(20, 45, 40, .45); transform: translateY(4px); }
-.bf-tray-item .bf-menu-rune { font-size: 18px; color: var(--bf-gold-2, #F0EADB); }
-.bf-tray-item:hover { transform: translateY(-1px) !important; border-color: rgba(145, 181, 160, .45); }
+  border: 1px solid rgba(var(--tk-e2b55a-rgb, 226, 181, 90), .16); background: rgba(var(--tk-070b16-rgb, 7, 11, 22), .45); transform: translateY(4px); }
+.bf-tray-item .bf-menu-rune { font-size: 18px; color: var(--bf-gold-2, var(--tk-f6d27a, #f6d27a)); }
+.bf-tray-item:hover { transform: translateY(-1px) !important; border-color: rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .45); }
 .bf-tray-item.danger { grid-column: 1 / -1; flex-direction: row; justify-content: center; }
 .bf-tray-sep { display: none; }
 @media (prefers-reduced-motion: reduce) { #menu, .bf-tray-item { transition: none !important; transform: none !important; } }
+
+/* Fase 18: troca de tema na base do menu (uma runa por reino). */
+.bf-tray-themes { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 4px; padding: 6px 2px 0; margin-top: 2px;
+  border-top: 1px solid rgba(var(--tk-e2b55a-rgb, 226, 181, 90), .16); }
+.bf-tray-theme { width: 27px; height: 27px; border-radius: 9px; border: 1px solid rgba(255, 255, 255, .1); cursor: pointer; padding: 0;
+  font: 600 13px var(--bf-rune-font); color: var(--chip); background: radial-gradient(circle at 50% 120%, color-mix(in srgb, var(--chip-2) 35%, transparent), rgba(0, 0, 0, .35));
+  opacity: 0; transform: translateY(4px) scale(.9); }
+#menu.in .bf-tray-theme { opacity: 1; transform: none; transition: opacity var(--m-fast) var(--m-ease), transform var(--m-base) var(--m-bouncy), box-shadow var(--m-base) var(--m-ease);
+  transition-delay: calc(var(--i, 0) * 25ms + 120ms); }
+#menu.in .bf-tray-theme:hover { transform: translateY(-2px) !important; box-shadow: 0 4px 12px -4px var(--chip); transition-delay: 0ms; }
+.bf-tray-theme.on { border-color: var(--chip); box-shadow: 0 0 0 1px var(--chip), 0 0 10px -2px var(--chip); }

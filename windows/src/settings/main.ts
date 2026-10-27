@@ -4,6 +4,7 @@
 // island's settings are drawn here, one Notch page at a time.
 
 import "./settings.css";
+import "./themes-page.css";
 import "../theme/bifrost.css";
 import "../bifrost/nordic.css";
 import "../bifrost/skin.css";
@@ -11,7 +12,8 @@ import "../bifrost/hub.css";
 import "../bifrost/hub-pages.css";
 import "../theme/motion.css";
 import "../bifrost/realm.css";
-import "../theme/freya.css";
+import "../theme/themes.css";
+import "../theme/themes";
 import "../theme/aurora";
 import "../bifrost/contextmenu";
 
@@ -38,6 +40,7 @@ import { activePillsSection } from "./page-pills";
 import { localSection } from "./page-chat";
 import { integrationsSection, whatsappSections } from "./page-integrations";
 import { generalSection } from "./page-general";
+import { themesSection } from "./page-themes";
 import { shortcutsSection } from "./page-shortcuts";
 
 // ── Language ──────────────────────────────────────────────────────────────────
@@ -124,6 +127,7 @@ async function render() {
   clear(S.root);
   const sections: Partial<Record<PageId, () => HTMLElement[]>> = {
     general: () => [generalSection()],
+    themes: () => [themesSection()],
     pills: () => [activePillsSection(connected)],
     agents: () => [claudeSection(status), agentsSection(agents), planSection(status)],
     chat: () => [aiSection(), ...mcpSections(S.settings, save, "chat"), localSection(false)],

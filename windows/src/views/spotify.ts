@@ -119,7 +119,7 @@ export function buildSpotifyPill(task: AgentTask, onTap: () => void): SpotifyPil
   const playBtn = pillButton(color, ICONS.play, togglePlay);
   const nextBtn = pillButton(color, ICONS.forward, () => void Bridge.spotifyControl("next"));
   const controls = h("div", { class: "np-pill-controls" }, playBtn, nextBtn);
-  const pill = h("div", { class: "pill np-pill", onclick: onTap }, mini, label, controls);
+  const pill = h("div", { class: "pill np-pill", role: "button", onclick: onTap }, mini, label, controls);
   pill.style.borderColor = `${color}24`;
   let hovered = false;
   let playing: boolean | null = null;

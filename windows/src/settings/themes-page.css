@@ -1,0 +1,29 @@
+/* Fase 18 — a galeria de temas (Ajustes → Temas). */
+.th-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 14px; margin-top: 12px; }
+.th-card {
+  display: flex; flex-direction: column; gap: 8px; padding: 10px; text-align: left; cursor: pointer; color: var(--ink);
+  border-radius: 18px; border: 1px solid rgba(255, 255, 255, .08); background: rgba(255, 255, 255, .03);
+  box-shadow: 0 0 0 0 transparent; font: inherit;
+}
+.th-card:hover { box-shadow: 0 10px 28px -12px var(--th-card-glow), 0 0 0 1px var(--th-card-glow); }
+.th-card.on { border-color: var(--th-card-accent); box-shadow: 0 0 0 2px var(--th-card-accent), 0 12px 30px -14px var(--th-card-glow); }
+.th-preview { position: relative; height: 112px; border-radius: 13px; overflow: hidden; isolation: isolate;
+  background: linear-gradient(180deg, var(--tk-070b16, #070b16), var(--tk-0d1630, #0d1630) 70%, var(--tk-0a1024, #0a1024)); }
+.th-sky { position: absolute; inset: 0; background: radial-gradient(160px 70px at 20% 0%, rgba(var(--th-a1-rgb), .28), transparent 70%), radial-gradient(140px 70px at 85% -10%, rgba(var(--th-a3-rgb), .26), transparent 70%); }
+.th-island { position: absolute; top: 0; left: 50%; width: 62%; height: 26px; transform: translateX(-50%); display: flex; align-items: center; gap: 6px; padding: 0 10px;
+  border-radius: 0 0 12px 12px; background: linear-gradient(180deg, var(--tk-05070f, #05070f), var(--tk-070b18, #070b18)); box-shadow: 0 6px 16px -8px rgba(var(--th-a1-rgb), .6); }
+.th-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--th-a2); box-shadow: 0 0 6px var(--th-a2); }
+.th-line { height: 5px; flex: 1; border-radius: 3px; background: rgba(255, 255, 255, .18); }
+.th-line.short { flex: .45; background: rgba(var(--th-accent-rgb), .55); }
+.th-aurora { position: absolute; top: 28px; left: 18%; right: 18%; height: 3px; overflow: hidden; border-radius: 2px; }
+.th-aurora > i { position: absolute; inset: 0 -100% 0 0; background: var(--th-aurora); background-size: 50% 100%; animation: th-flow 6s linear infinite; }
+@keyframes th-flow { to { transform: translateX(-50%); } }
+.th-birds { position: absolute; left: 0; right: 0; bottom: 4px; display: flex; justify-content: center; gap: 10px; }
+.th-birds .bf-mascot { width: 66px; height: 66px; }
+.th-meta { display: flex; align-items: center; gap: 8px; }
+.th-rune { font-family: var(--bf-rune-font); font-size: 18px; color: var(--th-card-accent); width: 22px; text-align: center; }
+.th-name { font-weight: 600; font-size: 14px; flex: 1; }
+.th-badge { font-size: 10.5px; padding: 2px 8px; border-radius: 999px; background: var(--th-card-accent); color: #0b0b10; opacity: 0; transform: scale(.8); transition: opacity var(--m-fast) var(--m-ease), transform var(--m-base) var(--m-bouncy); }
+.th-card.on .th-badge { opacity: 1; transform: none; }
+.th-tag { font-size: 11.5px; line-height: 1.35; color: var(--dim); }
+@media (prefers-reduced-motion: reduce) { .th-aurora > i { animation: none; } }

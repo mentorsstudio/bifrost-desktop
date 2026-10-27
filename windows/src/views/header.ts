@@ -8,6 +8,7 @@ import type { IslandViewName } from "../core/layout";
 import { tl, type Msg } from "../i18n/i18n";
 import { buildPlanPill, claudePillVisible, codexPillVisible, refreshCodexPlanUsage } from "./usage";
 import type { ViewActions, ViewHost } from "./views";
+import { slidingInk } from "../theme/interact";
 
 export type HeaderTab = "home" | "chat" | "drop" | "settings" | null;
 
@@ -34,7 +35,11 @@ export function buildHeader(actions: ViewActions): ViewHost {
   const codexPill = buildPlanPill(true);
   const planPills = h("div", { class: "plan-pills" }, claudePill.el, codexPill.el);
   const right = h("div", { class: "header-actions" }, planPills, gear, sound);
-  const el = h("div", { id: "header" }, h("div", { class: "tabs" }, tabs.home, tabs.chat, tabs.drop), right);
+  const tabRow = h("div", { class: "tabs", role: "tablist" }, tabs.home, tabs.chat, tabs.drop);
+  for (const b of Object.values(tabs)) b.setAttribute("role", "tab");
+  const el = h("div", { id: "header" }, tabRow, right);
+  // Fase 18: o fundo da aba escolhida desliza de uma para outra com mola.
+  if (typeof document !== "undefined" && typeof MutationObserver !== "undefined") slidingInk(tabRow, ".tab.on", "tabs");
   let last = "";
   let codexShown = false;
 
@@ -45,7 +50,7 @@ export function buildHeader(actions: ViewActions): ViewHost {
       const key = `${m.tab}|${m.soundOn}|${m.hidden}`;
       if (key !== last) {
         last = key;
-        for (const [id, b] of Object.entries(tabs)) b.classList.toggle("on", m.tab === id);
+        for (const [id, b] of Object.entries(tabs)) { b.classList.toggle("on", m.tab === id); b.setAttribute("aria-selected", String(m.tab === id)); }
         gear.classList.toggle("on", m.tab === "settings");
         gear.replaceChildren(svg(m.tab === "settings" ? ICONS.gearFill : ICONS.gear, 14));
         sound.replaceChildren(svg(m.soundOn ? ICONS.speakerOn : ICONS.speakerOff, 14));

@@ -16,6 +16,7 @@ import { Sound } from "../core/sound";
 import { State, type ChatMessage } from "../core/state";
 import type { ViewHost } from "./views";
 import { N_, t, tl } from "../i18n/i18n";
+import { flip } from "../theme/interact";
 
 const TEXT = {
   first: N_("Ask me anything…"),
@@ -195,7 +196,8 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
 
   who.addEventListener("click", () => {
     if (busy) return;
-    if (pick.isOpen) pick.close(); else pick.open();
+    // Fase 18: abrir/fechar o seletor com FLIP (o resto do chat escorrega no lugar).
+    flip(body, () => { if (pick.isOpen) pick.close(); else pick.open(); });
   });
 
   void onEvent<string>("chat-delta", (text) => {

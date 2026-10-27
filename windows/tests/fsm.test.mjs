@@ -377,3 +377,13 @@ test("open on hover: an island opened by an alert keeps the normal delay", () =>
   seconds(2);
   assert.equal(fsm.state, "petit");
 });
+
+test("fase 18: com a faixa do notch a compacta é o piso — nunca recolhe", () => {
+  fsm.floorPetit = true;
+  fsm.forcePetit();
+  fsm.forceHidden();
+  assert.equal(fsm.state, "petit");
+  fsm.mouseLeft();
+  mock.timers.tick(60_000);
+  assert.equal(fsm.state, "petit");
+});

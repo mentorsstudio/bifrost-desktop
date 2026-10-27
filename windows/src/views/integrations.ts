@@ -240,7 +240,7 @@ function githubCard(): HTMLElement {
     h(
       "div",
       { class: "int-stats" },
-      statRow(ICONS.star, "#C9DCCF", t("Total stars"), fmt(stars)),
+      statRow(ICONS.star, "#F5A524", t("Total stars"), fmt(stars)),
       statRow(ICONS.stack, "#6B7079", t("Repositories"), String(repos)),
     ),
   );
@@ -257,7 +257,7 @@ function gitlabCard(): HTMLElement {
 function giteaCard(): HTMLElement {
   const d = get("integration_gitea");
   return h("div", { class: "int-card" }, header("#609926", "Gitea", t("Overview")),
-    h("div", { class: "int-stats" }, statRow(ICONS.star, "#C9DCCF", t("Total stars"), String(d.totalStars ?? 0)),
+    h("div", { class: "int-stats" }, statRow(ICONS.star, "#F5A524", t("Total stars"), String(d.totalStars ?? 0)),
       statRow(ICONS.stack, "#6B7079", t("Repositories"), String(d.totalRepos ?? 0))));
 }
 

@@ -5,6 +5,7 @@
 import { h, dot } from "./dom";
 import { washRGBA, type Wash } from "../core/layout";
 import type { Msg } from "../i18n/i18n";
+import { slidingInk } from "../theme/interact";
 
 export function card(wash: Wash, ...children: (Node | string)[]): HTMLElement {
   const el = h("div", { class: wash ? "card wash" : "card" }, ...children);
@@ -38,6 +39,7 @@ export function segmented<T>(options: readonly { value: T; label: string }[], on
     return b;
   });
   const el = h("div", { class: "seg", role: "radiogroup" }, ...buttons);
+  if (typeof document !== "undefined" && typeof MutationObserver !== "undefined") slidingInk(el, "button.on", "seg");
   return {
     el,
     set(value) {

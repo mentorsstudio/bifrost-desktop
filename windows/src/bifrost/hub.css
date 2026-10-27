@@ -2,13 +2,13 @@
 .bf-hero { position: relative; overflow: hidden; display: grid !important; grid-template-columns: 1fr 260px; align-items: center;
   min-height: 160px; padding: 20px 24px !important; border-radius: 18px;
   background: radial-gradient(500px 220px at 85% 120%, color-mix(in srgb, var(--hero-accent) 22%, transparent), transparent 70%),
-    radial-gradient(600px 200px at 10% -30%, rgba(145, 181, 160,.14), transparent 70%),
-    linear-gradient(180deg, #1D3C34, #142D28) !important; }
+    radial-gradient(600px 200px at 10% -30%, rgba(var(--tk-5ef2c9-rgb, 94, 242, 201),.14), transparent 70%),
+    linear-gradient(180deg, var(--tk-0f1a36, #0f1a36), var(--tk-070b16, #070b16)) !important; }
 .bf-hero.compact { min-height: 112px; grid-template-columns: 1fr 200px; }
 .bf-hero.compact .bf-hero-tree { right: 220px; }
 .bf-hero .actions { display: flex !important; gap: 8px; margin-top: 4px; position: static !important; opacity: 1 !important; }
 .bf-hero-sky { position: absolute; inset: 0; pointer-events: none; }
-.bf-hero-tree { position: absolute; right: 290px; top: -10px; width: 240px; height: 180px; color: rgba(145, 181, 160,.13);
+.bf-hero-tree { position: absolute; right: 290px; top: -10px; width: 240px; height: 180px; color: rgba(var(--tk-e2b55a-rgb, 226, 181, 90),.13);
   animation: bf-tree-breathe 8s var(--bf-ease-tide) infinite alternate; }
 @keyframes bf-tree-breathe { to { opacity: .8; transform: translateY(-3px); } }
 .bf-hero-copy { position: relative; z-index: 1; min-width: 0; }
@@ -18,7 +18,7 @@
 .bf-hero-perch { position: relative; z-index: 1; height: 120px; }
 .bf-hero.compact .bf-hero-perch { height: 92px; }
 .bf-hero-branch { position: absolute; left: 6%; right: 0; bottom: 14px; height: 7px; border-radius: 4px;
-  background: linear-gradient(180deg, #1D3C34, #142D28); box-shadow: 0 2px 0 rgba(0, 0, 0,.4); }
+  background: linear-gradient(180deg, var(--tk-5a3a22, #5a3a22), var(--tk-2b1a0e, #2b1a0e)); box-shadow: 0 2px 0 rgba(0,0,0,.4); }
 .bf-hero-perch .bf-mascot { position: absolute; bottom: 12px; }
 .bf-hero-h { width: 104px !important; height: 104px !important; left: 22%; }
 .bf-hero-m { width: 84px !important; height: 84px !important; left: 62%; }
@@ -31,12 +31,12 @@
 
 /* ── Painel entalhado (substitui o cartão com partículas) ─────────────── */
 .bf-panel { position: relative; border-radius: 14px; overflow: hidden;
-  border: 1px solid rgba(145, 181, 160,.22) !important;
+  border: 1px solid rgba(var(--tk-e2b55a-rgb, 226, 181, 90),.22) !important;
   background:
     linear-gradient(90deg, transparent, color-mix(in srgb, var(--panel-accent) 70%, transparent), transparent) top / 100% 2px no-repeat,
     radial-gradient(420px 140px at 100% 0%, color-mix(in srgb, var(--panel-accent) 14%, transparent), transparent 70%),
-    radial-gradient(380px 160px at 0% 110%, rgba(145, 181, 160,.07), transparent 70%),
-    linear-gradient(180deg, #1D3C34, #142D28) !important; }
+    radial-gradient(380px 160px at 0% 110%, rgba(var(--tk-5ef2c9-rgb, 94, 242, 201),.07), transparent 70%),
+    linear-gradient(180deg, var(--tk-111b36, #111b36), var(--tk-0a1022, #0a1022)) !important; }
 .bf-panel .inner { position: relative; z-index: 1; }
 .bf-panel-knot { position: absolute; width: 18px; height: 18px; pointer-events: none; opacity: .55;
   border: 2px solid var(--bf-gold); border-radius: 50%; clip-path: inset(0 50% 50% 0); }
@@ -52,20 +52,20 @@
 
 /* ── Páginas do hub: layout nórdico comum ──────────────────────────────── */
 .hub-page { gap: 18px !important; }
-.hub-card { position: relative; border-radius: 14px !important; border: 1px solid rgba(145, 181, 160,.2) !important;
-  background: radial-gradient(380px 140px at 100% 0%, rgba(201, 220, 207,.08), transparent 70%), linear-gradient(180deg, #1D3C34, #142D28) !important; }
+.hub-card { position: relative; border-radius: 14px !important; border: 1px solid rgba(var(--tk-e2b55a-rgb, 226, 181, 90),.2) !important;
+  background: radial-gradient(380px 140px at 100% 0%, rgba(var(--tk-6aa8ff-rgb, 106, 168, 255),.08), transparent 70%), linear-gradient(180deg, var(--tk-101a34, #101a34), var(--tk-0a1022, #0a1022)) !important; }
 .hub-card::before { content: ""; position: absolute; left: 16px; right: 16px; top: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(145, 181, 160,.55), transparent); }
+  background: linear-gradient(90deg, transparent, rgba(var(--tk-e2b55a-rgb, 226, 181, 90),.55), transparent); }
 .hub-label, .hub-history-head > :first-child { font-family: var(--bf-heading-font) !important; letter-spacing: .22em !important; color: var(--bf-gold) !important; }
 .hub-label::before, .hub-history-head > :first-child::before { content: "ᛜ "; font-family: var(--bf-rune-font); color: var(--bf-aurora-1); letter-spacing: 0; }
-.hub-row, .hub-list-row, .hub-entry { border-color: rgba(145, 181, 160,.12) !important; transition: background var(--bf-tap); }
-.hub-list-row:hover, .hub-entry:hover { background: rgba(145, 181, 160,.05); }
+.hub-row, .hub-list-row, .hub-entry { border-color: rgba(var(--tk-e2b55a-rgb, 226, 181, 90),.12) !important; transition: background var(--bf-tap); }
+.hub-list-row:hover, .hub-entry:hover { background: rgba(var(--tk-5ef2c9-rgb, 94, 242, 201),.05); }
 .hub-big-number { font-family: var(--bf-heading-font) !important; color: var(--bf-gold-2) !important; }
-.hub-stat { border-left: 2px solid rgba(145, 181, 160,.35); padding-left: 10px; }
-.hub-chip, .hub-tag { border: 1px solid rgba(145, 181, 160,.3) !important; background: rgba(20, 45, 40,.6) !important; }
-.hub-input, .hub-select, .hub-textarea { background: rgba(20, 45, 40,.75) !important; border: 1px solid rgba(145, 181, 160,.25) !important; border-radius: 9px !important; }
-.hub-input:focus, .hub-select:focus, .hub-textarea:focus { border-color: rgba(145, 181, 160,.6) !important; outline: none; box-shadow: 0 0 0 3px rgba(145, 181, 160,.12); }
-.hub-keycap { font-family: var(--bf-heading-font); border: 1px solid rgba(145, 181, 160,.45) !important; background: linear-gradient(180deg, #142D28, #10231F) !important; color: var(--bf-gold-2) !important; }
+.hub-stat { border-left: 2px solid rgba(var(--tk-5ef2c9-rgb, 94, 242, 201),.35); padding-left: 10px; }
+.hub-chip, .hub-tag { border: 1px solid rgba(var(--tk-e2b55a-rgb, 226, 181, 90),.3) !important; background: rgba(var(--tk-070b16-rgb, 7, 11, 22),.6) !important; }
+.hub-input, .hub-select, .hub-textarea { background: rgba(var(--tk-070b16-rgb, 7, 11, 22),.75) !important; border: 1px solid rgba(var(--tk-93a1c6-rgb, 147, 161, 198),.25) !important; border-radius: 9px !important; }
+.hub-input:focus, .hub-select:focus, .hub-textarea:focus { border-color: rgba(var(--tk-5ef2c9-rgb, 94, 242, 201),.6) !important; outline: none; box-shadow: 0 0 0 3px rgba(var(--tk-5ef2c9-rgb, 94, 242, 201),.12); }
+.hub-keycap { font-family: var(--bf-heading-font); border: 1px solid rgba(var(--tk-e2b55a-rgb, 226, 181, 90),.45) !important; background: linear-gradient(180deg, var(--tk-2b1d12, #2b1d12), var(--tk-150e08, #150e08)) !important; color: var(--bf-gold-2) !important; }
 .hub-bars > * { background: linear-gradient(180deg, var(--bf-aurora-1), var(--bf-aurora-2)) !important; }
-.hub-segmented { border: 1px solid rgba(145, 181, 160,.25) !important; }
+.hub-segmented { border: 1px solid rgba(var(--tk-e2b55a-rgb, 226, 181, 90),.25) !important; }
 .hub-columns { gap: 18px !important; }

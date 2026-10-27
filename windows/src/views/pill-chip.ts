@@ -21,7 +21,7 @@ export function pillLook(color: string, hovered: boolean) {
 }
 
 const BADGE = {
-  approval: { color: "#C9DCCF", icon: "bang", stroke: 0 },
+  approval: { color: "#F5A524", icon: "bang", stroke: 0 },
   finished: { color: "#22C55E", icon: "check", stroke: 3 },
   error: { color: "#F4505E", icon: "xmark", stroke: 0 },
 } as const;
@@ -30,7 +30,7 @@ export function badgeLook(kind: keyof typeof BADGE) { return BADGE[kind]; }
 export function buildPill(task: AgentTask, actions: ViewActions): HTMLElement {
   const name = task.id === "integration_claude" ? pillDefinition(task.id)!.name : task.name;
   const lbl = h("span", { class: "lbl", text: name });
-  const pill = h("div", { class: "pill", title: name, onclick: () => actions.setFocus(task.id) }, createMiniBot(task, 24), lbl);
+  const pill = h("div", { class: "pill", role: "button", title: name, onclick: () => actions.setFocus(task.id) }, createMiniBot(task, 24), lbl);
   const paint = (hovered: boolean) => {
     const l = pillLook(task.color, hovered);
     pill.style.background = l.background;

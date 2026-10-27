@@ -25,10 +25,12 @@ import { onEvent } from "../core/bridge";
 import { FlowBridge, type FlowPrefs, type FlowStatus, type ModelsStatus } from "../core/flow";
 import { hero, liveRaven, setWindowShown, windowShown } from "./hero";
 import { icon, keyLabel } from "./ui";
+import { THEME_TXT } from "../theme/strings";
+import { autoReveal, slidingInk } from "../theme/interact";
 
 export type PageId =
   | "dictation" | "notes" | "insights" | "dictionary" | "snippets" | "styles" | "flowsettings"
-  | "general" | "pills" | "agents" | "chat" | "voice" | "integrations" | "phone" | "shortcuts";
+  | "general" | "themes" | "pills" | "agents" | "chat" | "voice" | "integrations" | "phone" | "shortcuts";
 
 interface PageDef {
   id: PageId;
@@ -50,6 +52,7 @@ export const FLOW_PAGES: PageDef[] = [
 
 export const NOTCH_PAGES: PageDef[] = [
   { id: "general", icon: "gear", title: () => t("General"), subtitle: () => t("Huginn, his sounds and how the island behaves.") },
+  { id: "themes", icon: "palette", title: () => THEME_TXT.pageTitle, subtitle: () => THEME_TXT.pageSubtitle },
   { id: "pills", icon: "grid", title: () => t("Active pills"), subtitle: () => t("The pills shown in the island, their order and their colours.") },
   { id: "agents", icon: "terminal", title: () => t("Agents"), subtitle: () => t("Claude Code, Codex and the other agents Huginn follows.") },
   { id: "chat", icon: "chat", title: () => t("Chat"), subtitle: () => "As IAs do seu PC e os servidores MCP — sem chave nenhuma." },
@@ -115,6 +118,7 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
   const statusLine = h("div", { class: "hub-status" });
   const scroll = h("div", { class: "hub-scroll" });
   const stage = h("div", { class: "hub-stage" });
+  autoReveal(stage);
   scroll.append(stage);
   let rendering = 0;
 
@@ -146,13 +150,13 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
     if (!status.prefs.enabled) {
       text = t("Dictation is off");
     } else if (models !== "ready") {
-      color = "#91B5A0";
+      color = "#f7b32b";
       text = models === "downloading" ? t("Downloading the voice model…") : t("Download the voice model to dictate");
     } else if (status.keys !== "ok" && status.keys !== "wayland") {
-      color = "#91B5A0";
+      color = "#f7b32b";
       text = t("Use the pill's microphone to dictate");
     } else {
-      color = "#91B5A0";
+      color = "#34d399";
       text = t("Ready · hold {0}", { 0: keyLabel(status.keys === "wayland" ? "wayland" : status.prefs.key, status.platform) });
     }
     statusLine.append(h("i", { class: "dot", style: `background:${color}` }), h("span", { text }));
@@ -171,6 +175,7 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
   let pre: Built | null = null;
   let active: Built | null = null;
   let epoch = 0;
+  let navDir = 0;
 
   async function build(def: PageDef, prefetch: boolean): Promise<Built> {
     const local = Object.create(ctx) as HubContext;
@@ -219,6 +224,8 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
 
   async function show(page: PageId) {
     const def = ALL.find((p) => p.id === page) ?? FLOW_PAGES[0];
+    const from = ALL.findIndex((p) => p.id === current), to = ALL.findIndex((p) => p.id === def.id);
+    navDir = from < 0 || to === from ? 0 : to > from ? 1 : -1;
     active?.local.onLeave?.();
     if (active) active.local.onLeave = undefined;
     current = def.id;
@@ -268,13 +275,24 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
     for (const el of [...stage.children] as HTMLElement[]) {
       if (el === page_ || el.classList.contains("m-layer")) continue;
       const id = el.dataset.page as PageId | undefined;
-      if (id && (alive.get(id)?.el === el || pre?.el === el)) {
+      const keep = !!id && (alive.get(id)?.el === el || pre?.el === el);
+      const park = () => {
+        el.classList.remove("m-entering", "m-leaving");
+        if (keep) { el.classList.add("m-layer"); el.setAttribute("aria-hidden", "true"); } else el.remove();
+      };
+      // Fase 18: a página que sai cruza com a que entra, deslizando para o lado oposto.
+      if (motion && el.classList.contains("hub-page")) {
+        el.style.setProperty("--m-dir", String(navDir));
         el.classList.remove("m-entering");
-        el.classList.add("m-layer");
-        el.setAttribute("aria-hidden", "true");
-      } else el.remove();
+        el.classList.add("m-leaving");
+        window.setTimeout(() => {
+          if (el === active?.el) { el.classList.remove("m-leaving"); return; }
+          if (!el.classList.contains("m-layer")) park();
+        }, Durations.fast);
+      } else park();
     }
-    page_.classList.remove("m-layer");
+    page_.style.setProperty("--m-dir", String(navDir));
+    page_.classList.remove("m-layer", "m-leaving");
     page_.removeAttribute("aria-hidden");
     if (scrolled) scroll.scrollTop = 0;
     if (!motion) return;
@@ -310,6 +328,8 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
   group("Voz", FLOW_PAGES);
   group("Ilha", NOTCH_PAGES);
   side.append(h("div", { class: "spacer" }), h("div", { class: "hub-meta" }, statusLine, h("div", { class: "hub-version", text: `Bifrost ${opts.version}` })));
+  // Fase 18: a seleção desliza entre as runas (inclusive de um reino para o outro).
+  slidingInk(side, ".hub-item.on", "hub");
 
   clear(root);
   root.append(side, h("main", { class: "hub-panel" }, scroll));
