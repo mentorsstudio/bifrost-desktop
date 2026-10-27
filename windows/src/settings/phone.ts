@@ -1,6 +1,7 @@
 // Settings → Android phone: the switch for the phone link and the code that
 // pairs a phone with this computer. Off until the user turns it on.
 
+import { formBtn, textField } from "../views/kit";
 import { Bridge, type PhoneChatStatus, type PhoneLinkPairing, type PhoneLinkStatus, type PhoneRelayState, type PhoneRelayStatus } from "../core/bridge";
 import { modelId, modelsOf, toggleModel, usableProviders } from "../core/phone-chat";
 import { PROVIDERS, type ProviderDef } from "../core/providers";
@@ -53,7 +54,7 @@ export function phoneSection(on: boolean, makeToggle: Toggle, settings: Settings
     note.textContent = "";
     if (status?.error) showError(status.error);
     if (!status?.running) return;
-    const show = h("button", { text: t("Show pairing code") });
+    const show = formBtn(t("Show pairing code"));
     show.addEventListener("click", () => void reveal(status, false));
     const address = status.host ? `${status.host}:${status.port}` : `:${status.port}`;
     clients.textContent = t("Phones connected: {count}", { count: status.clients });
@@ -136,8 +137,8 @@ export function relayStateText(state: PhoneRelayState): string {
 function relayBlock(makeToggle: Toggle, changed: () => void): HTMLElement {
   const note = h("div", { class: "hint" });
   const state = h("div", { class: "hint" });
-  const address = h("input", { type: "text", placeholder: "wss://", style: "width:100%", autocomplete: "off", spellcheck: "false" }) as HTMLInputElement;
-  const access = h("input", { type: "password", style: "width:100%", autocomplete: "off", spellcheck: "false" }) as HTMLInputElement;
+  const address = textField({ type: "text", placeholder: "wss://", style: "width:100%", autocomplete: "off", spellcheck: "false" }) as HTMLInputElement;
+  const access = textField({ type: "password", style: "width:100%", autocomplete: "off", spellcheck: "false" }) as HTMLInputElement;
   let current: PhoneRelayStatus = { enabled: false, url: "", hasAccess: false, state: "off" };
 
   const show = (status: PhoneRelayStatus | null) => {
@@ -164,9 +165,9 @@ function relayBlock(makeToggle: Toggle, changed: () => void): HTMLElement {
     }
   };
   const switchEl = makeToggle(false, (next) => void apply(next));
-  const saveAddress = h("button", { text: t("Save address") });
+  const saveAddress = formBtn(t("Save address"));
   saveAddress.addEventListener("click", () => void apply(current.enabled));
-  const saveKey = h("button", { text: t("Save key") });
+  const saveKey = formBtn(t("Save key"));
   saveKey.addEventListener("click", () => {
     void (async () => {
       note.textContent = "";
@@ -284,7 +285,7 @@ function servicesBlock(): HTMLElement {
   const note = h("div", { class: "hint" });
   let ticked: string[] = [];
   const boxes = PHONE_SERVICES.map(([id, name]) => {
-    const box = h("input", { type: "checkbox" }) as HTMLInputElement;
+    const box = textField({ type: "checkbox" }) as HTMLInputElement;
     box.addEventListener("change", () => {
       void (async () => {
         note.textContent = "";
@@ -433,13 +434,13 @@ function chatBlock(makeToggle: Toggle, settings: Settings): HTMLElement {
   /** One provider: a button that asks it for its models (only now), then a tick box per model. */
   const providerRow = (p: ProviderDef): HTMLElement => {
     const list = h("div", {});
-    const button = h("button", { text: t("Choose models") });
+    const button = formBtn(t("Choose models"));
     const head = h("div", { class: "row" }, h("label", { text: p.name }), button);
     const show = (models: string[]) => {
       list.replaceChildren(
         ...[...new Set([...models, ...modelsOf(allowed, p.id)])].map((model) => {
           const id = modelId(p.id, model);
-          const box = h("input", { type: "checkbox" }) as HTMLInputElement;
+          const box = textField({ type: "checkbox" }) as HTMLInputElement;
           box.checked = allowed.includes(id);
           box.addEventListener("change", () => void save(toggleModel(allowed, id, box.checked)));
           return h("div", { class: "row" }, h("label", {}, box, h("span", { text: ` ${model}` })));
@@ -523,10 +524,10 @@ function pairingRows(pairing: PhoneLinkPairing, again: () => void): HTMLElement[
   const qr = h("div", { class: "qr" });
   qr.innerHTML = pairing.qrSvg;
 
-  const link = h("input", { type: "text", readonly: "true", value: pairing.link, style: "width:100%" }) as HTMLInputElement;
+  const link = textField({ type: "text", readonly: "true", value: pairing.link, style: "width:100%" }) as HTMLInputElement;
   link.addEventListener("focus", () => link.select());
 
-  const copy = h("button", { text: t("Copy link") });
+  const copy = formBtn(t("Copy link"));
   const copied = copyLinkHint();
   copy.addEventListener("click", () => {
     void navigator.clipboard?.writeText(pairing.link).then(() => {
@@ -536,7 +537,7 @@ function pairingRows(pairing: PhoneLinkPairing, again: () => void): HTMLElement[
     });
   });
 
-  const repair = h("button", { text: t("Pair again") });
+  const repair = formBtn(t("Pair again"));
   repair.addEventListener("click", again);
 
   return [

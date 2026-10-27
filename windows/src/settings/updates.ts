@@ -2,6 +2,7 @@
 // (MacUpdateViews.swift): the toggle, what it does, "Check now" (a click, so
 // it works with the toggle off), and "Install X" once a new version is out.
 
+import { formBtn } from "../views/kit";
 import { Bridge } from "../core/bridge";
 import { NO_UPDATE, isBusy, type UpdateStatus } from "../core/update";
 import { h } from "../views/dom";
@@ -18,16 +19,13 @@ export function updateRows(toggle: Toggle, version: string): HTMLElement[] {
   const install = h("button", {
     onclick: () => void (status.canInstall ? Bridge.updateShow() : Bridge.updateOpenPage()),
   }) as HTMLButtonElement;
-  const check = h("button", {
-    text: t("Check now"),
-    onclick: async () => {
+  const check = formBtn(t("Check now"), "plain", async () => {
       check.disabled = true;
       feedback.textContent = "";
       const fresh = await Bridge.updateCheck();
       if (fresh) status = fresh;
       draw();
-    },
-  }) as HTMLButtonElement;
+    }) as HTMLButtonElement;
   const feedback = h("span", { class: "hint" });
   const footer = h("span", { class: "hint", style: "flex:1 1 0;min-width:0" });
   const current = h("span", { class: "hint" });

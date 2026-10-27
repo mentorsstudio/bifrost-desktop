@@ -2,6 +2,7 @@
 // to without keys, how the chat reaches one of them, and Bifrost's own MCP
 // server that lets Grok Bot, Hermes… drive Huginn.
 
+import { formBtn, choice, textField } from "../views/kit";
 import {
   Bridge, type McpChat, type McpServerConfig, type McpServerView, type McpStatus,
 } from "../core/bridge";
@@ -44,12 +45,12 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
     }
     if (!status.servers.length) serversBody.append(notice("hint", "Nenhum servidor ainda. Adicione um ou cole um JSON mcpServers."));
     for (const s of status.servers) serversBody.append(serverRow(s));
-    const add = h("button", { class: "primary", text: "Adicionar servidor" });
+    const add = formBtn("Adicionar servidor", "primary");
     add.addEventListener("click", () => {
       clear(serversBody);
       serversBody.append(editor(null));
     });
-    const imp = h("button", { text: "Importar JSON" });
+    const imp = formBtn("Importar JSON");
     imp.addEventListener("click", () => {
       clear(serversBody);
       serversBody.append(importer());
@@ -59,12 +60,12 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
 
   function serverRow(s: McpServerView): HTMLElement {
     const out = h("div", {});
-    const edit = h("button", { text: "Editar" });
+    const edit = formBtn("Editar");
     edit.addEventListener("click", () => {
       clear(serversBody);
       serversBody.append(editor(s));
     });
-    const test = h("button", { text: "Testar" });
+    const test = formBtn("Testar");
     test.addEventListener("click", async () => {
       clear(out);
       out.append(notice("hint", "Conectando…"));
@@ -77,7 +78,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
         out.append(notice("err", String(err).replace(/^Error:\s*/, "")));
       }
     });
-    const remove = h("button", { class: "danger", text: "Remover" });
+    const remove = formBtn("Remover", "danger");
     remove.addEventListener("click", async () => {
       if (!confirm(`Remover o servidor ${s.name}?`)) return;
       status = await Bridge.mcpRemoveServer(s.name);
@@ -102,7 +103,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
     return h("div", { class: "row" }, h("label", { text: label }), input);
   }
   function input(value: string, placeholder = "", type = "text"): HTMLInputElement {
-    return h("input", { type, value, placeholder, spellcheck: "false", autocomplete: "off", style: "flex:1 1 auto;min-width:0" }) as HTMLInputElement;
+    return textField({ type, value, placeholder, spellcheck: "false", autocomplete: "off", style: "flex:1 1 auto;min-width:0" }) as HTMLInputElement;
   }
   function area(value: string, placeholder: string): HTMLTextAreaElement {
     const a = h("textarea", { placeholder, rows: "3", spellcheck: "false", style: "flex:1 1 auto;min-width:0;font-family:monospace" }) as HTMLTextAreaElement;
@@ -123,7 +124,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
     const token = input("", existing?.hasToken ? "•••• token salvo (deixe vazio para manter)" : "Token Bearer (opcional)", "password");
     const basicUser = input("", existing?.hasToken ? "(credencial salva — deixe vazio para manter)" : "Usuário (Basic Auth, opcional)");
     const basicPass = input("", "Senha (Basic Auth)", "password");
-    const disabled = h("input", { type: "checkbox" }) as HTMLInputElement;
+    const disabled = textField({ type: "checkbox" }) as HTMLInputElement;
     disabled.checked = f.disabled;
     const msg = h("div", {});
     const stdioRows = h("div", { style: "display:flex;flex-direction:column;gap:6px" }, field("Comando", command), field("Argumentos", args), field("Ambiente", env));
@@ -158,7 +159,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
       token.value = basicPass.value = basicUser.value = "";
     };
 
-    const test = h("button", { text: "Testar conexão" });
+    const test = formBtn("Testar conexão");
     test.addEventListener("click", async () => {
       const r = read();
       if (typeof r === "string") return show(notice("err", r));
@@ -171,7 +172,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
         show(notice("err", String(err).replace(/^Error:\s*/, "")));
       }
     });
-    const saveBtn = h("button", { class: "primary", text: "Salvar" });
+    const saveBtn = formBtn("Salvar", "primary");
     saveBtn.addEventListener("click", async () => {
       const r = read();
       if (typeof r === "string") return show(notice("err", r));
@@ -183,14 +184,14 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
         show(notice("err", String(err).replace(/^Error:\s*/, "")));
       }
     });
-    const clearToken = h("button", { class: "danger", text: "Apagar credencial" });
+    const clearToken = formBtn("Apagar credencial", "danger");
     clearToken.style.display = existing?.hasToken ? "" : "none";
     clearToken.addEventListener("click", async () => {
       await Bridge.mcpSetToken(existing!.name, "");
       status = await Bridge.mcpStatus();
       redraw();
     });
-    const cancel = h("button", { text: "Cancelar" });
+    const cancel = formBtn("Cancelar");
     cancel.addEventListener("click", redraw);
 
     return h(
@@ -210,7 +211,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
     const text = area("", '{\n  "mcpServers": {\n    "hermes": { "command": "hermes.exe", "args": ["mcp-serve", "--tools"] }\n  }\n}');
     text.rows = 10;
     const msg = h("div", {});
-    const go = h("button", { class: "primary", text: "Importar" });
+    const go = formBtn("Importar", "primary");
     go.addEventListener("click", async () => {
       try {
         status = await Bridge.mcpImport(text.value);
@@ -220,7 +221,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
         msg.append(notice("err", String(err).replace(/^Error:\s*/, "")));
       }
     });
-    const cancel = h("button", { text: "Cancelar" });
+    const cancel = formBtn("Cancelar");
     cancel.addEventListener("click", redraw);
     return h("div", { style: "display:flex;flex-direction:column;gap:6px" },
       notice("hint", "Cole um JSON no formato mcpServers (o mesmo do Claude Desktop, Cursor e Grok Bot). Tokens não vão no JSON: adicione-os em Editar."),
@@ -233,14 +234,14 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
     if (!status) return;
     const c: McpChat = { ...status.chat };
     const inUse = settings.chatProvider === "mcp";
-    const use = h("button", { class: inUse ? "" : "primary", text: inUse ? "Em uso no chat" : "Usar MCP no chat" });
+    const use = formBtn(inUse ? "Em uso no chat" : "Usar MCP no chat", inUse ? "plain" : "primary");
     use.disabled = inUse;
     use.addEventListener("click", async () => {
       settings.chatProvider = "mcp";
       await save();
       drawChat();
     });
-    const server = h("select", {}) as HTMLSelectElement;
+    const server = choice() as HTMLSelectElement;
     for (const s of status.servers) server.append(h("option", { value: s.name, text: s.name }));
     if (!status.servers.some((s) => s.name === c.server)) server.append(h("option", { value: c.server, text: `${c.server} (não configurado)` }));
     server.value = c.server;
@@ -258,7 +259,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
     const extra = area(JSON.stringify(c.extraArgs ?? {}), '{"skills": "..."}');
     extra.rows = 2;
     const timeout = input(String(c.timeoutSecs), "600", "number");
-    const history = h("input", { type: "checkbox" }) as HTMLInputElement;
+    const history = textField({ type: "checkbox" }) as HTMLInputElement;
     history.checked = c.includeHistory;
     const taskRows = h("div", { style: "display:flex;flex-direction:column;gap:6px" },
       field("Ferramenta de status", statusTool), field("Argumento do id", idArg), field("Tempo máx. (s)", timeout));
@@ -267,7 +268,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
     sync();
     const msg = h("div", {});
 
-    const loadTools = h("button", { text: "Ver ferramentas" });
+    const loadTools = formBtn("Ver ferramentas");
     loadTools.addEventListener("click", async () => {
       clear(msg);
       try {
@@ -279,7 +280,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
         msg.append(notice("err", String(err).replace(/^Error:\s*/, "")));
       }
     });
-    const saveBtn = h("button", { class: "primary", text: "Salvar" });
+    const saveBtn = formBtn("Salvar", "primary");
     saveBtn.addEventListener("click", async () => {
       clear(msg);
       let extraArgs: Record<string, unknown>;
@@ -324,11 +325,11 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
   function drawOwn() {
     clear(ownBody);
     if (!status) return;
-    const on = h("input", { type: "checkbox" }) as HTMLInputElement;
+    const on = textField({ type: "checkbox" }) as HTMLInputElement;
     on.checked = status.serverEnabled;
     const port = input(String(status.serverPort), "47821", "number");
     const msg = h("div", {});
-    const saveBtn = h("button", { text: "Salvar" });
+    const saveBtn = formBtn("Salvar");
     saveBtn.addEventListener("click", async () => {
       clear(msg);
       try {
@@ -338,7 +339,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
         msg.append(notice("err", String(err).replace(/^Error:\s*/, "")));
       }
     });
-    const copy = h("button", { class: "primary", text: "Copiar config para clientes" });
+    const copy = formBtn("Copiar config para clientes", "primary");
     copy.addEventListener("click", async () => {
       clear(msg);
       try {
@@ -410,7 +411,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
       cards.push(card);
       grid.append(card);
     }
-    const rescan = h("button", { class: "primary", text: "Procurar de novo" });
+    const rescan = formBtn("Procurar de novo", "primary");
     rescan.addEventListener("click", async () => {
       status = await Bridge.mcpRescan();
       redraw();

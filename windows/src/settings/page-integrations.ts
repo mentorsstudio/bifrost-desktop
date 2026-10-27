@@ -1,5 +1,6 @@
 // Ajustes da ilha — parte de settings/main.ts, separada por página.
 
+import { formBtn, textField } from "../views/kit";
 import { Bridge } from "../core/bridge";
 import { MAX_DECLARED, availablePills } from "../core/pills";
 import { h } from "../views/dom";
@@ -69,14 +70,14 @@ export function integrationsSection(present: Record<string, boolean>): HTMLEleme
 
     const rows = h("div", { style: "display:flex;flex-direction:column;gap:6px;flex:1 1 auto;min-width:0" });
     for (const field of def.fields) {
-      const input = h("input", {
+      const input = textField({
         type: field.secret ? "password" : "text",
         placeholder: present[field.key] ? CHAT_STRINGS.stored : field.placeholder,
         autocomplete: "off",
         spellcheck: "false",
         style: "flex:1 1 auto;min-width:0",
       }) as HTMLInputElement;
-      const saveBtn = h("button", { text: t("Save") });
+      const saveBtn = formBtn(t("Save"));
       const dotEl = statusDot(present[field.key] ?? false);
       saveBtn.addEventListener("click", async () => {
         const value = input.value.trim();

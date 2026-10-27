@@ -1,5 +1,6 @@
 // Ajustes da ilha — parte de settings/main.ts, separada por página.
 
+import { formBtn, textField, choice } from "../views/kit";
 import { Bridge } from "../core/bridge";
 import { SOUND_NAMES } from "../core/sound";
 import { h } from "../views/dom";
@@ -13,7 +14,7 @@ import { recapRows } from "./page-shortcuts";
 // ── General section ───────────────────────────────────────────────────────────
 
 export function generalSection(): HTMLElement {
-  const volume = h("input", {
+  const volume = textField({
     type: "range", min: "0", max: "0.2", step: "0.005",
     value: String(S.settings.soundVolume),
   }) as HTMLInputElement;
@@ -30,13 +31,10 @@ export function generalSection(): HTMLElement {
       customCount.textContent = n > 0 ? t("{0} custom", { 0: n }) : "";
     });
   countCustom();
-  const soundsFolder = h("button", { text: t("Open sounds folder"), onclick: () => void Bridge.revealSoundsFolder() });
-  const reloadSounds = h("button", {
-    text: t("Reload sounds"),
-    onclick: () => void Bridge.reloadSounds().then(() => window.setTimeout(countCustom, 300)),
-  });
+  const soundsFolder = formBtn(t("Open sounds folder"), "plain", () => void Bridge.revealSoundsFolder());
+  const reloadSounds = formBtn(t("Reload sounds"), "plain", () => void Bridge.reloadSounds().then(() => window.setTimeout(countCustom, 300)));
 
-  const autoClose = h("input", {
+  const autoClose = textField({
     type: "number", min: "5", max: "120", step: "1",
     value: String(Math.round(S.settings.autoCloseInterval)),
     style: "width:72px",
@@ -47,7 +45,7 @@ export function generalSection(): HTMLElement {
     void save();
   });
 
-  const screen = h("select", {}) as HTMLSelectElement;
+  const screen = choice() as HTMLSelectElement;
   screen.append(
     h("option", { value: "primary", text: t("Main display") }),
     h("option", { value: "cursor", text: t("Display under the cursor") }),
@@ -119,7 +117,7 @@ export function generalSection(): HTMLElement {
  * Both windows and the tray switch in place, without a restart.
  */
 export function languageRow(): HTMLElement {
-  const select = h("select", {}) as HTMLSelectElement;
+  const select = choice() as HTMLSelectElement;
   select.append(h("option", { value: "", text: t("System") }));
   for (const { code, name } of LANGUAGES) select.append(h("option", { value: code, text: name, lang: code }));
   select.value = LANGUAGES.some((l) => l.code === S.settings.language) ? S.settings.language : "";

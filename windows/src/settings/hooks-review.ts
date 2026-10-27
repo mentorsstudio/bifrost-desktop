@@ -1,5 +1,6 @@
 // Ajustes da ilha — parte de settings/main.ts, separada por página.
 
+import { formBtn } from "../views/kit";
 import { Bridge, type HookPreview } from "../core/bridge";
 import { h, clear } from "../views/dom";
 import { renderDiff } from "./parts";
@@ -65,7 +66,7 @@ export async function reviewChange(
     clear(body);
     body.append(
       h("div", { class: "notice err", text: String(err).replace(/^Error:\s*/, "") }),
-      h("div", { class: "row" }, h("button", { text: t("Back"), onclick: back })),
+      h("div", { class: "row" }, formBtn(t("Back"), "plain", back)),
     );
     return;
   }
@@ -83,10 +84,7 @@ export async function reviewChange(
       }),
     ),
   );
-  const confirm = h("button", {
-    class: install ? "primary" : "danger",
-    text: install ? change.installButton : change.removeButton,
-  });
+  const confirm = formBtn(install ? change.installButton : change.removeButton, install ? "primary" : "danger");
   confirm.addEventListener("click", async () => {
     confirm.disabled = true;
     try {
@@ -99,6 +97,6 @@ export async function reviewChange(
       body.append(h("div", { class: "notice err", text: t("Could not write: {error}", { error: String(err) }) }));
     }
   });
-  body.append(h("div", { class: "row" }, confirm, h("button", { text: t("Cancel"), onclick: back })));
+  body.append(h("div", { class: "row" }, confirm, formBtn(t("Cancel"), "plain", back)));
 }
 

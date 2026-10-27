@@ -2,6 +2,7 @@
 // going through the same steps — preview the exact diff, click to confirm, and
 // only then does agents.rs back the file up and write it.
 
+import { formBtn } from "../views/kit";
 import { Bridge, type AgentHookStatus } from "../core/bridge";
 import { clear, h } from "../views/dom";
 import { renderDiff, statusDot } from "./parts";
@@ -70,11 +71,7 @@ function agentBlock(initial: AgentHookStatus): HTMLElement {
   function draw() {
     clear(head);
     clear(body);
-    const install = h("button", {
-      class: "primary",
-      text: status.installed ? TEXT.reinstall : TEXT.install,
-      onclick: () => void showPreview(true),
-    });
+    const install = formBtn(status.installed ? TEXT.reinstall : TEXT.install, "primary", () => void showPreview(true));
     // A hook pointing at a relay that isn't there would break the agent's hooks.
     if (!status.hookReady) {
       install.disabled = true;
@@ -90,11 +87,7 @@ function agentBlock(initial: AgentHookStatus): HTMLElement {
       install,
     );
     if (status.installed) {
-      head.append(h("button", {
-        class: "danger",
-        text: TEXT.uninstall,
-        onclick: () => void showPreview(false),
-      }));
+      head.append(formBtn(TEXT.uninstall, "danger", () => void showPreview(false)));
     }
     body.append(h("span", { class: "path", text: status.path }));
   }
@@ -109,7 +102,7 @@ function agentBlock(initial: AgentHookStatus): HTMLElement {
       clear(body);
       body.append(
         h("div", { class: "notice err", text: errorText(err) }),
-        h("div", { class: "row" }, h("button", { text: TEXT.back, onclick: draw })),
+        h("div", { class: "row" }, formBtn(TEXT.back, "plain", draw)),
       );
       return;
     }
@@ -119,10 +112,7 @@ function agentBlock(initial: AgentHookStatus): HTMLElement {
       renderDiff(plan.diff),
       h("div", { class: "row" }, h("span", { class: "path", text: TEXT.backup(plan.backup) })),
     );
-    const confirm = h("button", {
-      class: install ? "primary" : "danger",
-      text: install ? TEXT.confirmInstall : TEXT.confirmRemove,
-    });
+    const confirm = formBtn(install ? TEXT.confirmInstall : TEXT.confirmRemove, install ? "primary" : "danger");
     confirm.addEventListener("click", async () => {
       confirm.disabled = true;
       try {
@@ -135,7 +125,7 @@ function agentBlock(initial: AgentHookStatus): HTMLElement {
         body.append(h("div", { class: "notice err", text: TEXT.failed(err) }));
       }
     });
-    body.append(h("div", { class: "row" }, confirm, h("button", { text: TEXT.cancel, onclick: draw })));
+    body.append(h("div", { class: "row" }, confirm, formBtn(TEXT.cancel, "plain", draw)));
   }
 
   draw();

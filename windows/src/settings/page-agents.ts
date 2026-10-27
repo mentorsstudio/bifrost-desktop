@@ -1,5 +1,6 @@
 // Ajustes da ilha — parte de settings/main.ts, separada por página.
 
+import { formBtn } from "../views/kit";
 import { Bridge, type HookStatus } from "../core/bridge";
 import { h, clear } from "../views/dom";
 import { statusDot } from "./parts";
@@ -59,11 +60,7 @@ export function claudeSection(status: HookStatus): HTMLElement {
     }
 
     const actions = h("div", { class: "row" });
-    const install = h("button", {
-      class: "primary",
-      text: status.installed ? t("Reinstall hooks…") : t("Install hooks…"),
-      onclick: () => void reviewChange(body, HOOKS_CHANGE, true, redraw, () => void rebuild()),
-    });
+    const install = formBtn(status.installed ? t("Reinstall hooks…") : t("Install hooks…"), "primary", () => void reviewChange(body, HOOKS_CHANGE, true, redraw, () => void rebuild()));
     // Writing hook commands that point at a relay which isn't there would give
     // every Claude Code session a broken hook and nothing to show for it.
     if (!status.hookReady) {
@@ -73,11 +70,7 @@ export function claudeSection(status: HookStatus): HTMLElement {
     actions.append(install);
     if (!status.hookReady) actions.append(h("span", { class: "hint inline", text: t("The relay isn't installed yet.") }));
     if (status.installed) {
-      actions.append(h("button", {
-        class: "danger",
-        text: t("Uninstall hooks…"),
-        onclick: () => void reviewChange(body, HOOKS_CHANGE, false, redraw, () => void rebuild()),
-      }));
+      actions.append(formBtn(t("Uninstall hooks…"), "danger", () => void reviewChange(body, HOOKS_CHANGE, false, redraw, () => void rebuild())));
     }
     body.append(actions);
   }
@@ -149,16 +142,8 @@ export function planSection(status: HookStatus): HTMLElement {
         statusDot(status.planRelayInstalled),
         h("span", { class: "hint", text: status.planRelayInstalled ? t("installed") : t("not installed") }),
         status.planRelayInstalled
-          ? h("button", {
-              class: "danger",
-              text: t("Uninstall relay…"),
-              onclick: () => void reviewChange(body, STATUS_LINE_CHANGE, false, redraw, () => void rebuild()),
-            })
-          : h("button", {
-              class: "primary",
-              text: t("Install relay…"),
-              onclick: () => void reviewChange(body, STATUS_LINE_CHANGE, true, redraw, () => void rebuild()),
-            }),
+          ? formBtn(t("Uninstall relay…"), "danger", () => void reviewChange(body, STATUS_LINE_CHANGE, false, redraw, () => void rebuild()))
+          : formBtn(t("Install relay…"), "primary", () => void reviewChange(body, STATUS_LINE_CHANGE, true, redraw, () => void rebuild())),
       ),
       // Codex: nothing to install, Bifrost asks the Codex CLI when the pill shows.
       h("div", { class: "hint", text: PLAN_SETTINGS_TEXT.codex }),

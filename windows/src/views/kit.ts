@@ -67,3 +67,28 @@ export function formRow(...children: (Node | null)[]): HTMLElement {
 export function linkBtn(label: string, color: string, onClick: () => void): HTMLButtonElement {
   return h("button", { class: "link-btn", style: `color:${color}`, text: label, onclick: onClick }) as HTMLButtonElement;
 }
+
+// ── Formulários (janela de ajustes) ───────────────────────────────────────────
+
+export type ActionKind = "primary" | "danger" | "plain";
+/** Botão de formulário: primário, perigoso (remover) ou simples. */
+export function formBtn(label: string, kind: ActionKind = "plain", onClick?: () => void): HTMLButtonElement {
+  const el = h("button", { class: kind === "plain" ? "" : kind, text: label }) as HTMLButtonElement;
+  if (onClick) el.addEventListener("click", onClick);
+  return el;
+}
+
+type Attrs = Record<string, string | number | boolean | ((e: Event) => void) | undefined>;
+/** Campo de texto, número, senha ou faixa. */
+export function textField(attrs: Attrs): HTMLInputElement {
+  return h("input", attrs as never) as HTMLInputElement;
+}
+
+/** Lista de escolha; options = [valor, rótulo, lang?]. */
+export function choice(options: readonly (readonly [string, string, string?])[] = [], value?: string, onChange?: (v: string) => void): HTMLSelectElement {
+  const el = h("select", {}) as HTMLSelectElement;
+  for (const [v, label, lang] of options) el.append(h("option", lang ? { value: v, text: label, lang } : { value: v, text: label }));
+  if (value != null) el.value = value;
+  if (onChange) el.addEventListener("change", () => onChange(el.value));
+  return el;
+}

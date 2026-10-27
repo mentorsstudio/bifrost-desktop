@@ -1,5 +1,6 @@
 // Ajustes da ilha — parte de settings/main.ts, separada por página.
 
+import { formBtn } from "../views/kit";
 import { Bridge, type ShortcutsReport } from "../core/bridge";
 import {
   ISLAND_SHORTCUTS, SHORTCUTS, SHORTCUT_TEXT, activeKeys, displayKeys, duplicates, effective,
@@ -187,16 +188,13 @@ export function shortcutsSection(initial: ShortcutsReport | null): HTMLElement {
     ));
   }
 
-  const reset = h("button", {
-    text: SHORTCUTS_UI.reset,
-    onclick: () => {
+  const reset = formBtn(SHORTCUTS_UI.reset, "plain", () => {
       stopRecording?.();
       S.settings.shortcuts = {};
       clear(feedback);
       void save();
       draw();
-    },
-  });
+    });
 
   // The events are listened to once (see main); only the section on screen redraws.
   S.shortcutsListener = {
@@ -239,10 +237,7 @@ export function recapRows(): HTMLElement[] {
   void Bridge.recapPrefs().then((prefs) => {
     if (prefs) sw.classList.toggle("on", prefs.enabled);
   });
-  const clearBtn = h("button", {
-    class: "danger",
-    text: T.clear,
-    onclick: async () => {
+  const clearBtn = formBtn(T.clear, "danger", async () => {
       clearBtn.disabled = true;
       await Bridge.recapClear();
       feedback.textContent = T.cleared;
@@ -250,8 +245,7 @@ export function recapRows(): HTMLElement[] {
         clearBtn.disabled = false;
         feedback.textContent = "";
       }, 2400);
-    },
-  }) as HTMLButtonElement;
+    }) as HTMLButtonElement;
   return [
     h("div", { class: "row" },
       h("label", { text: T.label }),

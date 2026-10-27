@@ -1,5 +1,6 @@
 // Ajustes da ilha — parte de settings/main.ts, separada por página.
 
+import { choice } from "../views/kit";
 import { PILL_CATEGORIES, availablePills, chooseMainPill, isComingSoon, mainPillChoices, toggleDeclared, type PillDefinition } from "../core/pills";
 import { h, clear } from "../views/dom";
 import { colorDot } from "./colors";
@@ -17,7 +18,7 @@ import { MAX_ACTIVE, declaredChanged } from "./page-integrations";
  */
 export function activePillsSection(connected: Record<string, boolean>): HTMLElement {
   const slots = h("div", { class: "hint" });
-  const main = h("select", {}) as HTMLSelectElement;
+  const main = choice() as HTMLSelectElement;
   for (const def of mainPillChoices()) main.append(h("option", { value: def.id, text: def.name }));
   main.addEventListener("change", () => {
     const next = chooseMainPill(S.settings, main.value);

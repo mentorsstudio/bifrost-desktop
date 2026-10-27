@@ -1,5 +1,6 @@
 // Ajustes da ilha — parte de settings/main.ts, separada por página.
 
+import { formBtn } from "../views/kit";
 import { Bridge } from "../core/bridge";
 import { h, clear } from "../views/dom";
 
@@ -28,7 +29,7 @@ export function aiSection(): HTMLElement {
     for (const ai of ais) {
       const found = scan?.programs.find((p) => p.id === ai.id)?.found ?? false;
       const inUse = S.settings.chatProvider === ai.provider && (ai.provider !== "cli" || (S.settings.chatModels.cli ?? "claude") === ai.id);
-      const use = h("button", { class: inUse ? "" : "primary", text: inUse ? "Em uso" : "Usar no chat" }) as HTMLButtonElement;
+      const use = formBtn(inUse ? "Em uso" : "Usar no chat", inUse ? "plain" : "primary") as HTMLButtonElement;
       use.disabled = inUse || !found;
       use.addEventListener("click", async () => {
         S.settings.chatProvider = ai.provider;

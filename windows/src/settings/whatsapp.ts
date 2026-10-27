@@ -3,6 +3,7 @@
 // releases on that click only; the QR to link WhatsApp shows right here. The gateway's address and
 // credential go to the credential store through Rust, which never hands the credential back.
 
+import { formBtn, textField } from "../views/kit";
 import { Bridge, onEvent } from "../core/bridge";
 import {
   DEFAULT_PORT, DEFAULT_URLS, WHATSAPP_GREEN, installError, installStepLabel, isInstalling, linkColor, linkLabel,
@@ -41,36 +42,36 @@ export function whatsappSection(host: WhatsAppSettingsHost): HTMLElement {
   const body = h("div", { style: "display:flex;flex-direction:column;gap:10px" });
   const dynamic = h("div", { style: "display:flex;flex-direction:column;gap:10px" });
   const ignoredList = h("div", { style: "display:flex;flex-direction:column;gap:4px" });
-  const ignoreInput = h("input", {
+  const ignoreInput = textField({
     type: "text", placeholder: t("Phone number or chat id to ignore"), autocomplete: "off", spellcheck: "false",
     style: "flex:1 1 auto;min-width:0",
   }) as HTMLInputElement;
-  const addBtn = h("button", { text: t("Add") });
+  const addBtn = formBtn(t("Add"));
 
   // Advanced
-  const advancedBtn = h("button", { text: t("Advanced: your own gateway") });
+  const advancedBtn = formBtn(t("Advanced: your own gateway"));
   const advanced = h("div", { style: "display:flex;flex-direction:column;gap:10px" });
   const gatewaySelect = h("select", {},
     h("option", { value: "gowa", text: "GOWA" }),
     h("option", { value: "openwa", text: "OpenWA" }),
   ) as HTMLSelectElement;
-  const urlInput = h("input", { type: "text", autocomplete: "off", spellcheck: "false", style: "flex:1 1 auto;min-width:0" }) as HTMLInputElement;
-  const credentialInput = h("input", { type: "password", autocomplete: "off", spellcheck: "false", style: "flex:1 1 auto;min-width:0" }) as HTMLInputElement;
-  const credentialRemove = h("button", { class: "danger", text: t("Remove") });
+  const urlInput = textField({ type: "text", autocomplete: "off", spellcheck: "false", style: "flex:1 1 auto;min-width:0" }) as HTMLInputElement;
+  const credentialInput = textField({ type: "password", autocomplete: "off", spellcheck: "false", style: "flex:1 1 auto;min-width:0" }) as HTMLInputElement;
+  const credentialRemove = formBtn(t("Remove"), "danger");
   let autoStart = false;
   const autoStartSwitch = host.toggle(false, (on) => {
     autoStart = on;
     drawAdvanced();
   });
-  const pathInput = h("input", {
+  const pathInput = textField({
     type: "text", placeholder: t("Path to the GOWA binary (whatsapp)"), autocomplete: "off", spellcheck: "false",
     style: "flex:1 1 auto;min-width:0",
   }) as HTMLInputElement;
   const autoStartHint = h("div", { class: "hint" });
   const autoStartBlock = h("div", { style: "display:flex;flex-direction:column;gap:8px" });
-  const portInput = h("input", { type: "number", min: "1024", max: "65535", style: "width:90px" }) as HTMLInputElement;
-  const saveBtn = h("button", { class: "primary", text: t("Save WhatsApp") });
-  const testBtn = h("button", { text: t("Test connection") });
+  const portInput = textField({ type: "number", min: "1024", max: "65535", style: "width:90px" }) as HTMLInputElement;
+  const saveBtn = formBtn(t("Save WhatsApp"), "primary");
+  const testBtn = formBtn(t("Test connection"));
   const testNote = h("div", { class: "hint" });
   const saveNote = h("div", {});
 
@@ -199,7 +200,7 @@ export function whatsappSection(host: WhatsAppSettingsHost): HTMLElement {
       return out;
     }
     if (v.installed) {
-      const update = h("button", { text: t("Update"), onclick: () => void Bridge.whatsappInstall() });
+      const update = formBtn(t("Update"), "plain", () => void Bridge.whatsappInstall());
       const text = v.prefs.gowaVersion
         ? t("Gateway GOWA {version} installed, started by Bifrost", { version: v.prefs.gowaVersion })
         : t("Your GOWA gateway is set up");
@@ -211,9 +212,7 @@ export function whatsappSection(host: WhatsAppSettingsHost): HTMLElement {
       ));
     } else {
       out.push(
-        h("div", { class: "row" }, h("button", {
-          class: "primary", text: t("Install WhatsApp"), onclick: () => void Bridge.whatsappInstall(),
-        })),
+        h("div", { class: "row" }, formBtn(t("Install WhatsApp"), "primary", () => void Bridge.whatsappInstall())),
         h("div", { class: "hint", text: t("Bifrost downloads GOWA, the open-source gateway, from its GitHub page (about 15 MB, once), checks it and starts it. Then scan the QR code with your phone. No command line needed.") }),
       );
     }
@@ -267,7 +266,7 @@ export function whatsappSection(host: WhatsAppSettingsHost): HTMLElement {
     ignoredList.replaceChildren(...v.ignored.map((chat) => h("div", { class: "row", style: "gap:8px" },
       h("span", { style: "font-size:12.5px", text: chat.name }),
       h("span", { class: "spacer" }),
-      h("button", { text: t("Remove"), onclick: () => void Bridge.whatsappUnignore(chat.id) }),
+      formBtn(t("Remove"), "plain", () => void Bridge.whatsappUnignore(chat.id)),
     )));
     drawAdvanced();
   }

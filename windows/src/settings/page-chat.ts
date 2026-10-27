@@ -1,5 +1,6 @@
 // Ajustes da ilha — parte de settings/main.ts, separada por página.
 
+import { formBtn, textField } from "../views/kit";
 import { Bridge } from "../core/bridge";
 import { CUSTOM_SERVER_KEY, providerDef, urlExposure } from "../core/providers";
 import { h, clear } from "../views/dom";
@@ -87,13 +88,13 @@ export function localSection(customKey: boolean): HTMLElement {
 
     if (connected) {
       const inUse = S.settings.chatProvider === id;
-      const use = h("button", { class: inUse ? "" : "primary", text: inUse ? CHAT_STRINGS.inUse : CHAT_STRINGS.useInChat });
+      const use = formBtn(inUse ? CHAT_STRINGS.inUse : CHAT_STRINGS.useInChat, inUse ? "plain" : "primary");
       use.disabled = inUse;
       use.addEventListener("click", () => {
         S.settings.chatProvider = id;
         void save().then(redraw);
       });
-      const disconnect = h("button", { class: "danger", text: CHAT_STRINGS.disconnect });
+      const disconnect = formBtn(CHAT_STRINGS.disconnect, "danger");
       disconnect.addEventListener("click", async () => {
         S.settings[field] = "";
         if (S.settings.chatProvider === id) S.settings.chatProvider = "cli";
@@ -113,14 +114,14 @@ export function localSection(customKey: boolean): HTMLElement {
       return block;
     }
 
-    const input = h("input", {
+    const input = textField({
       type: "text",
       placeholder: def.usual || "https://llm.example.com",
       style: "flex:1 1 auto;min-width:0",
       spellcheck: "false",
       autocomplete: "off",
     }) as HTMLInputElement;
-    const connect = h("button", { class: "primary", text: CHAT_STRINGS.connect });
+    const connect = formBtn(CHAT_STRINGS.connect, "primary");
 
     const showExposure = () => {
       clear(exposure);
