@@ -73,10 +73,7 @@ function fileTag(label: string): HTMLElement {
 
 // ── O "+": ações de anexar padrão (outros recursos usam registerAttachAction) ──
 
-registerAttachAction({
-  id: "file", label: "Arquivo…", icon: ICONS.doc, order: 10,
-  run: (c) => { State.view = "upload"; State.notify(); c.done(); },
-});
+// "Anexar arquivo…" e "Converter arquivo…" vêm do Conversor (../filee/island.ts).
 registerAttachAction({
   id: "clipboard", label: "Colar da área de transferência", icon: ICONS.copy, order: 20,
   available: () => typeof navigator !== "undefined" && Boolean(navigator.clipboard?.readText),
@@ -146,7 +143,7 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
   // O "+": monta o menu com o que estiver registrado.
   const ctx: AttachContext = {
     insert: (text) => { const a = field.selectionStart ?? field.value.length; field.setRangeText(text, a, field.selectionEnd ?? a, "end"); grow(); },
-    attachFile: (n, path) => { State.droppedFile = { name: n, path }; State.notify(); },
+    attachFile: (n, path) => { State.droppedFile = { name: n, path }; State.promptContext = { kind: "file", name: n, path }; State.notify(); },
     done: () => { menu.classList.remove("on"); field.focus(); },
   };
   plus.addEventListener("click", () => {

@@ -9,6 +9,8 @@ import { Bridge } from "../core/bridge";
 import { State } from "../core/state";
 import type { IslandViewName } from "../core/layout";
 import type { ViewActions, ViewHost } from "../views/views";
+import { registerAttachAction } from "../views/attach";
+import { ICONS } from "../views/icons";
 import { Convert, QUICK_PROMPTS, actionLabel, baseName, on, type ItemReport, type Plan } from "./api";
 
 /** O original do arquivo solto (o chat usa a cópia da caixa de entrada). */
@@ -138,3 +140,33 @@ export function buildConvertView(actions: ViewActions): ViewHost {
     },
   };
 }
+
+// ── O "+" do compositor: anexar e converter pelo seletor nativo do Conversor ──
+/** Escolhe arquivos no seletor nativo; sem ele (dev/navegador), volta à vista de soltar. */
+async function pick(): Promise<string[] | null> {
+  try { const ps = await Convert.pickFiles(); return ps ?? []; } catch { return null; }
+}
+registerAttachAction({
+  id: "file", label: "Anexar arquivo…", icon: ICONS.doc, order: 10,
+  run: async (c) => {
+    c.done();
+    const ps = await pick();
+    if (ps === null) { State.view = "upload"; State.notify(); return; }
+    const path = ps[0];
+    if (!path) return;
+    FileeIsland.original = ps;
+    try { const f = await Bridge.ingestFile(path); c.attachFile(f.name, f.path); }
+    catch (err) { State.noteMessage = String(err).replace(/^Error:\s*/, ""); State.view = "note"; State.notify(); }
+  },
+});
+registerAttachAction({
+  id: "convert", label: "Converter arquivo…", icon: ICONS.doc, order: 15,
+  run: async (c) => {
+    c.done();
+    const ps = await pick();
+    if (!ps || !ps.length) return;
+    FileeIsland.original = ps;
+    State.droppedFile = { name: baseName(ps[0]), path: ps[0] };
+    State.view = "convert"; State.notify();
+  },
+});
