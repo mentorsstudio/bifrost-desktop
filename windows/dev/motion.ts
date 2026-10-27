@@ -25,7 +25,10 @@ setInterval(() => {
   }
 }, 2200);
 (window as unknown as { menu: () => void }).menu = () =>
-  showMenu(window.innerWidth - 230, window.innerHeight - 110, [
+  // Abre logo abaixo da grade, alinhado ao último cartão, sem cobrir nenhum estado.
+  showMenu(
+    (document.querySelector(".cell:last-child, [class*=cell]:last-child") as HTMLElement | null)?.getBoundingClientRect().left ?? window.innerWidth - 230,
+    Math.max(...Array.from(document.querySelectorAll<HTMLElement>("body *")).filter((e) => e.childElementCount && e.getBoundingClientRect().height < 220).map((e) => e.getBoundingClientRect().bottom).filter((b) => b < window.innerHeight)) + 14, [
     { label: "Abrir conversa", rune: "ᚺ", run: () => {} },
     { label: "Copiar", rune: "ᚷ", run: () => {} },
     { label: "Colar", rune: "ᛈ", run: () => {} },
