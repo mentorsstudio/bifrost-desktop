@@ -426,8 +426,10 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
       grid.append(card);
     }
     for (const i of scan.imported) {
+      // Juntado a um embutido (mesmo servidor): já aparece no cartão dele.
+      if (status && !servers.has(i.name)) continue;
       const card = h("div", { class: "bf-card on" },
-        h("span", { class: "bf-card-name", text: i.name }),
+        h("span", { class: "bf-card-name", title: i.name, text: prettyName(i.name) }),
         h("span", { class: "bf-badge imp", text: t("imported · {0}", { 0: i.source }) }),
       );
       cards.push(card);
