@@ -104,6 +104,22 @@ pub const PROGRAMS: &[Program] = &[
     Program { id: "davinci", name: "DaVinci Resolve", kind: "criativo", commands: &[], folders: &["%PROGRAMFILES%/Blackmagic Design/DaVinci Resolve/Resolve.exe"] },
     Program { id: "orca", name: "Orca", kind: "ia", commands: &["orca"], folders: &["%LOCALAPPDATA%/orca/bin/orca.exe", "%LOCALAPPDATA%/Programs/orca"] },
     Program { id: "hermes", name: "Hermes", kind: "ia", commands: &["hermes"], folders: &["%LOCALAPPDATA%/hermes/bin/hermes.exe"] },
+    // Fase 19: mais agentes reconhecidos (só detecção: nada é instalado nem executado).
+    Program { id: "aider", name: "Aider", kind: "ia", commands: &["aider"], folders: &["~/.local/bin/aider.exe"] },
+    Program { id: "goose", name: "Goose", kind: "ia", commands: &["goose"], folders: &["%LOCALAPPDATA%/Programs/Goose", "%LOCALAPPDATA%/Goose"] },
+    Program { id: "qwen", name: "Qwen Code", kind: "ia", commands: &["qwen"], folders: &["%APPDATA%/npm/qwen.cmd"] },
+    Program { id: "crush", name: "Crush", kind: "ia", commands: &["crush"], folders: &[] },
+    Program { id: "opencode", name: "OpenCode", kind: "ia", commands: &["opencode"], folders: &["%APPDATA%/npm/opencode.cmd"] },
+    Program { id: "amp", name: "Amp", kind: "ia", commands: &["amp"], folders: &["%APPDATA%/npm/amp.cmd"] },
+    Program { id: "copilot", name: "Copilot CLI", kind: "ia", commands: &["copilot"], folders: &["%APPDATA%/npm/copilot.cmd"] },
+    Program { id: "cline", name: "Cline (VS Code)", kind: "ia", commands: &[], folders: &["%APPDATA%/Code/User/globalStorage/saoudrizwan.claude-dev"] },
+    Program { id: "roo", name: "Roo Code (VS Code)", kind: "ia", commands: &[], folders: &["%APPDATA%/Code/User/globalStorage/rooveterinaryinc.roo-cline"] },
+    Program { id: "continue", name: "Continue", kind: "ia", commands: &[], folders: &["~/.continue"] },
+    Program { id: "windsurf", name: "Windsurf", kind: "editor", commands: &["windsurf"], folders: &["%LOCALAPPDATA%/Programs/Windsurf/Windsurf.exe"] },
+    Program { id: "kiro", name: "Kiro", kind: "editor", commands: &["kiro"], folders: &["%LOCALAPPDATA%/Programs/Kiro/Kiro.exe"] },
+    Program { id: "zed", name: "Zed", kind: "editor", commands: &["zed"], folders: &["%LOCALAPPDATA%/Programs/Zed/Zed.exe"] },
+    Program { id: "warp", name: "Warp", kind: "editor", commands: &["warp"], folders: &["%LOCALAPPDATA%/Programs/Warp/warp.exe"] },
+    Program { id: "jetbrains", name: "JetBrains (AI Assistant)", kind: "editor", commands: &[], folders: &["%APPDATA%/JetBrains"] },
 ];
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
@@ -255,6 +271,13 @@ pub fn config_files(env: &Env) -> Vec<(&'static str, PathBuf)> {
         ("Claude Code", env.home.join(".claude.json")),
         ("Cursor", env.home.join(".cursor").join("mcp.json")),
         ("VS Code", env.appdata.join("Code").join("User").join("mcp.json")),
+        // Fase 19: outros clientes com o mesmo formato `mcpServers`.
+        ("Windsurf", env.home.join(".codeium").join("windsurf").join("mcp_config.json")),
+        ("Gemini CLI", env.home.join(".gemini").join("settings.json")),
+        ("Kiro", env.home.join(".kiro").join("settings").join("mcp.json")),
+        ("LM Studio", env.home.join(".lmstudio").join("mcp.json")),
+        ("Cline", env.appdata.join("Code").join("User").join("globalStorage").join("saoudrizwan.claude-dev").join("settings").join("cline_mcp_settings.json")),
+        ("Roo Code", env.appdata.join("Code").join("User").join("globalStorage").join("rooveterinaryinc.roo-cline").join("settings").join("mcp_settings.json")),
     ]
 }
 
@@ -505,6 +528,23 @@ mod tests {
                 let _ = std::fs::remove_dir_all(&self.0);
             }
         }
+    }
+
+    #[test]
+    fn phase19_more_agents_and_config_sources() {
+        let ids: Vec<&str> = PROGRAMS.iter().map(|p| p.id).collect();
+        for id in ["aider", "goose", "qwen", "crush", "opencode", "amp", "copilot", "cline", "roo", "continue", "windsurf", "kiro", "zed", "warp", "jetbrains"] {
+            assert!(ids.contains(&id), "{id}");
+        }
+        let mut seen = std::collections::HashSet::new();
+        assert!(ids.iter().all(|i| seen.insert(*i)), "ids únicos");
+        let (_d, env) = fake();
+        let names: Vec<&str> = config_files(&env).into_iter().map(|c| c.0).collect();
+        for n in ["Windsurf", "Gemini CLI", "Kiro", "LM Studio", "Cline", "Roo Code"] { assert!(names.contains(&n), "{n}"); }
+        // O formato comum: mcpServers com command/args.
+        let got = parse_foreign("Windsurf", r#"{"mcpServers":{"fs":{"command":"npx","args":["-y","@modelcontextprotocol/server-filesystem"]}}}"#);
+        assert_eq!(got.len(), 1);
+        assert_eq!(got[0].source, "Windsurf");
     }
 
     #[test]

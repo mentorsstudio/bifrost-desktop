@@ -47,6 +47,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="coucou" android:host="pair" />
+                <data android:scheme="bifrost-desktop" android:host="pair" />
             </intent-filter>
         </activity>
 

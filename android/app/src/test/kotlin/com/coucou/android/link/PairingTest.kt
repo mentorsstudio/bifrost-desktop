@@ -22,6 +22,10 @@ class PairingTest {
         assertEquals("My PC", p.desktopName)
     }
 
+    @Test fun acceptsTheBifrostDesktopScheme() {
+        assertNotNull(PairingPayload.parse(good.replace("coucou://", "bifrost-desktop://")))
+    }
+
     @Test fun toleratesSurroundingWhitespace() {
         assertNotNull(PairingPayload.parse("  $good\n"))
     }

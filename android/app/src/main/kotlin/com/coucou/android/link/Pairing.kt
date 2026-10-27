@@ -26,7 +26,8 @@ data class PairingPayload(
         /** Returns null for anything that is not a well-formed v1 pairing link. */
         fun parse(text: String): PairingPayload? {
             val uri = try { URI(text.trim()) } catch (_: Exception) { return null }
-            if (uri.scheme != "coucou" || uri.host != "pair") return null
+            // Bifrost (fork do Coucou) gera bifrost-desktop://pair; os dois esquemas valem.
+            if ((uri.scheme != "coucou" && uri.scheme != "bifrost-desktop") || uri.host != "pair") return null
             val q = (uri.rawQuery ?: return null).split("&").mapNotNull {
                 val i = it.indexOf('=')
                 if (i <= 0) null else it.substring(0, i) to URLDecoder.decode(it.substring(i + 1), "UTF-8")
