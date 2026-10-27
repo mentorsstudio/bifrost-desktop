@@ -636,3 +636,11 @@ Referência: clone limpo do Coucou (louis-cfm/coucou @ 47d1c2d) em `/workspace/c
 | Hub / configurações / cabeçalho | barra lateral, formulário, abas à esquerda | barra superior, livro-razão em 2 colunas, seletor central (fase 13), reconferidos |
 
 Caminhada na área de trabalho: `logic::walk_ledge` — o passeio segue a borda da barra de tarefas (base da área útil) ou, se o corvo está no topo, a borda de baixo da ilha compacta (só ao longo dela). Teste `walk_follows_the_taskbar_or_the_island_edge`.
+
+### 10.15 Fase 15 — boas-vindas como pedra rúnica e a ilha como notch
+
+- **Boas-vindas do hub** (`hub/hero.ts`, `realm.css`): saiu o cartão com os corvos à direita (composição do Coucou). Agora é uma pedra rúnica simétrica em três colunas: escudo redondo de Huginn | inscrição centrada (runas, título, texto, ação) | escudo de Muninn, com o nome em runas sob cada escudo e a ponte de aurora no pé. Em janelas estreitas os escudos somem.
+- **Notch de verdade** (`src-tauri/src/notch.rs`): a janela da ilha vira AppBar (`SHAppBarMessage` ABM_NEW/QUERYPOS/SETPOS, borda de cima) reservando uma faixa de 32 px lógicos na largura do monitor — janelas maximizadas ficam abaixo. Um vigia de 750 ms reafirma `HWND_TOPMOST` (sem ativar), refaz a reserva quando monitor/posição/DPI mudam e consulta `SHQueryUserNotificationState`: em tela cheia (jogo D3D, vídeo, apresentação) a ilha cede (NOTOPMOST e solta a faixa) ou fica por cima, conforme o ajuste. Ao sair, `ABM_REMOVE`.
+- **Ajustes › Geral**: "Reservar a faixa da ilha (notch)" (`notchReserve`, ligado) e "Ficar por cima em tela cheia" (`notchOverFullscreen`, desligado).
+- **Windhawk opcional** (`windows/windhawk/`): mod C++ para o `explorer.exe` que devolve a ilha ao topo a cada troca de janela em primeiro plano; só para casos em que outro programa topmost ainda a cubra. O Windhawk não tem CSS/JS — o visual continua no CSS/TS do Bifrost.
+- O clique-através fora do formato da ilha continua o mesmo (região/poll do cursor).

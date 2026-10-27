@@ -100,22 +100,30 @@ export function hero(page: string, title: string, subtitle: string | null, actio
     row.append(...actions);
     copy.append(row);
   }
-  const perch = document.createElement("div");
-  perch.className = "bf-hero-perch";
-  const branch = document.createElement("div");
-  branch.className = "bf-hero-branch";
+  // v15: brasão nórdico — os dois corvos em escudos redondos ladeando a inscrição,
+  // como numa pedra rúnica (o Coucou põe os mascotes num cartão à direita).
   const huginn = new Mascot("huginn");
   const muninn = new Mascot("muninn");
   huginn.el.classList.add("bf-hero-h");
   muninn.el.classList.add("bf-hero-m");
-  perch.append(huginn.el, muninn.el, branch);
+  const shield = (m: Mascot, side: string, rune: string) => {
+    const s = document.createElement("div");
+    s.className = `bf-hero-shield ${side}`;
+    const r = document.createElement("span");
+    r.className = "bf-hero-shield-rune";
+    r.textContent = rune;
+    s.append(m.el, r);
+    return s;
+  };
+  const left = shield(huginn, "l", toRunes("huginn", ""));
+  const right = shield(muninn, "r", toRunes("muninn", ""));
   // Chegam voando quando a página abre e reagem ao cursor.
   huginn.set("flyIn");
   setTimeout(() => muninn.set("flyIn"), 160);
   setTimeout(() => { huginn.set(page === "chat" || page === "agents" ? "thinking" : "idle"); muninn.set("idle"); }, 900);
   el.addEventListener("pointerenter", () => { if (!compact) huginn.set("listening"); });
   el.addEventListener("pointerleave", () => huginn.set("idle"));
-  el.append(sky, copy, perch);
+  el.append(sky, left, copy, right);
   return el;
 }
 

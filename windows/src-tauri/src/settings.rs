@@ -103,6 +103,10 @@ pub struct Settings {
     pub show_clock: bool,
     /// Fase 13: Huginn passeia sozinho pela borda da tela de vez em quando. On by default.
     pub desktop_wander: bool,
+    /// Fase 15: a ilha reserva a faixa do alto da tela (AppBar), como um notch. On by default.
+    pub notch_reserve: bool,
+    /// Fase 15: em jogo/vídeo em tela cheia, a ilha fica por cima (true) ou se esconde (false).
+    pub notch_over_fullscreen: bool,
     /// Paulo build — MCP servers the chat may talk to (mcp/config.rs), by name.
     /// Owned by the Rust side: only the mcp_* commands change them.
     pub mcp_servers: BTreeMap<String, crate::mcp::McpServer>,
@@ -183,6 +187,8 @@ impl Default for Settings {
             phone_relay_url: String::new(),
             show_clock: false,
             desktop_wander: true,
+            notch_reserve: true,
+            notch_over_fullscreen: false,
             mcp_servers: crate::mcp::config::default_servers(),
             mcp_chat: crate::mcp::McpChat::default(),
             mcp_server_enabled: true,
@@ -517,6 +523,8 @@ mod tests {
   "phoneRelayUrl": "wss://relay.example.workers.dev",
   "showClock": true,
   "desktopWander": true,
+  "notchReserve": true,
+  "notchOverFullscreen": false,
   "mcpServers": { "hermes": { "command": "hermes.exe", "args": ["mcp-serve", "--tools"] }, "vps": { "url": "https://mcp.example.com/mcp" } },
   "mcpChat": { "server": "vps", "mode": "tool", "tool": "chat", "argument": "message", "extraArgs": { "a": 1 }, "statusTool": "s", "idArgument": "id", "timeoutSecs": 60, "includeHistory": false },
   "mcpServerEnabled": false,
@@ -1042,6 +1050,8 @@ mod tests {
                 "phoneRelayUrl",
                 "showClock",
                 "desktopWander",
+                "notchReserve",
+                "notchOverFullscreen",
                 "mcpServers",
                 "mcpChat",
                 "mcpServerEnabled",

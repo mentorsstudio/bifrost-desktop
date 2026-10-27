@@ -17,6 +17,7 @@ mod i18n;
 mod identity;
 mod integrations;
 mod island;
+mod notch;
 mod local_chat;
 mod log;
 mod mcp;
@@ -1277,6 +1278,7 @@ pub fn run() {
             }
             gate.set_active(true);
             island::spawn_cursor_poll(handle.clone(), gate.clone());
+            notch::start(handle.clone());
 
             log::line(format!("--- Bifrost {} started ---", env!("CARGO_PKG_VERSION")));
             hooks::ensure_hook_exe(&handle);
@@ -1308,6 +1310,7 @@ pub fn run() {
         .run(|app, event| {
             // Withdraw the phone link's announcement on the local network before the process ends.
             if let tauri::RunEvent::Exit = event {
+                notch::stop(app);
                 phone_link::stop_on_exit(app);
                 notes::shutdown(app);
                 // GOWA started by Bifrost stops with it; the conversations were only in memory.
