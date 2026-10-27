@@ -521,20 +521,18 @@ Credenciais no cofre do sistema (`secrets.rs`): `mcp-token:<nome>` (Hermes VPS e
 * Login OAuth dos serviços na nuvem depende do `mcp-remote` (npx). O GitHub remoto pode pedir OAuth que nem todo cliente aceita; nesse caso use o `gh` (já instalado) ou um token como credencial do servidor.
 * Verificação = compilação + suites automatizadas + capturas headless; não houve teste interativo no Windows.
 
-## 10. Paridade (fase 4) — pass/fail e o que é nosso
+## 10. Paridade (fase 5) — pass/fail e o que é nosso
 
 | Área | O que é nosso | Herdado | Paridade |
 |---|---|---|---|
-| Máquina de estados da ilha (`island/fsm.ts`) | **Reescrita** (relógios nomeados, mesmo contrato) | — | PASS (36 testes) |
-| Casca da ilha (`island/island.ts`, 1286 linhas) | Pele nórdica, cartões de aviso/permissão com layout novo em CSS | **Código herdado** (port TS): não reescrito nesta fase | PASS de paridade; não reescrito |
-| Chat da ilha ("Saga") | **Reescrito** (fase 3) | — | PASS |
-| Pílula | **Folha de estilo nova** (placa de fiorde, barras de aurora, botões-runa) | Lógica de fases/bandas/voz/hot-region (`pill/main.ts`) | PASS de paridade; lógica herdada |
-| Saudação (`huginn/greeting.ts`) | **Reescrita**: coreografia "voo de Huginn" própria, céu de aurora com runas, desenhada pelo RavenEngine | — | PASS (4 testes de não-corte) |
-| Novidades (`views/whatsnew.ts`) | **Reescrita** (pedra rúnica, "Sua saga até aqui"); botão de doação de terceiros removido | Regras em `whats-new/*.ts` | PASS |
-| Hub: faixa, painel, estado vazio, marca | **Reescritos** (`hub/hero.ts` sem canvas nem partículas; `frames.ts` removido) | — | PASS |
-| Hub: as 15 páginas | Camada de layout nórdica comum (painéis, rótulos com runa, campos, números) | Estrutura DOM de cada página | PASS de paridade; páginas não redesenhadas uma a uma |
-| Rótulos pt-BR | Escriba (antes "Notetaker"), Ilha, Voz, Caderno, Fluxos, E-mails, Demonstração… | — | PASS |
-| Fonte rúnica | **Noto Sans Runic (OFL)** embutida em todas as janelas e nos canvases | — | PASS |
-| Corvos, adornos, ícones, menu da bandeja | Nossos (fases 2–3) | — | PASS |
-| Menu nativo do WebView2 | Bloqueado | — | PASS |
+| Casca da ilha (`island/island.ts`) | **Reescrita do zero** sobre módulos próprios: `geometry.ts` (forma, toques, contagem, olhar, relógio), `targets.ts` (destino do ↗/terminal), `actions.ts` (ViewActions), `drop.ts` + `upload-steps.ts` (envio de arquivo) | — (contrato público mantido) | PASS (501 testes TS; 10 novos em `island-modules.test.mjs`) |
+| Máquina de estados (`island/fsm.ts`) | **Reescrita** (fase 4) | — | PASS (36) |
+| Cartões de aviso/permissão (permissão, pergunta, erro, fim, confuso, nota) | **Reescritos**: `views/alerts.ts` + `views/alert-model.ts` (trava de clique, fluxo de perguntas, rótulos) | — | PASS |
+| Demais views da ilha (cabeçalho, visão geral, pílulas, ajustes rápidos, chat, envio, Spotify, WhatsApp, GitHub, recap…) | Pele nórdica | **Código herdado** (`views/views.ts` e vizinhos) | PASS de paridade; não reescritas |
+| Pílula (`pill/main.ts`) | **Lógica reescrita**: `model.ts` (aparências, tamanhos, barras, zonas do mouse, quadros), `view.ts` (DOM), `speech.ts` (voz); CSS novo (fase 4) | — | PASS (9 testes novos) |
+| Saudação, novidades, faixa/painel do hub, fonte rúnica, corvos, menu da bandeja | Nossos (fases 2–4) | — | PASS |
+| Hub: as 15 páginas | **Layout próprio por página** (`bifrost/hub-pages.css`: runa-guia, céu e grade de cada página) | Estrutura DOM interna das páginas e dos formulários de Ajustes da ilha | PASS de paridade |
+| Movimento | Sistema único de tokens (fase 4) | — | PASS (6 testes) |
+| Textos | pt-BR; "Session" → "Sessão"; teste `ui-english.test.mjs` varre inglês esquecido | — | PASS |
+| Doação de terceiros | Constante `COFFEE_URL` removida | — | PASS |
 | Protocolo (`coucou-relay/v1`, `mochiOutfit`, janela `mochi`) | — | Mantido de propósito | HERDADO (protocolo) |
