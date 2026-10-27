@@ -553,3 +553,18 @@ Credenciais no cofre do sistema (`secrets.rs`): `mcp-token:<nome>` (Hermes VPS e
 - **Painel**: linhas tracejadas para os achados, "Instalar hooks" num clique para Codex/Gemini (prévia + aplicação com fingerprint), tempo que anda a cada 5 s. **Cartão da esquerda** (`session-card.ts`): contexto (pasta · branch · tempo) sob o ticker; parado, a última sessão lembrada (localStorage).
 - **Hub**: glossário pt-BR em `lookup` (notch → ilha); caminho padrão quando vazio; botão desativado legível com motivo.
 - **Ilha**: `kit.ts`, `header.ts`, `pill-chip.ts`, `quick-settings.ts` (próprios, com testes).
+
+### 10.8 Fase 8 (27/10/2026)
+
+- **Detecção de agentes** (`src-tauri/src/agents_scan.rs`): um CLI só vira sessão se tiver um terminal ou editor com janela como ancestral (`is_host`). Os auxiliares do Codex (`codex-code-mode-host`, `codex-computer-use-*`, `codex-windows-sandbox-service`) e o app desktop do Codex ficam de fora. O shim npm não duplica: um CLI cujo ancestral é o mesmo agente é ignorado. O Ollama gera uma linha única (`ollama_row`, id `ollama`), com os modelos juntos.
+- **CLIs via npm**: no Windows, `node_cmdlines` lê a linha de comando dos `node.exe` (PowerShell `Get-CimInstance`, `CREATE_NO_WINDOW`, cache de 30 s, limite de 4 s), e `cli_of_cmdline` reconhece claude, codex, gemini e os demais.
+- **Hub — montagem separada da ativação** (`hub/shell.ts`): `build()` monta com um contexto próprio, `activate()` restaura o estado da página (S.root, declaredViews, localRedraw, shortcutsListener). A próxima página da lista é montada de antemão no ócio, 700 ms depois da troca. A pré-montagem no hover foi removida porque custava quadros longos.
+- **Ajustes divididos**: `settings/store.ts` (estado S, save, toggle do kit) mais `page-agents`, `page-chat-pc`, `page-pills`, `page-chat`, `page-integrations`, `page-general`, `page-shortcuts` e `hooks-review`. O `main.ts` ficou com ~140 linhas.
+
+### 10.9 Fase 9 (27/10/2026)
+
+- **Vistas da ilha**: a visão geral e a vazia saíram de `views.ts` para `views/overview.ts` e `views/empty.ts`. A escolha do cartão da esquerda virou a função pura `leftMode()` (prioridade: plano → diff → sessão ativa → cartão da sessão → Spotify → WhatsApp → integração), testada em `tests/overview.test.mjs`. Chat, upload, Spotify, WhatsApp, GitHub e o resumo semanal já tinham módulo próprio. Os botões deles passaram para o `kit.ts` (`btn`, `linkBtn`).
+- **Formulários dos Ajustes no kit**: `formBtn` (primário, perigoso ou simples), `textField` e `choice`, em todas as páginas. Ficaram próprios só os controles especiais: interruptores com estado desabilitado, teclas de atalho e amostras de cor.
+- **60 fps**: as páginas da ilha já mostradas ficam vivas por 60 s no palco escondido (`.hub-prefetch`, com estilo e layout prontos). Ao voltar a uma delas nada é remontado, e `redraw()` (idioma, ajustes) descarta todas. Uma versão anterior mantinha as páginas desanexadas e piorava a volta (quadro de 150 ms): re-anexar custa um recálculo de estilo completo. Medido no Chromium do box: transição 59,7 fps (rAF), hover+clique 59,6, revisita 59,1. Ainda sobra um quadro de ~33 ms por troca, o da troca em si (mover a página e iniciar a animação).
+- **Painel de agentes**: com 3 ou mais linhas, ele entra no modo compacto (uma linha por agente, sem a segunda linha) e todas aparecem sem rolar, Ollama incluído.
+- **Revisão visual (correções)**: o glossário pt-BR passou a cobrir "Notch" com maiúscula ("Ilha → Chat"). A página Ajustes ganhou subtítulo. "Mãos livres" mostra "Ctrl da direita ×2" em vez da tecla repetida. Estilos sem app próprio agora mostram uma explicação em vez de um cartão vazio. Na ilha, o rótulo "Claude Code" encolhe antes do nome do projeto.
