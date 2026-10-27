@@ -755,19 +755,21 @@ Estudo completo em `filee-re.md`.
   opções (qualidade, lado máximo, %, DPI, pasta de saída), fila com progresso/cancelar/
   abrir pasta, ferramentas opcionais com download, ajustes do gesto.
 - **Ilha**: soltar arquivo mostra "Enviar para a IA", "Converter…" e "Cancelar".
-- **Gesto — o anel (rondó)**: no Explorer ou na Área de Trabalho, com o mouse sobre um
-  arquivo, segure **Ctrl** e **segure o botão direito** (~280 ms). Abre um anel em volta do
-  cursor: no miolo, o **ícone do arquivo** como o Windows o mostra (ou uma runa do tipo, se
-  não houver ícone), com um selo de contagem quando há vários arquivos selecionados. Em
-  volta, botões redondos surgem um atrás do outro (35 ms entre eles, mola contida dos
-  tokens `--m-snappy`): Converter para…, Comprimir, Redimensionar, Juntar PDFs (só quando
-  todos são PDF), Enviar para a IA e Abrir no Conversor. O Huginn fica pequeno, pousado no
-  topo do anel, e o balãozinho dele diz o nome do botão sob o mouse. "Converter para…" e
-  "Enviar para a IA" abrem um **segundo arco** por fora (formatos / atalhos de pergunta);
-  com ele aberto, o nome vai para o miolo. Soltar o botão sobre um item o executa; Esc ou
-  clique fora do **círculo** fecha, e o anel recolhe na ordem inversa. Um toque rápido devolve
-  o clique direito normal. Perto das bordas, a janela do anel é empurrada para dentro da
-  tela (o centro se desloca), em 100/125/150%.
+- **Gesto — o anel (fase 22, como o Filee)**: no Explorer ou na Área de Trabalho, com o
+  mouse sobre um arquivo, segure **Ctrl** e **segure o botão direito** (~280 ms; ou outro
+  gatilho nos Ajustes). Abre uma **rosca de fatias** em volta do cursor, montada como a do
+  Filee (`convert/ring.rs`): um perfil por tipo de arquivo decide as fatias — primeiro as
+  conversões diretas, na ordem do Filee, com o nome e o formato de saída embaixo ("Mesclar
+  PDF / PDF", "Um ZIP / ZIP") — e depois as nossas: Comprimir, Redimensionar, Enviar para a
+  IA (grupo: abre um segundo anel com as perguntas) e Abrir no Conversor. Máximo 12 fatias.
+  Fatias que não servem ficam apagadas e o miolo diz por quê ("Mesmo formato", "Precisa do
+  LibreOffice"). No miolo: o ícone do arquivo, a contagem e a dica — "Solte aqui para
+  cancelar" (soltar no meio ou fora cancela), "Solte → PNG" sobre uma fatia. O Huginn fica
+  pequeno, pousado na borda. Fatias surgem uma após a outra (35 ms) e recolhem ao contrário.
+- **Conflito com o Filee instalado**: o Bifrost lê (só leitura) `%APPDATA%\Filee\settings.json`;
+  se um gatilho ligado do Filee usa o mesmo botão e teclas, o gesto do Bifrost fica desligado
+  e os Ajustes avisam e oferecem outro gatilho (inclusive **Alt + segurar**). No PC do Paulo o
+  Filee usa Ctrl + arrastar com o *esquerdo* e Ctrl + Alt + Espaço: sem conflito.
 - **Menu do Explorer** (opcional, desligado): HKCU `*\shell\Bifrost` com "Converter…" e
   "Perguntar à IA". Sem admin.
 
@@ -779,6 +781,26 @@ Estudo completo em `filee-re.md`.
   mouse estiver selecionado, vale a seleção inteira; nunca sobrescreve: "nome (2).ext").
 - TS: `src/filee/*` (`ring.ts` = geometria e acerto por fatia, testado em
   `tests/filee-ring.test.mjs`; `menu.ts`/`menu.css` = o anel), `src/hub/pages/converter.ts`, `src/settings/page-filee.ts`, `fileemenu.html`.
+
+### Fatias por tipo (Filee × Bifrost)
+
+| Perfil (extensões) | Filee — frente, na ordem (12h, sentido horário) | Bifrost — anel |
+|---|---|---|
+| Imagens (png, jpg, webp, bmp, tiff, gif, ico, heic, avif…) | PNG, JPG, WEBP, PDF, SVG (traçar), Traço (line art), TIFF, BMP, ICO, Tamanho 50% | PNG, JPG, WEBP, PDF, TIFF, BMP, ICO, Tamanho 50% · Comprimir, Redimensionar, Enviar para a IA, Abrir no Conversor |
+| PDF | PNG, JPG, Imagem longa, DOCX, PPTX (slides), TXT, Markdown, EPUB, HWPX, HWP, Dividir PDF, Mesclar PDF | PNG, JPG, Imagem longa, DOCX, TXT, Markdown, EPUB, Dividir PDF, Mesclar PDF · Comprimir, IA, Conversor |
+| Documentos (docx, odt, rtf, doc) | PDF, HWPX, HWP, DOCX, ODT, TXT, HTML, EPUB, PNG, Mesclar PDF | PDF, DOCX, ODT, TXT, HTML, EPUB, PNG, Mesclar PDF · IA, Conversor |
+| E-books (epub) | PDF, EPUB, DOCX, TXT, AZW3, MOBI, KEPUB, HWPX, HWP, HTML | PDF, EPUB, DOCX, TXT, HTML, Markdown · IA, Conversor |
+| Texto (txt, md, html) | PDF, HWPX, HWP, DOCX, HTML, TXT, EPUB | PDF, DOCX, HTML, TXT, EPUB · IA, Conversor |
+| Vídeo (mp4, mkv, webm, mov, avi…) | MP4, MP4 720p, MP4 HEVC, WEBM, MOV, GIF, MP3, Extrair legendas, MKV, AVI | MP4, MP4 720p, MP4 HEVC, WEBM, MOV, GIF, MP3, Extrair legendas · Comprimir, Redimensionar, IA, Conversor (MKV e AVI saem por falta de vaga; ficam no Conversor) |
+| Áudio (mp3, wav, m4a, ogg, flac…) | MP3, MP3 128k, M4A, WAV, FLAC, OGG, OPUS, AAC | MP3, MP3 128k, M4A, WAV, FLAC, OGG, OPUS, AAC · Comprimir, IA, Conversor |
+| Vetor (svg) | PNG, PDF, SVG, JPG, WEBP, EPS | PNG, PDF, SVG (apagada: mesmo formato), JPG, WEBP · Comprimir, Redimensionar, IA, Conversor |
+| Compactados (zip, 7z, tar, tgz, rar…) | Extrair, Um ZIP, ZIP, 7Z, TAR.GZ, TAR | Extrair, Um ZIP, ZIP, 7Z, TAR.GZ, TAR · IA, Conversor |
+| Mistos / desconhecidos / pastas | PDF, Mesclar PDF, Um ZIP, PNG, TXT | PDF, Mesclar PDF, Um ZIP, PNG, TXT · IA, Conversor |
+
+Rotas de mais de um passo que o motor faz: documento → PDF (LibreOffice) → PNG/JPG
+(PDFium); documento → PDF → Mesclar; PDF → Markdown (embutido) → EPUB/HTML (Pandoc);
+PDF/documento → Imagem longa (páginas empilhadas); ZIP/RAR → extrai → 7Z/TAR/TAR.GZ.
+Estudo completo: `filee-re.md`.
 
 ### Formatos
 | Entrada → saída | Precisa de |
