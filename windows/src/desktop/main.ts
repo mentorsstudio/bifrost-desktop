@@ -7,6 +7,7 @@
 // like the Mac, and a few frames a second asleep — with no cursor polling at
 // all while he sleeps.
 
+import "../bifrost/contextmenu";
 import { Bridge, emitToWindow, onEvent, type DesktopMode } from "../core/bridge";
 import type { BotEmoteName } from "../core/layout";
 import { Sound } from "../core/sound";

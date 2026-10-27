@@ -9,6 +9,7 @@
 // * chat.rs   — the "mcp" chat provider;
 // * server.rs — the embedded server (Streamable HTTP on 127.0.0.1, with a token).
 
+pub mod catalog;
 pub mod chat;
 pub mod client;
 pub mod config;

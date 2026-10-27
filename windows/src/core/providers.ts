@@ -6,7 +6,7 @@ import type { Settings } from "./state";
 import { N_ } from "../i18n/i18n";
 
 export type ProviderId =
-  | "mcp"
+  | "cli" | "mcp"
   | "anthropic" | "openai" | "google" | "openrouter"
   | "ollama" | "lmstudio" | "custom";
 
@@ -27,6 +27,8 @@ export interface ProviderDef {
 export const PROVIDERS: readonly ProviderDef[] = [
   // Paulo build: no API key — the chat goes to an agent through an MCP server
   // (Settings → Servidores MCP). Its "models" are the configured servers.
+  // Bifrost: as IAs instaladas no PC (Claude Code, Codex, Gemini CLI), sem chave.
+  { id: "cli", name: "IA do PC", accent: "#F2C14E", key: null, urlField: null, defaultModel: "claude", prefer: "claude" },
   { id: "mcp", name: "MCP", accent: "#8B5CF6", key: null, urlField: null, defaultModel: "", prefer: null },
   { id: "anthropic", name: "Anthropic", accent: "#E07950", key: "anthropic-api-key", urlField: null, defaultModel: "claude-opus-5", prefer: "opus" },
   { id: "google", name: "Google", accent: "#4285F4", key: "google-api-key", urlField: null, defaultModel: "gemini-2.0-flash", prefer: "flash" },
@@ -64,8 +66,9 @@ export function withModel(settings: Settings, provider: ProviderId, model: strin
  * active one, so the picker never hides where the chat goes.
  */
 export function visibleProviders(settings: Settings): ProviderDef[] {
+  // Provedores com chave de API não aparecem mais: tudo por MCP ou IA local.
   return PROVIDERS.filter(
-    (p) => !p.urlField || settings[p.urlField] !== "" || settings.chatProvider === p.id,
+    (p) => settings.chatProvider === p.id || (p.key === null && (!p.urlField || settings[p.urlField] !== "")),
   );
 }
 

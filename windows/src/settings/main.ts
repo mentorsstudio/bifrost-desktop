@@ -5,6 +5,12 @@
 
 import "./settings.css";
 import "../theme/bifrost.css";
+import "../bifrost/nordic.css";
+import "../bifrost/contextmenu";
+
+// Céu nórdico atrás da janela inteira: aurora e ponte.
+document.body.classList.add("bf-sky", "bf-scope");
+document.body.prepend(Object.assign(document.createElement("div"), { className: "bf-aurora" }));
 import { Bridge, onEvent, type HookPreview, type HookStatus, type ShortcutsReport } from "../core/bridge";
 import { CUSTOM_SERVER_KEY, providerDef, urlExposure } from "../core/providers";
 import {
@@ -34,10 +40,6 @@ import {
 } from "../i18n/i18n";
 
 /** Where secrets.rs keeps the keys on this OS. */
-const KEY_STORE = navigator.userAgent.includes("Windows")
-  ? "Windows Credential Manager"
-  : "Secret Service (GNOME Keyring, KWallet)";
-
 let settings: Settings = { ...DEFAULT_SETTINGS };
 let version = "";
 
@@ -331,87 +333,48 @@ function planSection(status: HookStatus): HTMLElement {
   return section;
 }
 
-// ── Claude API section ────────────────────────────────────────────────────────
+// ── IAs do PC ────────────────────────────────────────────────────────────────
 
-const MODELS: [string, string][] = [
-  ["claude-opus-5", "Claude Opus 5"],
-  ["claude-sonnet-5", "Claude Sonnet 5"],
-  ["claude-haiku-4-5", "Claude Haiku 4.5"],
-];
-
-function apiSection(hasKey: boolean): HTMLElement {
-  const dot = statusDot(hasKey);
-  const state = h("span", { class: "hint", text: hasKey ? t("Key saved in the {store}.", { store: KEY_STORE }) : t("No key yet — the chat needs one.") });
-
-  const field = h("input", {
-    type: "password",
-    placeholder: hasKey ? `••••••••••••  ${t("(stored)")}` : "sk-ant-...",
-    style: "flex:1 1 auto;min-width:0",
-    autocomplete: "off",
-    spellcheck: "false",
-  }) as HTMLInputElement;
-
-  const saveBtn = h("button", { class: "primary", text: t("Save key") });
-  const clearBtn = h("button", { class: "danger", text: t("Remove") });
-  const feedback = h("div", {});
-
-  async function refresh() {
-    const present = (await Bridge.secretPresent("anthropic-api-key")) ?? false;
-    dot.style.background = present ? "#22c55e" : "#f4505e";
-    state.textContent = present
-      ? t("Key saved in the {store}.", { store: KEY_STORE })
-      : t("No key yet — the chat needs one.");
-    field.placeholder = present ? `••••••••••••  ${t("(stored)")}` : "sk-ant-...";
-    clearBtn.style.display = present ? "" : "none";
-  }
-
-  saveBtn.addEventListener("click", async () => {
-    const value = field.value.trim();
-    if (!value) return;
-    clear(feedback);
-    try {
-      await Bridge.secretSet("anthropic-api-key", value);
-      field.value = "";
-      feedback.append(h("div", { class: "notice ok", text: t("Saved. It never touches disk.") }));
-      await refresh();
-    } catch (err) {
-      feedback.append(h("div", { class: "notice err", text: t("Could not save: {error}", { error: String(err) }) }));
-    }
-  });
-
-  clearBtn.addEventListener("click", async () => {
-    clear(feedback);
-    try {
-      await Bridge.secretClear("anthropic-api-key");
-      feedback.append(h("div", { class: "notice ok", text: t("Key removed.") }));
-      await refresh();
-    } catch (err) {
-      feedback.append(h("div", { class: "notice err", text: t("Could not remove: {error}", { error: String(err) }) }));
-    }
-  });
-
-  const model = h("select", {}) as HTMLSelectElement;
-  for (const [id, label] of MODELS) model.append(h("option", { value: id, text: label }));
-  if (!MODELS.some(([id]) => id === settings.model)) {
-    model.append(h("option", { value: settings.model, text: settings.model }));
-  }
-  model.value = settings.model;
-  model.addEventListener("change", () => {
-    settings.model = model.value;
-    void save();
-  });
-
-  clearBtn.style.display = hasKey ? "" : "none";
-
-  return h(
-    "section",
-    {},
-    h("h2", {}, dot, h("span", { text: "Claude" })),
-    state,
-    h("div", { class: "row" }, h("label", { text: t("API key") }), field, saveBtn, clearBtn),
-    h("div", { class: "row" }, h("label", { text: t("Model") }), model),
-    feedback,
+/** As IAs instaladas que respondem o chat sem chave nenhuma. */
+function aiSection(): HTMLElement {
+  const body = h("div", { class: "bf-ai-grid" });
+  const section = h("section", { class: "bf-section" },
+    h("h2", {}, h("span", { class: "bf-rune", text: "ᚨ" }), h("span", { text: "IAs do seu PC" })),
+    h("div", { class: "hint", text: "O Huginn conversa pelas IAs que você já tem instaladas, com o login delas. Nada de chave: escolha uma e pronto." }),
+    body,
   );
+  const draw = async () => {
+    clear(body);
+    const scan = await Bridge.mcpScan().catch(() => null);
+    const ais = [
+      { id: "claude", name: "Claude Code", provider: "cli" as const },
+      { id: "codex", name: "Codex CLI", provider: "cli" as const },
+      { id: "gemini", name: "Gemini CLI", provider: "cli" as const },
+      { id: "ollama", name: "Ollama", provider: "ollama" as const },
+      { id: "lmstudio", name: "LM Studio", provider: "lmstudio" as const },
+    ];
+    for (const ai of ais) {
+      const found = scan?.programs.find((p) => p.id === ai.id)?.found ?? false;
+      const inUse = settings.chatProvider === ai.provider && (ai.provider !== "cli" || (settings.chatModels.cli ?? "claude") === ai.id);
+      const use = h("button", { class: inUse ? "" : "primary", text: inUse ? "Em uso" : "Usar no chat" }) as HTMLButtonElement;
+      use.disabled = inUse || !found;
+      use.addEventListener("click", async () => {
+        settings.chatProvider = ai.provider;
+        if (ai.provider === "cli") settings.chatModels = { ...settings.chatModels, cli: ai.id };
+        if (ai.provider === "ollama" && !settings.ollamaUrl) settings.ollamaUrl = "http://127.0.0.1:11434";
+        if (ai.provider === "lmstudio" && !settings.lmstudioUrl) settings.lmstudioUrl = "http://127.0.0.1:1234";
+        await save();
+        void draw();
+      });
+      body.append(h("div", { class: `bf-ai-card${found ? " found" : ""}${inUse ? " active" : ""}` },
+        h("span", { class: "bf-ai-name", text: ai.name }),
+        h("span", { class: `bf-badge ${found ? "ok" : "off"}`, text: found ? "detectado" : "não instalado" }),
+        use,
+      ));
+    }
+  };
+  void draw();
+  return section;
 }
 
 // ── Active pills section ──────────────────────────────────────────────────────
@@ -477,7 +440,7 @@ function activePillsSection(connected: Record<string, boolean>): HTMLElement {
     clear(groups);
     for (const cat of PILL_CATEGORIES) {
       if (cat.id === "service") continue;
-      const pills = availablePills().filter((p) => p.category === cat.id);
+      const pills = availablePills().filter((p) => p.category === cat.id && p.connect.kind !== "key");
       if (pills.length === 0) continue;
       groups.append(h("div", { class: "pill-group" }, h("h3", { text: t(cat.title) }), ...pills.map(row)));
     }
@@ -499,8 +462,6 @@ function activePillsSection(connected: Record<string, boolean>): HTMLElement {
 // ── Chat providers section ────────────────────────────────────────────────────
 
 const CHAT_STRINGS = {
-  get providersTitle() { return t("Chat providers"); },
-  get providersHint() { return t("Chat with Google AI, OpenAI or OpenRouter instead of Claude: add a key here, then click the model name above the chat box to switch provider and model. Keys stay in the system keychain. These providers get no web search and no tools: they can answer, never act on this computer."); },
   get stored() { return `••••••••  ${t("(stored)")}`; },
   get save() { return t("Save"); },
   get remove() { return t("Remove"); },
@@ -511,97 +472,14 @@ const CHAT_STRINGS = {
   get disconnect() { return t("Disconnect"); },
   get useInChat() { return t("Use in chat"); },
   get inUse() { return t("In use"); },
-  get keyOptional() { return t("API key (optional)"); },
   get localOnly() { return t("Nothing leaves your PC: the server runs on this computer."); },
   get remote() { return t("This address is another machine: what you ask is sent to it."); },
   get remoteHttp() { return t("This address is another machine, over plain http: what you ask travels unencrypted."); },
-  get keyOverHttp() { return t("Warning: the key would be sent unencrypted (http://) to another machine. Use https://, or a server on this computer."); },
   get invalid() { return t("Not a valid http:// or https:// address."); },
   noModels: (name: string) => t("No models yet. Download one in {name} first.", { name }),
   models: (n: number) => tn("{count} model", "{count} models", n),
 };
 
-interface CloudDef {
-  id: "google" | "openai" | "openrouter";
-  name: string;
-  placeholder: string;
-  where: string;
-}
-
-const CLOUD: CloudDef[] = [
-  { id: "google", name: "Google AI", placeholder: "AIza…", where: "aistudio.google.com" },
-  { id: "openai", name: "OpenAI", placeholder: "sk-…", where: "platform.openai.com" },
-  { id: "openrouter", name: "OpenRouter", placeholder: "sk-or-…", where: "openrouter.ai/keys" },
-];
-
-function chatProvidersSection(
-  present: Record<string, boolean>,
-  keyChanged: (key: string, on: boolean) => void,
-): HTMLElement {
-  const list = h("div", { style: "display:flex;flex-direction:column;gap:8px" });
-  for (const def of CLOUD) {
-    const p = providerDef(def.id);
-    const key = p.key!;
-    const input = h("input", {
-      type: "password",
-      placeholder: present[key] ? CHAT_STRINGS.stored : def.placeholder,
-      autocomplete: "off",
-      spellcheck: "false",
-      style: "flex:1 1 auto;min-width:0",
-    }) as HTMLInputElement;
-    const dotEl = statusDot(present[key] ?? false);
-    const saveBtn = h("button", { text: CHAT_STRINGS.save });
-    const removeBtn = h("button", { class: "danger", text: CHAT_STRINGS.remove });
-    const refresh = () => {
-      input.placeholder = present[key] ? CHAT_STRINGS.stored : def.placeholder;
-      dotEl.style.background = present[key] ? "#22c55e" : "#f4505e";
-      removeBtn.style.display = present[key] ? "" : "none";
-    };
-    saveBtn.addEventListener("click", async () => {
-      const value = input.value.trim();
-      if (!value) return;
-      try {
-        await Bridge.secretSet(key, value);
-        present[key] = true;
-        input.value = "";
-        keyChanged(key, true);
-      } catch {
-        dotEl.style.background = "#f5a524";
-        return;
-      }
-      refresh();
-    });
-    removeBtn.addEventListener("click", async () => {
-      try {
-        await Bridge.secretClear(key);
-        present[key] = false;
-        keyChanged(key, false);
-      } catch {
-        dotEl.style.background = "#f5a524";
-        return;
-      }
-      refresh();
-    });
-    refresh();
-    list.append(
-      h("div", { class: "row" },
-        h("label", {},
-          h("i", { class: "dot", style: `background:${p.accent};margin-right:8px` }),
-          h("span", { text: def.name }),
-        ),
-        input, saveBtn, removeBtn, dotEl,
-      ),
-      h("div", { class: "hint", style: "margin:-4px 0 0 144px", text: t("Key from {site}", { site: def.where }) }),
-    );
-  }
-  return h(
-    "section",
-    {},
-    h("h2", {}, h("span", { text: CHAT_STRINGS.providersTitle })),
-    h("div", { class: "hint", text: CHAT_STRINGS.providersHint }),
-    list,
-  );
-}
 
 // ── Local models section ──────────────────────────────────────────────────────
 
@@ -618,22 +496,21 @@ const LOCAL: Record<LocalId, { name: string; usual: string }> = {
 };
 
 /** What an address means for the user's data, as a hint line. */
-function exposureNotice(url: string, withKey: boolean): HTMLElement | null {
+function exposureNotice(url: string, _withKey: boolean): HTMLElement | null {
   switch (urlExposure(url)) {
     case "local":
       return h("div", { class: "hint", text: CHAT_STRINGS.localOnly });
     case "remote":
       return h("div", { class: "hint", text: CHAT_STRINGS.remote });
     case "remote-http":
-      return withKey
-        ? h("div", { class: "notice warn", text: CHAT_STRINGS.keyOverHttp })
-        : h("div", { class: "hint", text: CHAT_STRINGS.remoteHttp });
+      return h("div", { class: "hint", text: CHAT_STRINGS.remoteHttp });
     case "invalid":
       return url.trim() ? h("div", { class: "notice err", text: CHAT_STRINGS.invalid }) : null;
   }
 }
 
 function localSection(customKey: boolean): HTMLElement {
+  // Bifrost: servidor próprio sem chave — só o endereço.
   const body = h("div", { style: "display:flex;flex-direction:column;gap:14px" });
   const section = h(
     "section",
@@ -671,7 +548,7 @@ function localSection(customKey: boolean): HTMLElement {
       const disconnect = h("button", { class: "danger", text: CHAT_STRINGS.disconnect });
       disconnect.addEventListener("click", async () => {
         settings[field] = "";
-        if (settings.chatProvider === id) settings.chatProvider = "anthropic";
+        if (settings.chatProvider === id) settings.chatProvider = "cli";
         if (id === "custom") {
           await Bridge.secretClear(CUSTOM_SERVER_KEY).catch(() => {});
           customKey = false;
@@ -695,36 +572,20 @@ function localSection(customKey: boolean): HTMLElement {
       spellcheck: "false",
       autocomplete: "off",
     }) as HTMLInputElement;
-    // A custom server may want a key; it goes to the keychain, never to settings.json.
-    const key = h("input", {
-      type: "password",
-      placeholder: customKey ? CHAT_STRINGS.stored : CHAT_STRINGS.keyOptional,
-      style: "flex:1 1 auto;min-width:0",
-      autocomplete: "off",
-      spellcheck: "false",
-    }) as HTMLInputElement;
     const connect = h("button", { class: "primary", text: CHAT_STRINGS.connect });
 
     const showExposure = () => {
       clear(exposure);
-      const withKey = id === "custom" && (customKey || key.value.trim() !== "");
-      const notice = exposureNotice(input.value || def.usual, withKey);
+      const notice = exposureNotice(input.value || def.usual, customKey);
       if (notice) exposure.append(notice);
     };
     input.addEventListener("input", showExposure);
-    key.addEventListener("input", showExposure);
 
     connect.addEventListener("click", async () => {
       connect.disabled = true;
       clear(status);
       status.append(h("div", { class: "hint", text: CHAT_STRINGS.connecting }));
       try {
-        if (id === "custom" && key.value.trim()) {
-          // Stored with this address: the key is only ever sent there.
-          await Bridge.localSetKey(input.value || def.usual, key.value.trim());
-          key.value = "";
-          customKey = true;
-        }
         const server = await Bridge.localConnect(id, input.value);
         if (!server.models.length) {
           clear(status);
@@ -746,7 +607,6 @@ function localSection(customKey: boolean): HTMLElement {
     });
 
     block.append(h("div", { class: "row" }, label, input, connect));
-    if (id === "custom") block.append(h("div", { class: "row" }, h("label", { text: "" }), key));
     block.append(status, exposure);
     showExposure();
     return block;
@@ -769,36 +629,10 @@ interface IntegrationDef {
   hint?: string;
 }
 
+// Bifrost: GitHub, GitLab, Notion, Stripe, Vercel, Resend, n8n e Cal.com saíram
+// daqui — agora são servidores MCP oficiais (Configurações → Servidores MCP),
+// com login OAuth e sem chave. Sobra o que não precisa de nada.
 const INTEGRATIONS: IntegrationDef[] = [
-  { id: "integration_stripe", name: "Stripe", color: "#0570DE",
-    fields: [{ key: "stripe-api-key", label: N_("Secret key"), placeholder: "sk_live_…", secret: true }] },
-  { id: "integration_github", name: "GitHub", color: "#F4505E",
-    fields: [{ key: "github-token", label: N_("Token"), placeholder: "ghp_…", secret: true }],
-    hint: N_("Classic token with the repo scope, or fine-grained with read access to Pull requests, Commit statuses and Actions.") },
-  { id: "integration_gitlab", name: "GitLab", color: "#FC6D26",
-    fields: [
-      { key: "gitlab-url", label: N_("Instance URL"), placeholder: "https://gitlab.com", secret: false },
-      { key: "gitlab-token", label: N_("Token"), placeholder: "glpat-…", secret: true },
-    ],
-    hint: N_("Personal access token with read_api and read_user scopes.") },
-  { id: "integration_gitea", name: "Gitea", color: "#609926",
-    fields: [
-      { key: "gitea-url", label: N_("Instance URL"), placeholder: "https://gitea.example.com", secret: false },
-      { key: "gitea-token", label: N_("Token"), placeholder: "…", secret: true },
-    ] },
-  { id: "integration_vercel", name: "Vercel", color: "#7C5CFF",
-    fields: [{ key: "vercel-token", label: N_("Token"), placeholder: "…", secret: true }] },
-  { id: "integration_n8n", name: "n8n", color: "#F29B38",
-    fields: [
-      { key: "n8n-url", label: N_("Instance URL"), placeholder: "https://n8n.example.com", secret: false },
-      { key: "n8n-api-key", label: N_("API key"), placeholder: "…", secret: true },
-    ] },
-  { id: "integration_resend", name: "Resend", color: "#22C55E",
-    fields: [{ key: "resend-api-key", label: N_("API key"), placeholder: "re_…", secret: true }] },
-  { id: "integration_notion", name: "Notion", color: "#8C8C8C",
-    fields: [{ key: "notion-api-key", label: N_("Integration token"), placeholder: "ntn_…", secret: true }] },
-  { id: "integration_calcom", name: "Cal.com", color: "#C9956A",
-    fields: [{ key: "calcom-api-key", label: N_("API key"), placeholder: "cal_…", secret: true }] },
   // Nothing to enter: Spotify is read from the OS (src-tauri/src/spotify.rs).
   { id: "integration_spotify", name: "Spotify", color: "#1DB954", fields: [] },
 ];
@@ -819,7 +653,7 @@ function integrationsSection(present: Record<string, boolean>): HTMLElement {
 
   function updateNote() {
     const used = settings.activeIntegrations.length;
-    note.textContent = t("Pick up to {max} pills to show next to Huginn — {used}/{max} in use. Keys are stored in the {store}, never on disk.", { max: MAX_ACTIVE, used, store: KEY_STORE });
+    note.textContent = `Escolha até ${MAX_ACTIVE} pílulas ao lado do Huginn — ${used}/${MAX_ACTIVE} em uso. Serviços (GitHub, Notion, Stripe…) agora vivem em Servidores MCP.`;
   }
   declaredViews.push(updateNote);
 
@@ -1363,13 +1197,9 @@ async function render() {
   };
   const agents = await Bridge.agentHooksList();
 
-  const hasKey = (await Bridge.secretPresent("anthropic-api-key")) ?? false;
   const shortcutReport = await Bridge.shortcutsStatus();
 
-  const keys = [
-    "stripe-api-key", "github-token", "gitlab-url", "gitlab-token", "gitea-url", "gitea-token", "vercel-token",
-    "n8n-url", "n8n-api-key", "resend-api-key", "notion-api-key", "calcom-api-key",
-  ];
+  const keys: string[] = [];
   const present: Record<string, boolean> = {};
   for (const k of keys) present[k] = (await Bridge.secretPresent(k)) ?? false;
 
@@ -1381,19 +1211,6 @@ async function render() {
       connected[def.id] = present[def.connect.key] ?? (await Bridge.secretPresent(def.connect.key)) ?? false;
     }
   }
-  /** A chat provider's key was saved or removed: its pill's row says so at once. */
-  const keyChanged = (key: string, on: boolean) => {
-    for (const def of availablePills()) {
-      if (def.connect.kind === "key" && def.connect.key === key) connected[def.id] = on;
-    }
-    for (const redraw of declaredViews) redraw();
-  };
-  const chatKeys: Record<string, boolean> = {};
-  for (const def of CLOUD) {
-    const key = providerDef(def.id).key!;
-    chatKeys[key] = (await Bridge.secretPresent(key)) ?? false;
-  }
-  const customKey = (await Bridge.secretPresent(CUSTOM_SERVER_KEY)) ?? false;
 
   declaredViews.length = 0;
   localRedraw = null;
@@ -1403,7 +1220,7 @@ async function render() {
     general: () => [generalSection()],
     pills: () => [activePillsSection(connected)],
     agents: () => [claudeSection(status), agentsSection(agents), planSection(status)],
-    chat: () => [...mcpSections(settings, save), apiSection(hasKey), chatProvidersSection(chatKeys, keyChanged), localSection(customKey)],
+    chat: () => [aiSection(), ...mcpSections(settings, save), localSection(false)],
     integrations: () => [integrationsSection(present), ...whatsappSections()],
     phone: () => [phoneSection(settings.phoneLink ?? false, toggle, settings)],
     shortcuts: () => [shortcutsSection(shortcutReport)],

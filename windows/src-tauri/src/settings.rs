@@ -109,6 +109,8 @@ pub struct Settings {
     /// Bifrost's own MCP server on 127.0.0.1 (mcp/server.rs).
     pub mcp_server_enabled: bool,
     pub mcp_server_port: u16,
+    /// Entradas do catálogo/importação já oferecidas uma vez (mcp/catalog.rs::merge).
+    pub mcp_known: std::collections::BTreeSet<String>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -154,7 +156,7 @@ impl Default for Settings {
             show_plan_in_notch: false,
             plan_relay_installed: false,
             show_codex_plan_in_notch: false,
-            chat_provider: crate::mcp::chat::PROVIDER.into(),
+            chat_provider: crate::cli_chat::PROVIDER.into(),
             chat_models: BTreeMap::new(),
             ollama_url: String::new(),
             lmstudio_url: String::new(),
@@ -180,6 +182,7 @@ impl Default for Settings {
             mcp_chat: crate::mcp::McpChat::default(),
             mcp_server_enabled: true,
             mcp_server_port: crate::mcp::server::DEFAULT_PORT,
+            mcp_known: Default::default(),
         }
     }
 }
@@ -510,7 +513,8 @@ mod tests {
   "mcpServers": { "hermes": { "command": "hermes.exe", "args": ["mcp-serve", "--tools"] }, "vps": { "url": "https://mcp.example.com/mcp" } },
   "mcpChat": { "server": "vps", "mode": "tool", "tool": "chat", "argument": "message", "extraArgs": { "a": 1 }, "statusTool": "s", "idArgument": "id", "timeoutSecs": 60, "includeHistory": false },
   "mcpServerEnabled": false,
-  "mcpServerPort": 50000
+  "mcpServerPort": 50000,
+  "mcpKnown": []
 }"##;
 
     fn custom() -> Value {
@@ -1033,6 +1037,7 @@ mod tests {
                 "mcpChat",
                 "mcpServerEnabled",
                 "mcpServerPort",
+                "mcpKnown",
             ]
         );
         let _ = std::fs::remove_dir_all(&dir);

@@ -1,0 +1,522 @@
+# Bifrost — engenharia reversa e especificação
+
+> Documento gerado em 26/10/2026 (horário de Manaus) a partir do código em `windows/`
+> (Tauri 2 + Rust + TypeScript), do hook (`windows/hook`), do relay (`relay/`) e do app
+> macOS de referência (`NotchBuddy/`). Serve como especificação do Bifrost e como lista de
+> paridade: cada função, comando IPC, evento, ajuste e estado está listado abaixo com o
+> resultado da verificação.
+
+## 1. Arquitetura
+
+```mermaid
+flowchart LR
+  subgraph PC["PC do Paulo (Windows)"]
+    subgraph Rust["Processo Tauri (Rust, src-tauri/src)"]
+      LIB[lib.rs<br/>comandos IPC + boot]
+      ISL[island.rs<br/>janela da ilha]
+      HUB[hub: settings.html]
+      DESK[desktop.rs<br/>Huginn solto na área de trabalho]
+      PILL[flow/pill.rs<br/>pílula de ditado]
+      PIPE[pipe.rs<br/>named pipe do hook]
+      HOOKS[hooks.rs / agent_hooks.rs<br/>instala hooks do Claude Code e agentes]
+      CHAT[chat.rs<br/>roteia o chat]
+      CLI[cli_chat.rs<br/>IAs do PC: Claude Code / Codex / Gemini]
+      LOCAL[local_chat.rs<br/>Ollama / LM Studio / servidor próprio]
+      MCPc[mcp/client.rs<br/>cliente MCP rmcp]
+      MCPcat[mcp/catalog.rs<br/>detecção + catálogo + importação]
+      MCPs[mcp/server.rs<br/>servidor MCP 127.0.0.1:47821]
+      VOICE[voice/ + speech/<br/>'OK Bifrost' + ditado]
+      PHONE[phone_link/<br/>celular Android, LAN + relay]
+      WA[whatsapp/<br/>gateway local]
+      SPOT[spotify.rs<br/>mídia do sistema]
+      SEC[secrets.rs<br/>Gerenciador de Credenciais]
+      SET[settings.rs<br/>settings.json]
+    end
+    subgraph Web["Webviews (WebView2, src/)"]
+      IW[index.html → island/*<br/>ilha + chat + cartões]
+      SW[settings.html → hub/* + settings/*]
+      MW[mochi.html → desktop/main.ts]
+      PW[pill.html → pill/main.ts]
+      BF[bifrost/*<br/>motor de movimento, corvos, menu nórdico]
+    end
+    HOOK[bifrost-hook.exe<br/>windows/hook] -->|JSON pelo pipe| PIPE
+    CC[Claude Code / Codex / Cursor…] -->|eventos de hook| HOOK
+    CLIS[(claude.exe / codex.exe / gemini)] <-->|stdin/stdout| CLI
+    MCPsrv[(Servidores MCP: Hermes, Alethe, GitHub, Notion…)] <-->|stdio / Streamable HTTP + OAuth| MCPc
+    Agents[(Grok Bot, Hermes…)] -->|MCP| MCPs
+  end
+  PHONE <-->|WebSocket cifrado| RELAY[relay/ Cloudflare Worker]
+  RELAY <--> ANDROID[app Android]
+  Web <-->|invoke / eventos Tauri| LIB
+```
+
+### Fluxos principais
+1. **Sessão de agente**: Claude Code dispara hook → `bifrost-hook.exe` → named pipe (`pipe.rs`) → `island.rs` emite evento → `island/agents.ts` cria/atualiza pílula, cartão de aprovação/pergunta, e o Huginn muda de estado (`working`, `approval`, `question`, `finished`, `error`…).
+2. **Aprovação**: cartão na ilha → `approval_ack` / `approval_decline` → resposta volta ao hook pelo pipe.
+3. **Chat**: `views/chat.ts` → `chat_send` → `chat.rs::send` → provedor (`cli` = IA do PC, `mcp` = Hermes/outro agente, `ollama`/`lmstudio`/`custom` = modelo local). Provedores com chave (anthropic/openai/google/openrouter) continuam no código só para migração e são trocados por `cli` na abertura.
+4. **MCP**: na abertura `bifrost_boot_mcp` detecta programas (PATH + pastas), monta o catálogo (`mcp/catalog.rs`), importa os servidores de Claude Desktop / Claude Code / Cursor / VS Code e junta em `mcpServers` sem sobrescrever nada e sem trazer de volta o que o usuário removeu (`mcpKnown`). Tokens de cabeçalhos importados vão para o cofre.
+5. **Ditado (Flow)**: atalho → `flow/` grava (`speech/audio.rs`), transcreve, limpa (`flow/cleanup.rs`) e cola (`flow/paste.rs`); a pílula (`pill.html`) mostra o nível do microfone.
+6. **Celular**: `phone_link/` anuncia na LAN (`discovery.rs`), pareia com código (`pairing.rs`), espelha sessões/chat/resumo; fora da rede usa o relay (`relay_client.rs` + `relay_crypto.rs`).
+7. **WhatsApp**: gateway local instalado e controlado por `whatsapp/` (processo, webhook, arquivo de conversas).
+
+## 2. Mapa de módulos
+
+### Rust (`windows/src-tauri/src`)
+| Arquivo | Linhas | Papel (do cabeçalho do arquivo) |
+|---|---|---|
+| `src-tauri/src/agent_hooks.rs` | 143 | Whether each hook-driven pill is connected. A pill fed by hook events has no key: it is connected once the agent's config routes its events to bifrost-hook (Mac #183 — th |
+| `src-tauri/src/agents.rs` | 1310 | Hook and plugin installers for every agent other than Claude Code (hooks.rs). Each agent is a list of file edits handed to config_file.rs, which applies the |
+| `src-tauri/src/chat.rs` | 412 | The chat, whoever answers it: the conversation, the system prompt, and which provider a turn goes to. Each provider's own wire format lives in its module: |
+| `src-tauri/src/claude.rs` | 416 | Claude API client — the same integration as ClaudeService.swift: multi-turn chat with web search, and files sent as document/image/text blocks. |
+| `src-tauri/src/cli_chat.rs` | 115 | O chat pelas IAs instaladas no PC, sem chave de API: Claude Code, Codex CLI ou Gemini CLI, cada um com o login que o próprio programa já tem. |
+| `src-tauri/src/codex_plan.rs` | 219 | Codex plan usage — the same source as CodexPlanGauge.swift on the Mac. Bifrost asks the Codex CLI itself: `codex app-server` (the JSON-RPC server |
+| `src-tauri/src/config_file.rs` | 652 | The one careful way Bifrost changes a file that belongs to somebody else: Claude Code's settings.json, every other agent's hook config, and the plugin |
+| `src-tauri/src/desktop.rs` | 1011 | Huginn on the desktop: his own small window, wherever the user dropped him. Window side of DesktopMochi.swift, plus the geometry half of DesktopMochiLogic.swift (`logic`  |
+| `src-tauri/src/files.rs` | 200 | Dropped files are copied into %LOCALAPPDATA%\Bifrost\inbox so the original is never touched and the copy survives the drag source going away. |
+| `src-tauri/src/flow/cleanup.rs` | 97 | The clean-up of Flow dictation: Claude removes the "um", the repeats and the corrections said on the way ("at 3, no, at 4" → "at 4"), fixes the |
+| `src-tauri/src/flow/logic.rs` | 273 | The key logic of Flow dictation, with nothing from the OS in it. Port of FlowKeyLogic.swift. - Hold the key: Bifrost listens. Release it: the words are pasted where you t |
+| `src-tauri/src/flow/mod.rs` | 706 | Flow dictation: hold a key anywhere, speak, let go, and the words are pasted where you type. Port of FlowDictation.swift for Windows and Linux. |
+| `src-tauri/src/flow/os_linux.rs` | 263 | Flow dictation on Linux. On X11: the key through XInput 2's raw key events (they reach every client without grabbing anything, so no key is ever taken |
+| `src-tauri/src/flow/os_windows.rs` | 283 | Flow dictation on Windows: the key, through a low-level keyboard hook (it only watches, it never swallows a key); the paste, through SendInput; and |
+| `src-tauri/src/flow/paste.rs` | 73 | The words go where you type: onto the clipboard (kept out of the clipboard history), Ctrl+V in the app in front, and the clipboard gets back what it |
+| `src-tauri/src/flow/pill.rs` | 356 | The pill of Flow dictation: a small see-through capsule at the bottom of the screen (or on its left or right edge) while dictation is on. It opens into |
+| `src-tauri/src/flow/store.rs` | 392 | Everything the Bifrost window shows and edits about dictation: the history, the numbers, the dictionary, the snippets, the styles and the preferences. |
+| `src-tauri/src/flow/text.rs` | 350 | What Bifrost does to the words before pasting them, and the numbers of the Statistics page. Port of FlowText.swift; nothing here touches the OS, so it |
+| `src-tauri/src/flow/wayland.rs` | 203 | Flow dictation on Wayland, where no app may watch the keyboard or type into another one. The key: a shortcut held through the desktop's GlobalShortcuts portal |
+| `src-tauri/src/github.rs` | 799 | GitHub pulse and contribution calendar — the pure half of GithubPoller.swift, GitHubPulse.swift and GitHubActivity.swift. Parsing, alert detection and the |
+| `src-tauri/src/hooks.rs` | 580 | Claude Code hook installation. The rule from CLAUDE.md is strict and is followed to the letter: read %USERPROFILE%\.claude\settings.json, take a dated backup, merge witho |
+| `src-tauri/src/i18n.rs` | 336 | Interface language for what Rust shows: the tray menu, the settings window title and the errors the webviews display. Same tables and same lookup as |
+| `src-tauri/src/identity.rs` | 67 | The user's first name, for Huginn's system prompt — the same rules as UserIdentity.swift on the Mac. The full name comes from the OS account (platform::user_full_name); t |
+| `src-tauri/src/integrations.rs` | 1315 | Integration pollers — the Rust side of StripePoller / GithubPoller / VercelPoller / N8nPoller / ResendPoller / NotionPoller / CalcomPoller. Same endpoints, same first-run |
+| `src-tauri/src/island.rs` | 542 | Island window: placement on the chosen display, the two window sizes (full panel / invisible wake strip), click-through and the cursor poll. There is no notch on a PC, so |
+| `src-tauri/src/lib.rs` | 1309 | Bifrost for Windows — app wiring and the commands the island calls. |
+| `src-tauri/src/local_chat.rs` | 572 | Chat with a model server the user runs: Ollama, LM Studio, or any other server that speaks the OpenAI API (vLLM, llama.cpp, Unsloth…) — the same |
+| `src-tauri/src/log.rs` | 32 | Small append-only log at %LOCALAPPDATA%\Bifrost\bifrost-desktop.log (Windows) or ~/.local/share/bifrost-desktop/bifrost-desktop.log (Linux) — the equivalent of nbLog() in |
+| `src-tauri/src/main.rs` | 6 | Bifrost runs without a console window: Huginn is the whole UI. |
+| `src-tauri/src/mcp/catalog.rs` | 488 | Catálogo do Bifrost: os servidores MCP que já vêm prontos, a detecção dos programas e IAs instalados no PC e a importação dos servidores que outros |
+| `src-tauri/src/mcp/chat.rs` | 228 | The "mcp" chat provider: no API key, the message goes to an agent through a tool of an MCP server picked in the settings (`mcpChat`). Two modes: |
+| `src-tauri/src/mcp/client.rs` | 267 | The MCP client: one live connection per configured server, opened on first use and kept until its configuration changes or it closes. |
+| `src-tauri/src/mcp/config.rs` | 246 | The MCP servers Bifrost may talk to, as written in settings.json: "mcpServers": { "hermes":     { "command": "hermes.exe", "args": ["mcp-serve", "--tools"], "env": {} }, |
+| `src-tauri/src/mcp/mod.rs` | 19 | MCP (Model Context Protocol) — the Paulo build of Bifrost. Instead of API keys, the chat can talk to agents through MCP servers the user configures (Hermes, Alethe, Orca, |
+| `src-tauri/src/mcp/server.rs` | 526 | Bifrost's own MCP server: lets Grok Bot, Hermes, Alethe… drive Huginn. Streamable HTTP on 127.0.0.1 only (`http://127.0.0.1:<port>/mcp`), and every |
+| `src-tauri/src/net.rs` | 285 | Network helpers shared by the chat providers: address checks, bounded reads and HTTP clients. Every answer a server sends is read with a ceiling, so a misbehaving or |
+| `src-tauri/src/notes/builder.rs` | 382 | Builds the transcript of a call from the two recordings: the microphone is you, the computer's sound is the others, told apart by the diarizer. Port of |
+| `src-tauri/src/notes/mod.rs` | 718 | The Notetaker: records a call (your microphone, and what the computer plays for the other people), shows a live transcript, then writes the whole |
+| `src-tauri/src/openai_compat.rs` | 420 | Cloud providers that speak the OpenAI chat completions API: OpenAI, Google AI (Gemini's OpenAI-compatible endpoint, as ClaudeService.swift uses it) and |
+| `src-tauri/src/phone_link/admission.rs` | 290 | Who may open a connection, and for how long it may stay unauthenticated (docs/ANDROID_LINK.md, "Admission"). The server accepts connections from the local network before  |
+| `src-tauri/src/phone_link/chat.rs` | 419 | Chat from the phone (docs/ANDROID_LINK.md, "Chat"). The phone sends text, this computer asks the provider with ITS key, and the answer comes back as small `chatDelta` lin |
+| `src-tauri/src/phone_link/chat_backend.rs` | 207 | The real chat behind the phone link (chat.rs holds the rules): the same provider code as the island's chat, with the phone's own conversation. The key is read inside `cla |
+| `src-tauri/src/phone_link/discovery.rs` | 272 | Announces this computer on the local network while the phone link is on, so the phone finds it by itself when its address changes (another Wi-Fi, a hotspot). mDNS / DNS-S |
+| `src-tauri/src/phone_link/hub.rs` | 2239 | What the phone is told, and what it may decide. The hub holds the last list of sessions and the one permission request that is still waiting, as the island published them |
+| `src-tauri/src/phone_link/interop.rs` | 224 | The real phone link server, run for the Android app's tests. Not a test of its own: it is `#[ignore]`d, and android/.../RustDesktopInteropTest.kt |
+| `src-tauri/src/phone_link/mod.rs` | 904 | Copyright (c) 2026 Rhytam Biswas. MIT License, like the rest of Bifrost; see android/LICENSE for the text. The phone link: lets the Android app ("Bifrost for Android") se |
+| `src-tauri/src/phone_link/pairing.rs` | 330 | The phone link's identity: a TLS certificate made once, and the pairing token. Both live in the OS keystore (Credential Manager, Secret Service), never in a |
+| `src-tauri/src/phone_link/relay_client.rs` | 1068 | The phone link through a relay (docs/RELAY_LINK.md), computer side. Off unless the user turns on "Away from home Wi-Fi" in Settings → Android phone and gives a relay addr |
+| `src-tauri/src/phone_link/relay_crypto.rs` | 770 | The end-to-end encrypted channel for the relay link (docs/RELAY_LINK.md, sections 4 and 5). Pure: bytes in, bytes out. No sockets, no clock, no files, no logging. The rel |
+| `src-tauri/src/phone_link/server.rs` | 457 | The phone link's TLS server (docs/ANDROID_LINK.md, protocol v1). One accepted connection is two tasks: a reader that checks the phone's lines |
+| `src-tauri/src/pipe.rs` | 370 | Relay server for bifrost-hook. Windows: the named pipe `\\.\pipe\bifrost-desktop-<sid>`, one instance per connection. Linux: the Unix socket `$XDG_RUNTIME_DIR/bifrost-des |
+| `src-tauri/src/platform/linux.rs` | 939 | Linux: XDG directories for files, xdg-open for links and folders, and gtk-layer-shell for the island window. Wayland gives an app no global cursor position and no say ove |
+| `src-tauri/src/platform/linux_focus.rs` | 565 | Linux "Open terminal": bringing a session's terminal or editor window forward. session_window.rs keeps, per session, the relay's ancestors read from /proc |
+| `src-tauri/src/platform/mod.rs` | 90 | Everything that differs between operating systems, behind one set of names. The rest of the app calls `platform::…` and never touches Win32 or a Linux |
+| `src-tauri/src/platform/windows.rs` | 643 | Windows: Win32 for the island window and the cursor, %APPDATA% for files. |
+| `src-tauri/src/portal.rs` | 910 | Global shortcuts on Wayland, through the XDG desktop portal (org.freedesktop.portal.GlobalShortcuts): KDE Plasma 6, GNOME 48+, Hyprland's portal, COSMIC… |
+| `src-tauri/src/recap.rs` | 1049 | Weekly recap history — port of RecapStore.swift. Every hook event the relay forwards also passes through here. A "turn" runs from a prompt (or the first tool call) to Sto |
+| `src-tauri/src/secrets.rs` | 185 | API keys live in the Windows Credential Manager or, on Linux, the Secret Service (GNOME Keyring, KWallet) — never on disk and never in the front end — the island can only |
+| `src-tauri/src/session_window.rs` | 404 | "Open terminal" brings the window a Claude Code session runs in to the front, instead of opening its folder in VS Code (Mac 0.1.0: jump to the terminal). |
+| `src-tauri/src/settings.rs` | 1077 | Preferences, stored as plain JSON in settings.json under platform::config_dir(). No secret ever lands here — API keys live in the OS keychain (see secrets.rs). |
+| `src-tauri/src/shortcuts.rs` | 861 | Global keyboard shortcuts — port of HotKeyCenter.swift + ShortcutLogic.swift. The shortcuts are registered from Rust through tauri-plugin-global-shortcut |
+| `src-tauri/src/sounds.rs` | 100 | Your own sounds: a file named like one of Huginn's sounds in the sounds folder replaces it (finish.wav, approval.mp3, greet.m4a…), as on the Mac |
+| `src-tauri/src/speech/audio.rs` | 555 | Sound in: the microphone (or what the computer plays, for the Notetaker) turned into 16 kHz mono for the models, the nine bands the pill draws, and |
+| `src-tauri/src/speech/mod.rs` | 478 | Speech to text on this computer: NVIDIA's Parakeet (25 languages) through sherpa-onnx, and the small models that tell the voices of a call apart. The |
+| `src-tauri/src/spotify.rs` | 2106 | The Spotify pill — port of SpotifyController.swift. The Mac listens to Spotify's distributed notification and drives it over AppleScript. Linux has MPRIS instead: Spotify |
+| `src-tauri/src/tray.rs` | 168 | Notification-area icon: Open, Weekly recap, Adornments, Settings, Pause, Quit. "Update Bifrost to X…" shows under Open only while a new version is out |
+| `src-tauri/src/update.rs` | 1024 | "Bifrost 0.6.0 is out" in the island, and on Windows one click to install it. Port of MacUpdate.swift / MacUpdater.swift (the Mac's GitHub build). |
+| `src-tauri/src/voice/brain.rs` | 228 | « OK Bifrost »'s brain: Claude with the user's key and Bifrost's tools — pills, music, the user's own data, opening an app, preparing an email (the |
+| `src-tauri/src/voice/mod.rs` | 566 | « OK Bifrost » on Windows and Linux: say it, then ask anything. Port of the Mac's Voice/ (VoiceEngine.swift and its friends). While it is on, the microphone is open and a |
+| `src-tauri/src/voice/wake.rs` | 239 | « OK Coucou »: hearing the wake phrase in what Parakeet wrote, and telling speech from silence on the microphone. Nothing here touches the OS. |
+| `src-tauri/src/webview_drop.rs` | 87 | Files dropped on the island, taken by WebView2 itself. Tauri's drag-drop goes through drop targets wry registers on the webview's child windows. The innermost windows, th |
+| `src-tauri/src/whatsapp/archive.rs` | 158 | Just enough of the zip format to take GOWA's binary out of the zip it publishes: the central directory, stored and deflated entries, nothing else (no zip64, no encryption |
+| `src-tauri/src/whatsapp/gateway.rs` | 793 | What the two local WhatsApp gateways send and answer, turned into `Message`. Port of WhatsAppGateway.swift: every field name comes from each gateway's docs and source cod |
+| `src-tauri/src/whatsapp/install.rs` | 182 | "Install WhatsApp": one click instead of GitHub, a zip and a command line (port of WhatsAppGOWAInstaller.swift). Downloads GOWA's own latest build for this system from it |
+| `src-tauri/src/whatsapp/mod.rs` | 1329 | WhatsApp in the island (experimental), the Windows and Linux port of the Mac's WhatsAppController.swift. Talks to the local gateway the user runs (GOWA, which Bifrost can |
+| `src-tauri/src/whatsapp/model.rs` | 578 | WhatsApp in the island: what Bifrost keeps of the conversations, in memory only, and the rules that decide what reaches the pill. Port of WhatsAppModels.swift (the Mac's  |
+| `src-tauri/src/whatsapp/prefs.rs` | 106 | WhatsApp's harmless choices (Settings → Integrations → WhatsApp), in whatsapp.json next to settings.json. Owned by Rust: the webview changes them through `whatsapp_set_pr |
+| `src-tauri/src/whatsapp/process.rs` | 189 | GOWA started by Bifrost ("Start GOWA automatically", or after "Install WhatsApp"): a child of Bifrost, on the address set in Settings, stopped when Bifrost quits. Port of |
+| `src-tauri/src/whatsapp/provider.rs` | 451 | The two local WhatsApp gateways Bifrost can talk to (port of WhatsAppProvider.swift). Each call goes to the URL set in Settings (127.0.0.1 by default) and nowhere else: n |
+| `src-tauri/src/whatsapp/webhook.rs` | 83 | The local door the WhatsApp gateway knocks on with each new message (port of WhatsAppWebhook.swift): an HTTP listener bound to 127.0.0.1 only, never reachable from anothe |
+
+### TypeScript (`windows/src`)
+| Arquivo | Linhas | Papel (do cabeçalho do arquivo) |
+|---|---|---|
+| `src/bifrost/contextmenu.ts` | 90 | Menu de contexto do Bifrost: o menu nativo do WebView2 nunca aparece. Onde um menu faz sentido (texto, campos, corvos) desenhamos o nosso, nórdico. |
+| `src/bifrost/mascots.ts` | 83 | Huginn (pensamento) e Muninn (memória): os dois corvos de Odin, desenhados do zero em SVG para o Bifrost. Cada estado é uma classe CSS em nordic.css |
+| `src/bifrost/motion.ts` | 89 | Motor de movimento do Bifrost: curvas próprias, molas e linhas do tempo. Mesmo princípio do motor do Huginn na ilha (alvos + duração + curva, tudo |
+| `src/core/anim.ts` | 155 | Easing + spring helpers. Ease.* mirrors BotEngine.swift `enum Ease` (itself the prototype's `E`). Spring mirrors SwiftUI `.spring(response:dampingFraction:)` so open/clos |
+| `src/core/bridge.ts` | 743 | Thin wrapper over the Tauri commands/events. Every call is a no-op when the page is opened in a plain browser, so the island can be iterated on with |
+| `src/core/diff.ts` | 326 | Live diff — port of DiffEngine.swift (NotchBuddy/Sources/CoucouKit). Line diff (LCS) with 3-line context hunks, used for the Edit / MultiEdit / |
+| `src/core/flow.ts` | 241 | Flow dictation, the voice models and the Notetaker, as the Bifrost window and the pill see them (src-tauri/src/flow, speech, notes). |
+| `src/core/fonts.ts` | 9 | Fonts that carry the scripts of the ten interface languages, appended to the existing stacks before the generic family. Latin and Cyrillic text keeps |
+| `src/core/github.ts` | 312 | GitHub pulse and contribution grid — the pure half of the GitHub card. Port of the helpers around GitHubPulseCardView, GitHubDetailView and GitHubActivityDetailContent (I |
+| `src/core/layout.ts` | 260 | Island geometry — ported from IslandTypes.swift + IslandWindowController.islandSize + IslandRootView.botPosition. All values are logical pixels, identical to the |
+| `src/core/mcp.ts` | 113 | MCP (Paulo build): pure helpers for the "Servidores MCP" settings, so they can be tested without a webview. The Rust side (mcp/config.rs) checks again. |
+| `src/core/phone-chat.ts` | 40 | Settings → Android phone → chat: which models the phone may use. Pure helpers, so the rules can be tested without a webview. Rust cleans the list again (phone_link/chat_b |
+| `src/core/pill-colors.ts` | 58 | A colour of your own for each pill's Huginn — the pure half, port of NotchBuddy/Sources/CoucouKit/PillColors.swift. The catalog (./pills.ts) keeps |
+| `src/core/pills.ts` | 255 | Every pill the island can show — port of PillCatalog.swift, the single source of truth on macOS. IDs, names, colours, categories and subtitles are the Mac's, |
+| `src/core/plan.ts` | 224 | Plan usage gauges — the logic of ClaudePlanGauge.swift and CodexPlanGauge.swift on the Mac, with no DOM so it can be tested on its own. The pills and cards |
+| `src/core/providers.ts` | 114 | Who the chat can talk to — the island's side of chat.rs. The Mac's ChatProvider (IslandTypes.swift) plus OpenRouter and any OpenAI-compatible |
+| `src/core/shortcuts.ts` | 410 | Keyboard shortcuts — the pure part, port of ShortcutLogic.swift. Global shortcuts are registered by Rust (src-tauri/src/shortcuts.rs), which owns the same table of defaul |
+| `src/core/sound.ts` | 166 | SoundEngine — port of SoundEngine.swift. Os 29 WAVs são os sons originais do Bifrost (windows/sounds, SOUNDS_DIR em vite.config.ts); they are served at /sounds/<name>.wav |
+| `src/core/spotify.ts` | 121 | The Spotify pill on the page: what src-tauri/src/spotify.rs reports (MPRIS on Linux, the system media controls on Windows), and the pure rules the views and Huginn follow |
+| `src/core/state.ts` | 517 | App state — mirror of AppState.swift (the parts the island needs). |
+| `src/core/update.ts` | 78 | New versions of Bifrost (src-tauri/src/update.rs): what Rust reports, and the small rules the island applies to it. Pure, so tests/update.test.mjs checks them. |
+| `src/core/whatsapp.ts` | 295 | WhatsApp (experimental) on the page: what src-tauri/src/whatsapp reports, and the pure rules the card and Settings follow — ports of WhatsAppModels.swift (initials, previ |
+| `src/desktop/main.ts` | 366 | The desktop Huginn's own window (mochi.html): draws him, and turns clicks and drags on him into pokes, flights home, the wardrobe and a new spot. Port of |
+| `src/hub/frames.ts` | 25 | When the Bifrost window's canvases are drawn (hub/hero.ts), kept apart from the DOM so it can be tested. The rule is the island's: nothing on screen, |
+| `src/hub/hero.ts` | 483 | The coloured band on top of each page of the Bifrost window: a deep black with the page's colour breathing in a corner, particles that drift all the |
+| `src/hub/pages.ts` | 22 | The Flow pages of the Bifrost window, by id (shell.ts draws the Notch ones from the island's settings). |
+| `src/hub/pages/dictation.ts` | 148 | Dictation: today's dictations with search and copy, the big numbers, and the way to the Notetaker. Until dictation is set up, the steps to get there. |
+| `src/hub/pages/flowsettings.ts` | 154 | Flow → Settings: the key, where the pill is, the microphone, the voice model, the Notetaker's summaries, the window and the history. Port of FlowHubSettings.swift. |
+| `src/hub/pages/insights.ts` | 78 | Statistics: words, time saved, speed, dictations, the words of each day and the apps you dictate in. Port of FlowHubInsights.swift. |
+| `src/hub/pages/notes.ts` | 264 | The Notetaker: your calls, transcribed person by person, with a summary, the key points and the to-dos. Port of FlowHubNotes.swift. |
+| `src/hub/pages/styles.ts` | 79 | Styles: an optional clean-up by Claude (no "um", no repeats, corrections applied), as said, natural or polished, per app. Port of the styles part of |
+| `src/hub/pages/voice.ts` | 84 | « OK Bifrost »: say it, then ask anything. Turning it on, how Bifrost answers out loud, and what leaves the computer. Port of the Mac's Settings → Voice. |
+| `src/hub/pages/words.ts` | 155 | Dictionary (names Bifrost always spells right, and replacements) and Snippets (say a short phrase, paste a whole text). Port of FlowHubWords.swift. |
+| `src/hub/shell.ts` | 202 | The Bifrost window: a sidebar with Flow (dictation, the Notetaker, the statistics, the dictionary, the snippets, the styles and their settings) |
+| `src/hub/ui.ts` | 157 | Small pieces the Bifrost window's pages are drawn with: icons, rows, cards, switches, segmented controls. Same look as the Mac's (FlowHub.swift). |
+| `src/i18n/i18n.ts` | 270 | Interface language — the Mac's languages except Thai and Traditional Chinese, Mac-only for now. Strings are looked up by their English text, like the Mac's catalog: |
+| `src/island/agents.ts` | 52 | Agents other than Claude Code, as the island shows them. Ids, names and colours are PillCatalog.swift's (pill `agent_<id>`), so a pill looks the same on every |
+| `src/island/desktop.ts` | 181 | Huginn on the desktop, island side: runs his life cycle (the controller in mochi/desktop-logic.ts) against the real app, tells the desktop window what |
+| `src/island/fsm.ts` | 213 | Island open/close FSM — port of IslandStateMachine.swift. No DOM, no Tauri: it only reports transitions. |
+| `src/island/hooks.ts` | 538 | Hook events from Claude Code and every other agent → island state. Port of HookServer.processEvent / processPermissionRequest from the macOS app. |
+| `src/island/integrations.ts` | 138 | Integration events → island state. Port of the `handle…` methods in the Swift pollers: a genuinely new item flips the pill to finished/error, badges it when |
+| `src/island/island.ts` | 1286 | The island: DOM shell, sizing animation, Huginn placement, mouse handling. Mirrors IslandRootView.swift + IslandWindowController.swift. |
+| `src/island/phone-link.ts` | 262 | What the island tells the phone link (src-tauri/src/phone_link). While the link is on, the island publishes a picture of its agent sessions and |
+| `src/island/phone-services.ts` | 128 | What the island's service pills show, written as small read-only cards for the phone (docs/ANDROID_LINK.md, "Service cards"). Rust sends a phone only the services its use |
+| `src/island/shortcuts.ts` | 213 | Keyboard shortcuts → island. Port of IslandWindowController.handleHotKey and handleIslandKey from the macOS app. Global shortcuts are caught by Rust and arrive as a `shor |
+| `src/island/spotify.ts` | 58 | Spotify's reports → the page (src-tauri/src/spotify.rs). The parts of SpotifyController.swift that touch the app: the pill wears the track's title, music starting shows t |
+| `src/island/update.ts` | 158 | New versions in the island — port of MacUpdater's card side. Rust (src-tauri/src/update.rs) does the looking, the downloading and the schedule; it offers the card ("updat |
+| `src/island/voice.ts` | 123 | « OK Bifrost » asks the island what only it knows (src-tauri/src/voice): the pills, to add, remove or pick the main one, and the user's own data for |
+| `src/island/whatsapp.ts` | 93 | WhatsApp's reports → the page (src-tauri/src/whatsapp). The parts of WhatsAppController.swift that touch the island: a new message lights the pill with the conversation's |
+| `src/main.ts` | 197 | Entry point: boot the bridge, wire the island, start the greeting. |
+| `src/mochi/desktop-logic.ts` | 330 | Huginn on the desktop — the pure logic, port of NotchBuddy/Sources/App/DesktopMochiLogic.swift and of the life cycle in DesktopMochiController (DesktopMochi.swift). No DO |
+| `src/mochi/engine.ts` | 1475 | Huginn — o corvo mensageiro do Bifrost, desenhado em código (Canvas 2D). O motor de estados/animações (tweens, partículas, emotes) segue o do app |
+| `src/mochi/greeting.ts` | 717 | The launch "bifrost-desktop" (greeting v2) — port of GreetingCanvasView.swift. Huginn drops into the island, bounces, slides to the side and waves hello with |
+| `src/mochi/minibots.ts` | 99 | Mini Huginns (pills + compact grid) — port of MiniBotCanvasView. Each canvas owns a BotEngine; the island's frame loop ticks every live one. |
+| `src/mochi/outfits.ts` | 354 | Adornos do Huginn, desenhados em código — originais do Bifrost: halo de aurora, faixa de runas, cachecol de gelo, coroa de estrelas, elmo e lanterna. |
+| `src/mochi/wardrobe.ts` | 131 | Os adornos do Huginn — a lógica pura. Escolhidos na vista "Adornos" (clique direito no Huginn, ou no menu da bandeja) e guardados nas preferências como |
+| `src/pill/main.ts` | 529 | Flow dictation's pill (pill.html). Port of FlowPillView (FlowPill.swift). What it shows comes whole from Rust in `pill-state` events; the nine dots |
+| `src/recap/phone.ts` | 35 | The weekly recap as the phone gets it (cap `recap`, docs/ANDROID_LINK.md): the numbers of the last completed week and the busiest agent's name. Pure: no DOM, no Tauri; te |
+| `src/recap/recap.ts` | 87 | Weekly recap — when the card opens, and what it shows. Port of AppDelegate.checkMondayRecap / openWeeklyRecap. It opens on its own once a week, on Monday from 8 am, at th |
+| `src/recap/share.ts` | 294 | The 1080 × 1920 image of the week, drawn once into an offscreen canvas — port of RecapShareImageView in WeeklyRecapView.swift. Same colours, sizes |
+| `src/recap/summary.ts` | 253 | Weekly recap — pure aggregation, port of RecapStore.weeklySummary. Rust (src-tauri/src/recap.rs) records the turns; this file turns them into |
+| `src/settings/agents.ts` | 143 | Settings → Agents: one section for every agent other than Claude Code, all going through the same steps — preview the exact diff, click to confirm, and |
+| `src/settings/colors.ts` | 101 | The colour dot at the start of a pill's row, and the palette it opens — the Mac's dot in Settings → Active pills does the same. The dot looks exactly as |
+| `src/settings/main.ts` | 1237 | The Bifrost window (settings.html): Flow dictation, the Notetaker and, under Notch, every setting of the island — the place where anything that writes to |
+| `src/settings/mcp.ts` | 442 | Settings → Chat → "Servidores MCP" (Paulo build): the agents the chat talks to without keys, how the chat reaches one of them, and Bifrost's own MCP |
+| `src/settings/parts.ts` | 16 | Small pieces every settings section draws with. |
+| `src/settings/phone.ts` | 550 | Settings → Android phone: the switch for the phone link and the code that pairs a phone with this computer. Off until the user turns it on. |
+| `src/settings/updates.ts` | 75 | Settings → General → Updates — port of UpdateSettingsSection (MacUpdateViews.swift): the toggle, what it does, "Check now" (a click, so it works with the toggle off), and |
+| `src/settings/whatsapp.ts` | 328 | Settings → Integrations → WhatsApp (experimental) — a port of WhatsAppSettingsSection (WhatsAppViews.swift). Off until turned on. "Install WhatsApp" downloads GOWA from i |
+| `src/upload/canvas.ts` | 602 | The upload canvas — port of UploadCanvasView.swift. While the sequence engine is active this canvas draws the whole island body: card, dashed drop frame, drop text, progr |
+| `src/upload/sequence.ts` | 528 | The drop choreography — port of UploadSequenceEngine.swift, itself a port of design/prototype/upload-sequence.html. The engine is pure arithmetic: it owns no DOM and draw |
+| `src/views/chat.ts` | 352 | Chat view — DOM port of PromptView / ChatBubble / TypingDotsView / ModelPickerView from IslandViewContent.swift. Answers are rendered as Markdown (markdown.ts). A local m |
+| `src/views/diff.ts` | 67 | Diff card — port of DiffCardView / DiffLineRowView (IslandViewContent.swift). Opens in the overview's left card when a diff step of the ticker is clicked. |
+| `src/views/dom.ts` | 145 | Minimal DOM helpers — no framework, as specified. |
+| `src/views/github.ts` | 251 | The GitHub card once the pulse is in — DOM ports of GitHubPulseCardView, GitHubDetailView, GitHubPRRowView, GitHubRepoCIRowView and GitHubActivityDetailContent (IslandVie |
+| `src/views/icons.ts` | 77 | SVG paths standing in for the SF Symbols used by the macOS island. Drawn on a 24×24 grid so they read at the same optical size. |
+| `src/views/integrations.ts` | 520 | Integration cards shown in the overview's left card — DOM ports of IntegrationCardView and friends from IslandViewContent.swift. Cal.com is the one simplification: macOS  |
+| `src/views/markdown.ts` | 266 | Markdown in the chat's answers, as on the Mac (ChatMarkdown.swift and ChatMarkdownView.swift): headings, paragraphs, fenced code with a copy button, |
+| `src/views/recap.ts` | 243 | Weekly recap card and its share panel — port of WeeklyRecapCardView and RecapSharePanelView (WeeklyRecapView.swift). The Mac shares from a separate |
+| `src/views/spotify.ts` | 431 | The Spotify pill and card — DOM ports of SpotifyPill / SpotifyCardView (SpotifyViews.swift) and the shared now-playing pieces (NowPlayingViews.swift |
+| `src/views/ticker.ts` | 221 | Overview task ticker — port of TickerView (V2) from IslandViewContent.swift. Three rows: completed (A), current → completed (B), incoming (C). Every row |
+| `src/views/update.ts` | 112 | The update card — port of UpdateCardView (MacUpdateViews.swift): the one-time question, "Bifrost X is out" with Update now · What's new · Later, |
+| `src/views/upload.ts` | 124 | Drop zone, upload progress and the "what do you want to do with it" card — ports of UploadView / UploadingView / ChooseView from IslandViewContent.swift. |
+| `src/views/usage.ts` | 214 | Plan usage in the island: the Claude and Codex pills in the header and the card behind each. Same behaviour as ClaudePlanHeaderPill, ClaudePlanCardView |
+| `src/views/views.ts` | 854 | Island views — DOM ports of IslandViewContent.swift. Paddings, font sizes, colours and wording are copied from the Swift views so both platforms read |
+| `src/views/wardrobe.ts` | 100 | Wardrobe view — port of WardrobeView (IslandViewContent.swift). Opened with a right-click on Huginn or from the tray menu. Resting the pointer on a button |
+| `src/views/whatsapp.ts` | 258 | The WhatsApp card — a DOM port of WhatsAppCardView, WhatsAppRow, WhatsAppConversationView, WhatsAppBubble and WhatsAppAvatar (WhatsAppViews.swift). Sizes, colours and wor |
+| `src/views/whatsnew.ts` | 108 | What's new after an update (whats-new/controller.ts decides when): first what this version brings — an icon, a title and a line per item — then |
+| `src/whats-new/controller.ts` | 162 | What's new after an update — when the card opens. Once per version, a few seconds after Bifrost starts (after the greeting), and only when nothing |
+| `src/whats-new/icons.ts` | 57 | The icons of the What's new card, as strokes on the 24×24 grid of views/icons.ts (drawn with svg(path, size, { stroke })). The Mac maps the same names to SF Symbols (What |
+| `src/whats-new/whats-new.ts` | 196 | What's new after an update, and the blue Huginn while one waits — the rules, pure, so tests/whats-new.test.mjs checks them. The island side is in |
+
+## 3. Janelas
+| Rótulo | Página | O que faz |
+|---|---|---|
+| `island` | `index.html` → `src/main.ts` / `island/*` | Ilha no topo da tela: pílulas, Huginn, chat, cartões de aprovação/pergunta, recap, upload, Spotify, WhatsApp, atualizações. |
+| `settings` | `settings.html` → `hub/*` + `settings/*` | Hub: Flow (Ditado, Notetaker, Estatísticas, Dicionário, Trechos, Estilos, Ajustes) e Notch (Geral, Abas ativas, Agentes, Chat, OK Bifrost, Integrações, Celular Android, Atalhos). |
+| `mochi` (rótulo interno) | `mochi.html` → `desktop/main.ts` | Huginn solto na área de trabalho (arrastar, cutucar, guarda-roupa, voltar para casa). |
+| `pill` | `pill.html` → `pill/main.ts` | Pílula do ditado. |
+| bandeja | `tray.rs` | Menu da bandeja do sistema (nativo). |
+
+## 4. Estados, animações e sons
+* **Ilha (FSM, `island/fsm.ts`)**: `hidden` → `petit` → `home` → `bifrost-desktop`; abre no hover/atalho, fecha pelo intervalo `autoCloseInterval`.
+* **Huginn na ilha (`mochi/engine.ts`, Canvas 2D)**: estados `idle, working, thinking, searching, approval, question, error, finished, ratelimit, sleeping, dizzy`; emotes `love, surprised, proud, wink, yawn, happy, annoyed`; tweens por propriedade (`yaw, pitch, roll, tilt, open, sx, sy, oy, ox, tint, morph, hands, blush…`) com curvas de `core/anim.ts`; partículas e mini-corvos (`mochi/minibots.ts`); roupas (`mochi/outfits.ts`, `wardrobe.ts`); saudação (`mochi/greeting.ts`).
+* **Corvos SVG do Bifrost (`bifrost/mascots.ts`, NOVO)**: Huginn (azul-fiorde, runa ᚨ) e Muninn (ferro, runa ᛗ) com estados `idle` (respiração + piscar sorteado), `flyIn`, `flyOut` (bater de asas), `thinking` (três pontos de aurora), `listening` (ondas), `success` (pulo + check desenhado), `error` (tremor + runa ᚾ), `sleeping` (z).
+* **Motor de movimento (`bifrost/motion.ts`, NOVO)**: curvas `fjord`, `raven` (ressalto), `tide`, `ember`, mola analítica, ritmo único `Beat` (120/220/360/620/1100 ms), `cascade()` para entrada em sequência; `prefers-reduced-motion` pula para o fim.
+* **Efeitos (`bifrost/nordic.css`, NOVO)**: aurora que deriva, ponte arco-íris que flui, seções entalhadas com nó dourado, botões de ferro com fio de ouro (hover/clique), cartões que sobem em cascata, menu de contexto nórdico.
+* **Sons (`core/sound.ts`, `sounds.rs`)**: peek,, open,, close,, hover,, blip,, slap,, annoyed,, dizzy,, greet,, work,, finish,, error,, approval,, question,, approve,, gulp,, tick,, send,, love,, pop,, proud,, wink,, yawn,, attach,, think,, search,, rate,, sleep,, greeting,.
+
+## 5. Menus de contexto
+* Menu nativo do WebView2 **desligado** em todas as janelas: `SetAreDefaultContextMenusEnabled(false)` (`webview_drop.rs::disable_native_menus`) + `contextmenu` com `preventDefault` global (`bifrost/contextmenu.ts`, importado pelas 4 páginas).
+* Menu próprio: campos de texto (Recortar/Copiar/Colar/Selecionar tudo), texto selecionado (Copiar). Clique direito no Huginn continua abrindo o guarda-roupa.
+* Bandeja: continua o menu nativo do Windows (limitação — ver §9).
+
+## 6. Comandos IPC (173) — lista de paridade
+| Comando | Situação | Verificação |
+|---|---|---|
+| `boot` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `save_settings` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `set_system_languages` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `set_collapsed` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `set_island_rect` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `focus_window` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `reposition` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `fit_zoom` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `hub_shown` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `list_monitors` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `open_url` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `open_gitlab_url` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `open_gitea` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `open_gitea_url` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `open_in_vscode` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `open_session` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `open_claude_desktop` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `open_file_in_vscode` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `quit_app` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `hooks_status` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `agent_hooks_status` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `hooks_preview` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `hooks_apply` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `agent_hooks_list` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `agent_hooks_preview` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `agent_hooks_apply` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `status_line_preview` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `status_line_apply` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `codex_plan_usage` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `approval_decision` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `approval_answer` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `approval_ack` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `approval_decline` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `log_line` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `chat_send` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `chat_models` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `local_connect` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `local_set_key` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `chat_reset` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `mcp_status` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `mcp_scan` | NOVO | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `mcp_rescan` | NOVO | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `mcp_save_server` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `mcp_remove_server` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `mcp_import` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `mcp_set_token` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `mcp_set_basic_auth` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `mcp_test` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `mcp_list_tools` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `mcp_set_chat` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `mcp_set_server` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `mcp_server_token` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `ingest_file` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `secret_present` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `secret_set` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `secret_clear` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `refresh_integration` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `github_refresh` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `n` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `open_settings_window` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `set_paused` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `shortcuts_status` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `shortcuts_suspend` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_link_status` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_link_set_enabled` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_link_pairing` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_link_new_pairing` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_link_publish` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_link_publish_question` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_link_publish_prefs` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_answers_status` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_answers_set_enabled` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_diffs_status` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_diffs_set_enabled` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_link_send_diff` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_usage_status` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_usage_set_enabled` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_recap_status` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_recap_set_enabled` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_relay_status` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_relay_set` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_relay_set_access` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_link_publish_usage` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_link_publish_recap` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_services_status` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_services_set` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_link_publish_services` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_details_status` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_details_set_enabled` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_chat_status` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_chat_set_enabled` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `phone_link::phone_chat_set_models` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `recap::recap_history` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `recap::recap_prefs` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `recap::recap_set_enabled` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `recap::recap_set_hide_projects` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `recap::recap_mark_shown` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `recap::recap_clear` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `recap::recap_save_png` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `recap::recap_reveal_saved` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `desktop::desktop_mochi_info` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `desktop::desktop_mochi_pick_up` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `desktop::desktop_mochi_carry` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `desktop::desktop_mochi_carry_end` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `desktop::desktop_mochi_drag_begin` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `desktop::desktop_mochi_drag_move` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `desktop::desktop_mochi_drag_end` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `desktop::desktop_mochi_fly_out` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `desktop::desktop_mochi_fly_home` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `desktop::desktop_mochi_set_asleep` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `sounds::custom_sounds` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `sounds::custom_sound` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `sounds::reveal_sounds_folder` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `sounds::reload_sounds` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `spotify::spotify_refresh` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `spotify::spotify_control` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `spotify::spotify_open` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `spotify::spotify_installed` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `whatsapp::whatsapp_island` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `whatsapp::whatsapp_open` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `whatsapp::whatsapp_close` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `whatsapp::whatsapp_send` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `whatsapp::whatsapp_ignore` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `whatsapp::whatsapp_unignore` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `whatsapp::whatsapp_settings` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `whatsapp::whatsapp_set_options` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `whatsapp::whatsapp_save_gateway` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `whatsapp::whatsapp_test` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `whatsapp::whatsapp_install` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::flow_status` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::flow_set_prefs` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::flow_history` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::flow_delete` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::flow_clear` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::flow_stats` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::flow_words` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::flow_set_words` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::flow_snippets` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::flow_set_snippets` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::flow_styles` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::flow_set_styles` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::flow_running_apps` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::flow_copy` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::flow_paste_again` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::flow_models_download` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::flow_models_remove` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::pill_state` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::pill_hot` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::pill_hover` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `flow::pill_action` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `notes::notes_state` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `notes::notes_start` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `notes::notes_stop` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `notes::notes_rename` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `notes::notes_rename_speaker` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `notes::notes_toggle_todo` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `notes::notes_delete` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `notes::notes_summarize` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `notes::notes_retry` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `notes::notes_markdown` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `notes::notes_export` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `voice::voice_done` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `voice::voice_say_native` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `update::update_status` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `update::update_set_consent` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `update::update_check` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `update::update_shown` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `update::update_show` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `update::update_later` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `tray::tray_update_hint` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `update::update_dismiss` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `update::update_install` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+| `update::update_open_page` | mantido | ✅ compila + `cargo test` (562) + `npm test` (475) |
+
+## 7. Eventos emitidos pelo Rust
+`chat-delta`, `cursor`, `desktop-cursor`, `desktop-flight`, `desktop-mochi-dropped`, `desktop-visible`, `file-drag`, `flow-history`, `flow-prefs`, `github-alerts`, `hook`, `hub-page`, `hub-visible`, `integration`, `integration_gitea`, `integration_gitlab`, `notes-changed`, `open-wardrobe`, `phone-link-decided`, `phone-link-getdiff`, `pill-bands`, `pill-pointer`, `pill-state`, `pill-visible`, `pointer-inside`, `recap-check`, `screen-changed`, `settings-changed`, `shortcut`, `shortcuts-status`, `sounds-changed`, `speech-models`, `tray`, `update-offer`, `update-status`, `voice-ask`, `voice-say`
+
+## 8. Ajustes (`settings.json`) — lista de paridade
+| Campo | Situação | Verificação |
+|---|---|---|
+| `sound_enabled` | mantido | ✅ round-trip em `settings::tests` |
+| `sound_volume` | mantido | ✅ round-trip em `settings::tests` |
+| `auto_close_interval` | mantido | ✅ round-trip em `settings::tests` |
+| `open_on_hover` | mantido | ✅ round-trip em `settings::tests` |
+| `absence_interval` | mantido | ✅ round-trip em `settings::tests` |
+| `active_integrations` | migrado: pílulas com chave removidas | ✅ round-trip em `settings::tests` |
+| `main_pill` | mantido | ✅ round-trip em `settings::tests` |
+| `screen` | mantido | ✅ round-trip em `settings::tests` |
+| `autostart` | mantido | ✅ round-trip em `settings::tests` |
+| `hooks_installed` | mantido | ✅ round-trip em `settings::tests` |
+| `model` | mantido | ✅ round-trip em `settings::tests` |
+| `show_plan_in_notch` | mantido | ✅ round-trip em `settings::tests` |
+| `plan_relay_installed` | mantido | ✅ round-trip em `settings::tests` |
+| `show_codex_plan_in_notch` | mantido | ✅ round-trip em `settings::tests` |
+| `chat_provider` | migrado: provedores com chave → `cli` | ✅ round-trip em `settings::tests` |
+| `chat_models` | mantido | ✅ round-trip em `settings::tests` |
+| `ollama_url` | mantido | ✅ round-trip em `settings::tests` |
+| `lmstudio_url` | mantido | ✅ round-trip em `settings::tests` |
+| `custom_url` | mantido | ✅ round-trip em `settings::tests` |
+| `shortcuts` | mantido | ✅ round-trip em `settings::tests` |
+| `mochi_outfit` | mantido | ✅ round-trip em `settings::tests` |
+| `pill_colors` | mantido | ✅ round-trip em `settings::tests` |
+| `language` | mantido | ✅ round-trip em `settings::tests` |
+| `desktop_mochi` | mantido | ✅ round-trip em `settings::tests` |
+| `phone_link` | mantido | ✅ round-trip em `settings::tests` |
+| `phone_chat` | mantido | ✅ round-trip em `settings::tests` |
+| `phone_chat_models` | mantido | ✅ round-trip em `settings::tests` |
+| `phone_details` | mantido | ✅ round-trip em `settings::tests` |
+| `phone_answers` | mantido | ✅ round-trip em `settings::tests` |
+| `phone_diffs` | mantido | ✅ round-trip em `settings::tests` |
+| `phone_usage` | mantido | ✅ round-trip em `settings::tests` |
+| `phone_recap` | mantido | ✅ round-trip em `settings::tests` |
+| `phone_services` | mantido | ✅ round-trip em `settings::tests` |
+| `phone_relay` | mantido | ✅ round-trip em `settings::tests` |
+| `phone_relay_url` | mantido | ✅ round-trip em `settings::tests` |
+| `show_clock` | mantido | ✅ round-trip em `settings::tests` |
+| `mcp_servers` | mantido | ✅ round-trip em `settings::tests` |
+| `mcp_chat` | mantido | ✅ round-trip em `settings::tests` |
+| `mcp_server_enabled` | mantido | ✅ round-trip em `settings::tests` |
+| `mcp_server_port` | mantido | ✅ round-trip em `settings::tests` |
+| `mcp_known` | NOVO | ✅ round-trip em `settings::tests` |
+
+Credenciais no cofre do sistema (`secrets.rs`): `mcp-token:<nome>` (Hermes VPS etc.), chaves antigas (`anthropic-api-key`, `github-token`, `stripe-api-key`…) **ficam guardadas mas não são mais lidas pela interface** nem pedidas.
+
+## 9. Funções e paridade
+| Função | Antes | Agora | Verificação |
+|---|---|---|---|
+| Sessões de agentes (Claude Code, Codex, Cursor, Gemini…) por hooks | sim | mantido | ✅ `hooks.test.mjs`, `agents.test.mjs`, `cargo test hooks::` |
+| Aprovar/negar, perguntas | sim | mantido | ✅ testes da ilha |
+| Plano do Claude/Codex na ilha | sim | mantido | ✅ `plan.test.mjs`, `codex_plan::tests` |
+| Chat com Claude por chave de API | sim | **removido da interface** → IA do PC (`cli`) | ✅ `chat.test.mjs`, `cli_chat::tests` |
+| Chat Google/OpenAI/OpenRouter por chave | sim | **removido da interface** | ✅ `providers.test.mjs` |
+| Chat Ollama / LM Studio / servidor próprio | sim | mantido (sem campo de chave) | ✅ `providers.test.mjs` |
+| Chat via MCP (Hermes) | sim | mantido | ✅ `mcp::chat::tests`, `mcp.test.mjs` |
+| Servidor MCP do Bifrost (47821) | sim | mantido | ✅ `mcp::server` tests |
+| Detecção de programas/IAs + catálogo MCP + importação | não | **NOVO** | ✅ `mcp::catalog::tests` (4) |
+| Pílulas GitHub/GitLab/Gitea/Vercel/n8n/Resend/Notion/Cal.com/Stripe | por chave | **trocadas por MCP** (não oferecidas; código mantido) | ✅ `pills.test.mjs` |
+| Spotify | sim | mantido | ✅ `spotify.test.mjs` |
+| WhatsApp (gateway local) | sim | mantido | ✅ `whatsapp.test.mjs`, `whatsapp::tests` |
+| Celular Android (LAN + relay) | sim | mantido (chat do celular segue só com modelos locais) | ✅ `phone-*.test.mjs`, `phone_link::tests` |
+| Ditado Flow, Notetaker, Dicionário, Trechos, Estilos | sim | mantido | ✅ `cargo test flow::`, `notes::` |
+| OK Bifrost (palavra de ativação) | sim | mantido | ✅ `cargo test voice::` |
+| Atalhos globais | sim | mantido | ✅ `shortcuts.test.mjs` |
+| Recap/resumo do dia | sim | mantido | ✅ `recap*.test.mjs` |
+| Atualizações | sim | mantido | ✅ `update.test.mjs` |
+| Huginn na área de trabalho | sim | mantido | ✅ `desktop.test.mjs` |
+| Menu nativo no clique direito | aparecia | **bloqueado + menu nórdico** | ✅ `bifrost.test.mjs` |
+| Identidade nórdica, Huginn + Muninn SVG, motor de movimento | não | **NOVO** (Configurações → Chat) | ✅ `bifrost.test.mjs` + capturas/vídeos |
+
+**Limitações honestas**
+* A reescrita completa do zero (todas as telas, a ilha e o motor Canvas do Huginn com nova arte nórdica) **não foi feita nesta rodada**: a ilha, o chat, o hub e o Huginn em Canvas continuam com o código herdado (já redesenhado como Huginn na rodada anterior). O novo sistema nórdico (`src/bifrost/`) está ligado nas Configurações e no menu de contexto de todas as janelas, e é a base para migrar as demais telas.
+* Nomes internos herdados (`mochi.html`, pasta `src/mochi`, rótulo de janela `mochi`, `coucou-relay/v1` do protocolo do relay) não aparecem para o usuário; renomear quebra compatibilidade do relay/celular e ficou para depois. O crédito MIT ao Coucou no `copyright` é exigido pela licença.
+* Menu da bandeja continua nativo.
+* Login OAuth dos serviços na nuvem depende do `mcp-remote` (npx). O GitHub remoto pode pedir OAuth que nem todo cliente aceita; nesse caso use o `gh` (já instalado) ou um token como credencial do servidor.
+* Verificação = compilação + suites automatizadas + capturas headless; não houve teste interativo no Windows.

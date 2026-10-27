@@ -68,3 +68,20 @@ pub fn install(app: &AppHandle) {
         crate::log::line(format!("file drop: {err}"));
     }
 }
+
+/// Bifrost: nenhuma janela mostra o menu nativo do WebView2 no clique direito
+/// (as páginas desenham o próprio menu nórdico, src/bifrost/contextmenu.ts).
+pub fn disable_native_menus(app: &AppHandle) {
+    use tauri::Manager;
+    for (label, win) in app.webview_windows() {
+        let result = win.with_webview(move |webview| unsafe {
+            let Ok(core) = webview.controller().CoreWebView2() else { return };
+            if let Ok(settings) = core.Settings() {
+                let _ = settings.SetAreDefaultContextMenusEnabled(false.into());
+            }
+        });
+        if let Err(err) = result {
+            crate::log::line(format!("context menu ({label}): {err}"));
+        }
+    }
+}

@@ -1,5 +1,5 @@
 // Settings → Chat → "Servidores MCP" (Paulo build): the agents the chat talks
-// to without API keys, how the chat reaches one of them, and Bifrost's own MCP
+// to without keys, how the chat reaches one of them, and Bifrost's own MCP
 // server that lets Grok Bot, Hermes… drive Huginn.
 
 import {
@@ -9,6 +9,8 @@ import { MCP_NAME, clientSnippet, credentialFromForm, configFromForm, formFromCo
 import type { Settings } from "../core/state";
 import { h, clear } from "../views/dom";
 import { statusDot } from "./parts";
+import { Mascot } from "../bifrost/mascots";
+import { cascade } from "../bifrost/motion";
 
 const notice = (kind: "err" | "ok" | "hint", text: string) =>
   h("div", { class: kind === "hint" ? "hint" : kind === "err" ? "notice err" : "notice", text });
@@ -356,10 +358,82 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
     );
   }
 
-  void load();
+  // ── Detectados / catálogo ───────────────────────────────────────────────
+  const detBody = h("div", { style: "display:flex;flex-direction:column;gap:12px" });
+  const huginn = new Mascot("huginn");
+  const muninn = new Mascot("muninn");
+  async function drawDetected() {
+    clear(detBody);
+    huginn.set("thinking");
+    const scan = await Bridge.mcpScan().catch(() => null);
+    if (!scan) {
+      huginn.set("error");
+      detBody.append(notice("err", "Não consegui ler os programas do PC."));
+      return;
+    }
+    huginn.set("success");
+    setTimeout(() => huginn.set("idle"), 1400);
+    const chips = h("div", { class: "bf-chips" });
+    for (const p of scan.programs.filter((p) => p.found)) {
+      chips.append(h("span", { class: "bf-badge ok", title: p.path ?? "", text: `${p.name} · detectado` }));
+    }
+    detBody.append(h("div", { class: "bf-card-note", text: "Programas e IAs encontrados neste PC:" }), chips);
+    const grid = h("div", { class: "bf-grid" });
+    const servers = new Map((status?.servers ?? []).map((s) => [s.name, s]));
+    const cards: HTMLElement[] = [];
+    for (const e of scan.catalog) {
+      const mine = servers.get(e.name);
+      const on = !!mine && !mine.config.disabled;
+      const sw = h("button", { class: on ? "switch on" : "switch", title: on ? "Desligar" : "Ligar" }) as HTMLButtonElement;
+      sw.addEventListener("click", async () => {
+        const base = mine?.config ?? e.config;
+        status = await Bridge.mcpSaveServer(e.name, { ...base, disabled: on ? true : undefined } as McpServerConfig, mine ? e.name : null);
+        redraw();
+        void drawDetected();
+      });
+      const badge = e.origin === "nuvem"
+        ? h("span", { class: "bf-badge cloud", text: "nuvem · OAuth" })
+        : h("span", { class: `bf-badge ${e.detected ? "ok" : "off"}`, text: e.detected ? "detectado" : "não instalado" });
+      const card = h("div", { class: `bf-card${on ? " on" : ""}` },
+        h("div", { class: "row", style: "justify-content:space-between" }, h("span", { class: "bf-card-name", text: e.label }), sw),
+        badge,
+        h("div", { class: "bf-card-note", text: e.note }),
+      );
+      cards.push(card);
+      grid.append(card);
+    }
+    for (const i of scan.imported) {
+      const card = h("div", { class: "bf-card on" },
+        h("span", { class: "bf-card-name", text: i.name }),
+        h("span", { class: "bf-badge imp", text: `importado · ${i.source}` }),
+      );
+      cards.push(card);
+      grid.append(card);
+    }
+    const rescan = h("button", { class: "primary", text: "Procurar de novo" });
+    rescan.addEventListener("click", async () => {
+      status = await Bridge.mcpRescan();
+      redraw();
+      void drawDetected();
+    });
+    detBody.append(grid, h("div", { class: "row" }, rescan));
+    void cascade(cards);
+  }
+
+  void load().then(drawDetected);
   return [
+    h("section", { class: "bf-section" },
+      h("div", { class: "row", style: "align-items:center;gap:14px" },
+        h("div", { class: "bf-mascot-pair" }, huginn.el, muninn.el),
+        h("div", {},
+          h("h2", { class: "bf-title" }, h("span", { class: "bf-rune", text: "ᛉ" }), h("span", { text: "Detectados no seu PC" })),
+          notice("hint", "O Bifrost procura IAs e programas instalados (Claude Code, Codex, Ollama, Docker, Git, OBS…) e já deixa os servidores MCP prontos. Serviços na nuvem usam o servidor MCP oficial com login OAuth no navegador — sem chave."),
+        ),
+      ),
+      h("div", { class: "bf-bridge" }),
+      detBody),
     h("section", {}, h("h2", {}, h("span", { text: "Servidores MCP" })),
-      notice("hint", "Agentes que o chat do Huginn usa sem chave de API: Hermes, Alethe, Orca, Freya…"), serversBody),
+      notice("hint", "Todos os servidores ligados ao Huginn: Hermes, Alethe, Orca, Freya, os detectados no PC e os importados."), serversBody),
     h("section", {}, h("h2", {}, h("span", { text: "Chat via MCP" })),
       notice("hint", "Como a mensagem chega ao agente. Para o Hermes: modo Tarefa, hermes_task_start / prompt, status hermes_task_status / job_id."), chatBody),
     h("section", {}, h("h2", {}, h("span", { text: "Servidor MCP do Bifrost" })),

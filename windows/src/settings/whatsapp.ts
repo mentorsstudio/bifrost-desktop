@@ -168,7 +168,7 @@ export function whatsappSection(host: WhatsAppSettingsHost): HTMLElement {
     urlInput.placeholder = DEFAULT_URLS[kind];
     credentialInput.placeholder = v.hasCredential
       ? `••••••••  ${t("(stored)")}`
-      : kind === "gowa" ? t("Basic auth  (user:password, if set)") : t("API key  (owa_k1_…)");
+      : kind === "gowa" ? t("Basic auth  (user:password, if set)") : "Credencial do gateway  (owa_k1_…)";
     credentialRemove.style.display = v.hasCredential ? "" : "none";
     switchState(autoStartSwitch, autoStart);
     autoStartBlock.replaceChildren();

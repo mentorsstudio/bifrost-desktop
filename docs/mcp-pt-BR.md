@@ -6,10 +6,10 @@ Os provedores antigos continuam lá (Configurações → Chat), mas o padrão ag
 
 São duas peças:
 
-1. **Cliente MCP** — o chat do Mochi manda a mensagem para um agente (Hermes, Alethe, Orca,
+1. **Cliente MCP** — o chat do Huginn manda a mensagem para um agente (Hermes, Alethe, Orca,
    Freya…) por uma ferramenta MCP. Configuração em `settings.json`, campo `mcpServers`.
 2. **Servidor MCP do Bifrost** — o app expõe `http://127.0.0.1:47821/mcp` (só neste computador,
-   com token Bearer) para que Grok Bot, Hermes etc. possam acionar o Mochi.
+   com token Bearer) para que Grok Bot, Hermes etc. possam acionar o Huginn.
 
 `settings.json` fica em `%APPDATA%\com.paulocodex.bifrost\` no Windows e em
 `~/.config/com.paulocodex.bifrost/` no Linux. Dá para editar tudo pela tela
@@ -146,11 +146,11 @@ Ferramentas expostas:
 | Ferramenta | O que faz | Retorno |
 |---|---|---|
 | `notify` `{message, title?, agent?}` | Mostra um aviso na pílula do agente | `ok` |
-| `ask_approval` `{action, tool?, agent?, session_id?}` | Cartão Permitir/Negar no Mochi | `allow`, `deny` ou `no_decision` (~108 s) |
+| `ask_approval` `{action, tool?, agent?, session_id?}` | Cartão Permitir/Negar no Huginn | `allow`, `deny` ou `no_decision` (~108 s) |
 | `show_session` `{session_id, agent?, cwd?, prompt?}` | Abre uma sessão (pílula) | `ok` |
 | `update_session` `{session_id, status: working\|question\|done, step?, message?}` | Atualiza a sessão | `ok` |
 | `end_session` `{session_id, agent?}` | Encerra a sessão | `ok` |
-| `chat` `{message}` | Pergunta ao chat do Mochi (recusa se o provedor for MCP, para evitar laço) | texto |
+| `chat` `{message}` | Pergunta ao chat do Huginn (recusa se o provedor for MCP, para evitar laço) | texto |
 
 **Registrar no Grok Bot**: o Grok Bot roda na nuvem e **não alcança** `127.0.0.1` do seu PC.
 Opções: (a) usar o servidor só a partir de agentes locais (Hermes no PC, Claude Code, Cursor);

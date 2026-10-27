@@ -378,6 +378,8 @@ export const Bridge = {
     callOrThrow<LocalServer>("local_connect", { provider, url }),
   // ── MCP (Paulo build) ─────────────────────────────────────────────────────
   mcpStatus: () => call<McpStatus>("mcp_status"),
+  mcpScan: () => callOrThrow<McpScan>("mcp_scan"),
+  mcpRescan: () => callOrThrow<McpStatus>("mcp_rescan"),
   mcpSaveServer: (name: string, config: McpServerConfig, previous: string | null) =>
     callOrThrow<McpStatus>("mcp_save_server", { name, config, previous }),
   mcpRemoveServer: (name: string) => callOrThrow<McpStatus>("mcp_remove_server", { name }),
@@ -722,6 +724,10 @@ export interface McpChat {
   timeoutSecs: number;
   includeHistory: boolean;
 }
+
+export interface McpDetected { id: string; name: string; kind: string; found: boolean; path: string | null }
+export interface McpCatalogEntry { name: string; label: string; origin: string; needs: string | null; detected: boolean; note: string; config: McpServerConfig }
+export interface McpScan { programs: McpDetected[]; catalog: McpCatalogEntry[]; imported: { name: string; source: string }[] }
 
 export interface McpStatus {
   servers: McpServerView[];

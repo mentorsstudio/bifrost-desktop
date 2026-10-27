@@ -4,6 +4,7 @@ mod agent_hooks;
 mod agents;
 mod chat;
 mod claude;
+mod cli_chat;
 mod codex_plan;
 mod config_file;
 mod desktop;
@@ -117,6 +118,7 @@ fn save_settings(app: AppHandle, shared: State<Shared>, settings: Settings) {
         settings.mcp_chat = current.mcp_chat.clone();
         settings.mcp_server_enabled = current.mcp_server_enabled;
         settings.mcp_server_port = current.mcp_server_port;
+        settings.mcp_known = current.mcp_known.clone();
         *current = settings;
         (screen_changed, autostart_changed, shortcuts_changed)
     };
@@ -948,9 +950,46 @@ fn open_settings_window(app: AppHandle, page: Option<String>) {
     show_hub(&app, Some(page.as_deref().unwrap_or("general")));
 }
 
+/// Bifrost: tudo por MCP. Na abertura, detecta os programas/IAs do PC, junta o
+/// catálogo e os servidores de outros apps, e tira o chat de provedores que
+/// pediam chave de API (as chaves antigas ficam no cofre, sem uso).
+fn bifrost_boot_mcp(s: &mut Settings) {
+    let env = mcp::catalog::Env::current();
+    let (_, imported) = mcp::catalog::scan(&env);
+    let found = mcp::catalog::detect(&env);
+    let catalog = mcp::catalog::entries(&env, &found);
+    for (name, secret) in mcp::catalog::merge(&mut s.mcp_servers, &mut s.mcp_known, &catalog, &imported) {
+        let _ = secrets::set_mcp_token(&name, &secret);
+    }
+    if cli_chat::needs_migration(&s.chat_provider) {
+        s.chat_provider = cli_chat::PROVIDER.into();
+    }
+    s.active_integrations.retain(|id| !cli_chat::KEYED_PILLS.contains(&id.as_str()));
+    let _ = settings::save(s);
+}
+
+#[tauri::command]
+fn mcp_scan() -> mcp::catalog::Scan {
+    mcp::catalog::scan(&mcp::catalog::Env::current()).0
+}
+
+#[tauri::command]
+fn mcp_rescan(shared: State<Shared>) -> Result<McpStatus, String> {
+    let env = mcp::catalog::Env::current();
+    let (_, imported) = mcp::catalog::scan(&env);
+    let catalog = mcp::catalog::entries(&env, &mcp::catalog::detect(&env));
+    mcp_update(&shared, |s| {
+        for (name, secret) in mcp::catalog::merge(&mut s.mcp_servers, &mut s.mcp_known, &catalog, &imported) {
+            let _ = secrets::set_mcp_token(&name, &secret);
+        }
+        Ok(())
+    })
+}
+
 pub fn run() {
     platform::prepare_environment();
-    let loaded = settings::load();
+    let mut loaded = settings::load();
+    bifrost_boot_mcp(&mut loaded);
     i18n::set_picked(&loaded.language);
     let gate = Arc::new(PollGate::new());
 
@@ -1021,6 +1060,8 @@ pub fn run() {
             local_set_key,
             chat_reset,
             mcp_status,
+            mcp_scan,
+            mcp_rescan,
             mcp_save_server,
             mcp_remove_server,
             mcp_import,
@@ -1175,6 +1216,8 @@ pub fn run() {
                 platform::make_non_activating(&win);
                 #[cfg(windows)]
                 webview_drop::install(&handle);
+                #[cfg(windows)]
+                webview_drop::disable_native_menus(&handle);
                 island::apply_geometry(&handle, &loaded.screen, false);
                 let _ = win.show();
             }

@@ -55,10 +55,10 @@ test("a provider without a key is never asked for its models", async () => {
   $(".model-btn").fire("click");
   await flush();
   assert.ok($(".chat-body").classList.contains("picking"));
-  assert.deepEqual(chips(), ["MCP", "Anthropic", "Google", "OpenAI", "OpenRouter"]);
+  assert.deepEqual(chips(), ["IA do PC", "MCP", "Anthropic"]);
   assert.deepEqual(sent("secret_present"), [{ key: "anthropic-api-key" }]);
   assert.deepEqual(sent("chat_models"), []);
-  assert.match($(".picker-status").textContent, /No API key/);
+  assert.match($(".picker-status").textContent, /Sem acesso/);
 });
 
 test("with a key, the models are listed and picking one saves it", async () => {
@@ -79,19 +79,16 @@ test("with a key, the models are listed and picking one saves it", async () => {
 });
 
 test("switching provider saves it and asks the new provider only", async () => {
-  answers.secret_present = (args) => args.key === "google-api-key";
-  answers.chat_models = (args) => (args.provider === "google" ? [{ id: "gemini-2.5-flash", label: "gemini-2.5-flash" }] : []);
+  answers.secret_present = false;
+  answers.chat_models = (args) => (args.provider === "cli" ? [{ id: "claude", label: "Claude Code" }] : []);
   $(".model-btn").fire("click");
   await flush();
   assert.deepEqual(sent("chat_models"), []);
-  view.el.find(".picker-chip")[2].fire("click");
+  view.el.find(".picker-chip")[0].fire("click");
   await flush();
-  assert.equal(State.settings.chatProvider, "google");
-  assert.deepEqual(sent("chat_models"), [{ provider: "google" }]);
-  // The saved model was not offered: the flash one is kept instead, and saved.
-  assert.equal(State.settings.chatModels.google, "gemini-2.5-flash");
-  assert.equal(sent("save_settings").at(-1).settings.chatModels.google, "gemini-2.5-flash");
-  assert.deepEqual(models(), ["gemini-2.5-flash"]);
+  assert.equal(State.settings.chatProvider, "cli");
+  assert.deepEqual(sent("chat_models"), [{ provider: "cli" }]);
+  assert.deepEqual(models(), ["Claude Code"]);
 });
 
 test("a local answer streams into one reply, then the finished text replaces it", async () => {

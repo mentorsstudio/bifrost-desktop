@@ -25,7 +25,7 @@ const STRINGS = {
   switchModel: N_("Switch provider or model"),
   noModel: N_("Choose a model"),
   loading: N_("Loading models…"),
-  noKey: N_("No API key — add it in Settings."),
+  noKey: "Sem acesso — escolha uma IA do PC em Configurações → Chat.",
   openSettings: N_("Open Settings"),
 };
 

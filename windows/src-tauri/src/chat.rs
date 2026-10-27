@@ -207,7 +207,10 @@ pub async fn send(
     let context = context.map(checked_context).transpose()?;
     let provider = settings.chat_provider.as_str();
     let model = model_for(settings, provider);
-    if provider == ANTHROPIC || provider.is_empty() {
+    if provider == crate::cli_chat::PROVIDER || provider.is_empty() {
+        return crate::cli_chat::send(chat, &model, query, context).await;
+    }
+    if provider == ANTHROPIC {
         return claude::send(chat, &model, query, context).await;
     }
     if let Some(p) = openai_compat::provider(provider) {
@@ -235,6 +238,9 @@ pub async fn send_for_phone(
     query: String,
     on_delta: impl FnMut(String),
 ) -> Result<ChatReply, String> {
+    if provider == crate::cli_chat::PROVIDER {
+        return crate::cli_chat::send(chat, model, query, None).await;
+    }
     if provider == ANTHROPIC {
         return claude::send(chat, model, query, None).await;
     }
@@ -259,6 +265,9 @@ pub async fn models(settings: &Settings, provider: &str) -> Result<Vec<ModelInfo
             .keys()
             .map(|name| ModelInfo { id: name.clone(), label: format!("MCP · {name}") })
             .collect());
+    }
+    if provider == crate::cli_chat::PROVIDER {
+        return Ok(crate::cli_chat::models());
     }
     if provider == ANTHROPIC {
         let key = secrets::get(claude::KEY).ok_or_else(no_key)?;
