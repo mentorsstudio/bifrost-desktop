@@ -4,6 +4,7 @@
 // Cal.com is the one simplification: macOS shows a three-level calendar
 // (month → day → booking); here it is the list of upcoming bookings.
 
+import { linkBtn } from "./kit";
 import { h, svg, clear, dot } from "./dom";
 import { ICONS } from "./icons";
 import { State, type AgentTask } from "../core/state";
@@ -91,39 +92,19 @@ function idleCard(task: AgentTask, openSettings: () => void): HTMLElement {
   const actions = h("div", { class: "int-actions" });
   if (task.id === "integration_claude") {
     actions.append(
-      h("button", {
-        class: "link-btn",
-        style: `color:${task.color}b3`,
-        text: t("Open Visual Studio Code"),
-        onclick: () => void Bridge.openInVSCode(task.sessionCwd ?? null),
-      }),
+      linkBtn(t("Open Visual Studio Code"), `${task.color}b3`, () => void Bridge.openInVSCode(task.sessionCwd ?? null)),
     );
   } else if (task.id === "agent_claude-desktop") {
     actions.append(
-      h("button", {
-        class: "link-btn",
-        style: `color:${task.color}d9`,
-        text: t("Open Claude"),
-        onclick: () => void Bridge.openClaudeDesktop(),
-      }),
+      linkBtn(t("Open Claude"), `${task.color}d9`, () => void Bridge.openClaudeDesktop()),
     );
   } else if (task.id === "integration_n8n") {
     actions.append(
-      h("button", {
-        class: "link-btn",
-        style: `color:${task.color}d9`,
-        text: t("Open {name}", { name: "n8n" }),
-        onclick: () => void Bridge.openN8n(),
-      }),
+      linkBtn(t("Open {name}", { name: "n8n" }), `${task.color}d9`, () => void Bridge.openN8n()),
     );
   } else if (OPEN_URLS[task.id]) {
     actions.append(
-      h("button", {
-        class: "link-btn",
-        style: `color:${task.color}d9`,
-        text: t("Open {name}", { name: task.name }),
-        onclick: () => void Bridge.openUrl(OPEN_URLS[task.id]),
-      }),
+      linkBtn(t("Open {name}", { name: task.name }), `${task.color}d9`, () => void Bridge.openUrl(OPEN_URLS[task.id])),
     );
   }
   const hookPill = def?.connect.kind === "hooks";
@@ -131,17 +112,11 @@ function idleCard(task: AgentTask, openSettings: () => void): HTMLElement {
     // Nothing to set up, and nothing to refresh.
   } else if (configured && (hookPill || def?.category !== "ai")) {
     actions.append(
-      h("button", {
-        class: "link-btn",
-        style: `color:${task.color}d9`,
-        text: t("Refresh"),
-        // A hook pill has nothing to poll: look at its hooks again instead.
-        onclick: () => void (hookPill ? refreshHookPills() : Bridge.refreshIntegration(task.id)),
-      }),
+      linkBtn(t("Refresh"), `${task.color}d9`, () => void (hookPill ? refreshHookPills() : Bridge.refreshIntegration(task.id))),
     );
   } else if (!configured) {
     actions.append(
-      h("button", { class: "link-btn", style: "color:#8e939c", text: t("Settings…"), onclick: openSettings }),
+      linkBtn(t("Settings…"), "#8e939c", openSettings),
     );
   }
 

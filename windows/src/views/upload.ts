@@ -4,6 +4,7 @@
 // Sending a file by email is not in the Windows v1, so `choose` offers the one
 // action the spec asks for: ask a question about it.
 
+import { btn } from "./kit";
 import { h, clear } from "./dom";
 import { State } from "../core/state";
 import type { ViewActions, ViewHost } from "./views";
@@ -90,16 +91,8 @@ export function buildChoose(actions: ViewActions): ViewHost {
   const row = h(
     "div",
     { class: "actions" },
-    h("button", {
-      class: "btn primary",
-      text: tl("Ask a question"),
-      onclick: () => actions.setView("prompt"),
-    }),
-    h("button", {
-      class: "btn secondary",
-      text: tl("Cancel"),
-      onclick: () => actions.cancelDrop(),
-    }),
+    btn(tl("Ask a question"), "primary", () => actions.setView("prompt")),
+    btn(tl("Cancel"), "secondary", () => actions.cancelDrop()),
   );
   const el = h(
     "div",

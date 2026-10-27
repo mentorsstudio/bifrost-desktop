@@ -6,6 +6,7 @@
 // Nothing animates in this view: the image is drawn once, when share mode
 // opens or the privacy toggle changes.
 
+import { btn } from "./kit";
 import { h, clear } from "./dom";
 import { Bridge } from "../core/bridge";
 import { washRGBA } from "../core/layout";
@@ -15,7 +16,7 @@ import {
   dayKey, formatCount, formatDuration, weekRangeLabel, type WeeklySummary,
 } from "../recap/summary";
 import type { ViewActions, ViewHost } from "./views";
-import { onLanguageChange, t, tl, type Msg } from "../i18n/i18n";
+import { onLanguageChange, t, tl } from "../i18n/i18n";
 
 /** User-visible strings, in the current language (src/i18n). */
 const T = {
@@ -44,9 +45,6 @@ const T = {
   get copyUnavailable() { return t("Copying images isn't available here — use Save image."); },
 };
 
-function btn(label: string | Msg, kind: "primary" | "secondary", onClick: () => void): HTMLButtonElement {
-  return h("button", { class: `btn ${kind}`, onclick: onClick }, h("span", { text: label }));
-}
 
 function chip(value: string, label: string): HTMLElement {
   return h("div", { class: "recap-chip" },

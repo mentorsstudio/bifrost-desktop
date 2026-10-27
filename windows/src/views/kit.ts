@@ -12,9 +12,9 @@ export function card(wash: Wash, ...children: (Node | string)[]): HTMLElement {
   return el;
 }
 
-export function btn(label: string | Msg, kind: "primary" | "secondary", onClick: () => void, kbd?: string): HTMLElement {
+export function btn(label: string | Msg, kind: "primary" | "secondary", onClick: () => void, kbd?: string): HTMLButtonElement {
   return h("button", { class: `btn ${kind}`, onclick: onClick },
-    h("span", { text: label }), kbd ? h("span", { class: "kbd", text: kbd }) : null);
+    h("span", { text: label }), kbd ? h("span", { class: "kbd", text: kbd }) : null) as HTMLButtonElement;
 }
 
 export interface Toggle { el: HTMLButtonElement; set(on: boolean): void }
@@ -61,4 +61,9 @@ export function statusBadge(): Badge {
 
 export function formRow(...children: (Node | null)[]): HTMLElement {
   return h("div", { class: "settings-row" }, ...children);
+}
+
+/** Ação discreta em texto, na cor da pílula (cartões das integrações). */
+export function linkBtn(label: string, color: string, onClick: () => void): HTMLButtonElement {
+  return h("button", { class: "link-btn", style: `color:${color}`, text: label, onclick: onClick }) as HTMLButtonElement;
 }
