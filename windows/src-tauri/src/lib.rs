@@ -25,6 +25,7 @@ mod notes;
 mod openai_compat;
 mod phone_link;
 mod pipe;
+mod diagnostico;
 mod platform;
 #[cfg(target_os = "linux")]
 mod portal;
@@ -1003,6 +1004,10 @@ fn mcp_rescan(shared: State<Shared>) -> Result<McpStatus, String> {
 }
 
 pub fn run() {
+    // Diagnóstico para o teste de fumaça: escreve o JSON e sai, sem janela nem instância única.
+    if let Some(out) = diagnostico::requested(&std::env::args().collect::<Vec<_>>()) {
+        std::process::exit(diagnostico::run(out));
+    }
     platform::prepare_environment();
     let mut loaded = settings::load();
     bifrost_boot_mcp(&mut loaded);
