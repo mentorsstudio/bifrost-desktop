@@ -118,3 +118,6 @@ export function hermesVpsServers(base: string): { name: string; url: string }[] 
   if (!/^https?:\/\/[^/\s]+/i.test(b)) return null;
   return [{ name: "hermes-vps", url: `${b}/mcp` }, { name: "hermes-vps-tarefas", url: `${b}/task/mcp` }];
 }
+
+/** O VPS do Paulo (não é segredo; a credencial fica só no cofre do Windows). */
+export const HERMES_VPS_BASE = "https://mcp.srv2096709.hstgr.cloud";

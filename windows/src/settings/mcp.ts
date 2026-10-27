@@ -7,7 +7,7 @@ import { formBtn, choice, textField, switchEl } from "../views/kit";
 import {
   Bridge, type McpChat, type McpServerConfig, type McpServerView, type McpStatus,
 } from "../core/bridge";
-import { hermesVpsServers, MCP_NAME, clientSnippet, credentialFromForm, configFromForm, formFromConfig, type McpForm } from "../core/mcp";
+import { HERMES_VPS_BASE, hermesVpsServers, MCP_NAME, clientSnippet, credentialFromForm, configFromForm, formFromConfig, type McpForm } from "../core/mcp";
 import type { Settings } from "../core/state";
 import { h, clear } from "../views/dom";
 import { statusDot } from "./parts";
@@ -138,7 +138,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>, which
 
   /** Preset Hermes (VPS): URL + usuário/senha (Basic Auth) → /mcp e /task/mcp, credencial no cofre do Windows. */
   function hermesPreset(): HTMLElement {
-    const url = input("", "https://seu-vps.exemplo.com");
+    const url = input(HERMES_VPS_BASE, "https://seu-vps.exemplo.com");
     const user = input("", t("User (Basic Auth, optional)"));
     const pass = input("", t("Password (Basic Auth)"), "password");
     const msg = h("div", {});
