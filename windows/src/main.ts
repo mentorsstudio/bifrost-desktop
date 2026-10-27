@@ -1,3 +1,5 @@
+import "./filee/island.css";
+import { fileeAsk } from "./filee/island";
 import { keepChatChoice } from "./views/chat";
 // Entry point: boot the bridge, wire the island, start the greeting.
 
@@ -72,6 +74,8 @@ async function main() {
   await island.desktop.init();
 
   await onEvent<{ x: number; y: number }>("cursor", ({ x, y }) => island.onCursor(x, y));
+  // Gesto do Huginn / menu "Bifrost ›": "Enviar para a IA" abre o chat com o arquivo.
+  await onEvent<{ paths: string[]; prompt: string | null }>("filee-ask", (p) => void fileeAsk(island, p));
   await onEvent<boolean>("pointer-inside", (inside) => island.setPointerInside(inside));
 
   /** Pause has to reach Rust too, or the pollers keep calling out. */

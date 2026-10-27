@@ -18,8 +18,10 @@ const FONT = `system-ui, "Segoe UI Variable Text", "Segoe UI", ${SCRIPT_FONTS}, 
 /** The card's inner right edge: no text runs past it. */
 const TEXT_RIGHT = USC.CARD_X + USC.CARD_W - 16;
 /** The two choose buttons, as drawn and as hit areas. */
-const ASK_BTN = { x: 114, w: 168 };
-const CANCEL_BTN = { x: 290, w: 120 };
+const ASK_BTN = { x: 114, w: 156 };
+/** Conversor (Filee no Bifrost): o arquivo solto também pode ser convertido. */
+const CONVERT_BTN = { x: 278, w: 128 };
+const CANCEL_BTN = { x: 414, w: 100 };
 /** Drop-zone chips (English keys, shown with `t()`). */
 const CHIPS = [N_("PDF"), N_("Images"), N_("Code"), N_("Docs")];
 
@@ -111,6 +113,8 @@ export interface UploadCanvasActions {
   ask(): void;
   /** Secondary button. */
   cancel(): void;
+  /** "Converter…": a vista do Conversor na ilha. */
+  convert(): void;
 }
 
 export class UploadCanvas {
@@ -140,7 +144,7 @@ export class UploadCanvas {
     };
     this.overlay = document.createElement("div");
     this.overlay.id = "upload-overlay";
-    this.overlay.append(mk(ASK_BTN.x, ASK_BTN.w, actions.ask), mk(CANCEL_BTN.x, CANCEL_BTN.w, actions.cancel));
+    this.overlay.append(mk(ASK_BTN.x, ASK_BTN.w, actions.ask), mk(CONVERT_BTN.x, CONVERT_BTN.w, actions.convert), mk(CANCEL_BTN.x, CANCEL_BTN.w, actions.cancel));
 
     this.el = document.createElement("div");
     this.el.id = "upload-layer";
@@ -346,8 +350,14 @@ export class UploadCanvas {
     ctx.fillStyle = "#F5F6F8";
     rr(ctx, ASK_BTN.x, 113, ASK_BTN.w, 26, 13);
     ctx.fill();
-    const ask = fitted(ctx, t("Ask a question about it"), ASK_BTN.w - 14, 500, 12.5);
+    const ask = fitted(ctx, "Enviar para a IA", ASK_BTN.w - 14, 500, 12.5);
     text(ctx, ask.s, ASK_BTN.x + ASK_BTN.w / 2, 126, ask.font, "#0B0C0E", "center");
+
+    ctx.fillStyle = "rgba(94,242,201,0.16)";
+    rr(ctx, CONVERT_BTN.x, 113, CONVERT_BTN.w, 26, 13);
+    ctx.fill();
+    const conv = fitted(ctx, "Converter…", CONVERT_BTN.w - 14, 500, 12.5);
+    text(ctx, conv.s, CONVERT_BTN.x + CONVERT_BTN.w / 2, 126, conv.font, "#E8FFF8", "center");
 
     ctx.fillStyle = "rgba(255,255,255,0.09)";
     rr(ctx, CANCEL_BTN.x, 113, CANCEL_BTN.w, 26, 13);

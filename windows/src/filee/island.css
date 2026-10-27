@@ -1,0 +1,29 @@
+/* O Conversor dentro da ilha (vista "convert") e os atalhos de pergunta do chat. */
+.fl-i-stack { padding: 0 18px 0 98px; gap: 8px; }
+.fl-i-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fl-i-chips { display: flex; flex-wrap: wrap; gap: 6px; max-height: 64px; overflow: hidden; }
+.fl-i-chip {
+  height: 26px; padding: 0 11px; border-radius: 13px; border: 1px solid rgba(255, 255, 255, .1);
+  background: rgba(255, 255, 255, .06); color: #f1f2f4; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: background var(--m-fast) var(--m-ease), border-color var(--m-fast), transform var(--m-fast) var(--m-snappy);
+}
+.fl-i-chip.tools { font-weight: 500; color: #d6d9de; }
+.fl-i-chip:hover:not(:disabled) { background: rgba(var(--th-accent-rgb, 94, 242, 201), .16); border-color: rgba(var(--th-accent-rgb, 94, 242, 201), .5); }
+.fl-i-chip.off { opacity: .45; cursor: default; }
+.fl-i-none { color: #9398a1; font-size: 12px; }
+.fl-i-status { min-height: 16px; font-size: 12px; color: #9398a1; display: flex; gap: 10px; align-items: center; overflow: hidden; white-space: nowrap; }
+.fl-i-status span { overflow: hidden; text-overflow: ellipsis; }
+.fl-i-status.done { color: var(--th-ok, #34d399); }
+.fl-i-status.error { color: var(--th-error-text, #ffb0a8); }
+.fl-i-link { flex: none; border: 0; background: none; padding: 0; color: var(--th-accent, #5ef2c9); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.fl-i-actions { flex-wrap: nowrap; }
+
+.fl-quick { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; mask-image: linear-gradient(90deg, #000 90%, transparent); }
+.fl-quick::-webkit-scrollbar { display: none; }
+.fl-quick-chip {
+  flex: none; height: 22px; padding: 0 10px; border-radius: 11px; border: 1px solid rgba(var(--th-accent-rgb, 94, 242, 201), .35);
+  background: rgba(var(--th-accent-rgb, 94, 242, 201), .08); color: #e9ecef; font: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer;
+  transition: background var(--m-fast) var(--m-ease);
+}
+.fl-quick-chip:hover { background: rgba(var(--th-accent-rgb, 94, 242, 201), .2); }
+@media (prefers-reduced-motion: reduce) { .fl-i-chip, .fl-quick-chip { transition: none; } }

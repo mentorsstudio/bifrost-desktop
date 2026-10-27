@@ -30,7 +30,8 @@ import { autoReveal, slidingInk } from "../theme/interact";
 
 export type PageId =
   | "dictation" | "notes" | "insights" | "dictionary" | "snippets" | "styles" | "flowsettings"
-  | "general" | "themes" | "pills" | "agents" | "chat" | "voice" | "integrations" | "phone" | "shortcuts";
+  | "general" | "themes" | "pills" | "agents" | "chat" | "voice" | "integrations" | "phone" | "shortcuts"
+  | "converter";
 
 interface PageDef {
   id: PageId;
@@ -62,7 +63,12 @@ export const NOTCH_PAGES: PageDef[] = [
   { id: "shortcuts", icon: "keyboard", title: () => t("Shortcuts"), subtitle: () => t("The keys that open the island and its actions.") },
 ];
 
-const ALL = [...FLOW_PAGES, ...NOTCH_PAGES];
+/** Forja: as ferramentas de arquivo (o Conversor, o Filee dentro do Bifrost). */
+export const FORGE_PAGES: PageDef[] = [
+  { id: "converter", icon: "convert", title: () => "Conversor" },
+];
+
+const ALL = [...FLOW_PAGES, ...NOTCH_PAGES, ...FORGE_PAGES];
 
 /** What a page gets to draw itself and reach the rest of the window. */
 export interface HubContext {
@@ -327,6 +333,7 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
   };
   group("Voz", FLOW_PAGES);
   group("Ilha", NOTCH_PAGES);
+  group("Forja", FORGE_PAGES);
   side.append(h("div", { class: "spacer" }), h("div", { class: "hub-meta" }, statusLine, h("div", { class: "hub-version", text: `Bifrost ${opts.version}` })));
   // Fase 18: a seleção desliza entre as runas (inclusive de um reino para o outro).
   slidingInk(side, ".hub-item.on", "hub");

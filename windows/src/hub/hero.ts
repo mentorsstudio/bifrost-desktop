@@ -56,6 +56,7 @@ export const THEMES: Record<string, Theme> = {
   integrations: { color: "#7C5CFF", cast: [m("#7C5CFF", 54, 0.15), m("#22D3EE", 46, 0.55), m("#F7B32B", 42, 0.95)] },
   phone: { color: "#3DDC84", cast: [m("#3DDC84", 56, 0.25), m("#F5F6F8", 46, 0.8, { outfit: "helm" })] },
   voice: { color: "#F97316", cast: [m("#F97316", 60, 0.3), m("#F5F6F8", 48, 0.85, { outfit: "runeBand" })] },
+  converter: { color: "#22D3EE", cast: [m("#22D3EE", 58, 0.2, { state: "working" }), m("#F7B32B", 46, 0.7, { outfit: "runeBand" })] },
   shortcuts: { color: "#6366F1", cast: [m("#6366F1", 56, 0.2, { outfit: "runeBand" }), m("#F5F6F8", 46, 0.8)] },
 };
 

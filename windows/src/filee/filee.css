@@ -1,0 +1,148 @@
+/* Conversor (Filee no Bifrost): a página do hub. Usa as variáveis do hub
+   (--hub-*), do motor de temas (--th-*) e os tokens de movimento (--m-*). */
+
+.fl-page { --fl-accent: var(--th-a2, #22d3ee); --fl-gold: var(--th-a3, #f7b32b); }
+
+/* ── Área de soltar ── */
+.fl-drop {
+  position: relative;
+  display: grid;
+  grid-template-columns: 132px 1fr;
+  align-items: center;
+  gap: 18px;
+  min-height: 148px;
+  padding: 18px 24px;
+  border-radius: 22px;
+  border: 1.5px dashed color-mix(in srgb, var(--fl-accent) 45%, transparent);
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--fl-accent) 14%, transparent), transparent 60%),
+    radial-gradient(120% 140% at 100% 100%, color-mix(in srgb, var(--fl-gold) 10%, transparent), transparent 60%),
+    var(--hub-card);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color var(--m-base) var(--m-ease), transform var(--m-base) var(--m-smooth), box-shadow var(--m-base) var(--m-ease);
+}
+.fl-drop:hover, .fl-drop:focus-visible { border-color: var(--fl-accent); outline: none; }
+.fl-drop.over {
+  border-style: solid;
+  border-color: var(--fl-accent);
+  transform: scale(1.012);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--fl-accent) 18%, transparent), 0 18px 40px -18px color-mix(in srgb, var(--fl-accent) 60%, transparent);
+}
+.fl-drop-raven { position: relative; width: 108px; height: 108px; justify-self: center; z-index: 1; }
+.fl-drop-raven > * { width: 100%; height: 100%; }
+.fl-drop-copy { min-width: 0; z-index: 1; }
+.fl-drop-say { font-size: 19px; font-weight: 650; color: var(--hub-text); letter-spacing: -.01em; }
+.fl-drop-hint { margin-top: 6px; color: var(--hub-secondary); font-size: 13px; line-height: 1.45; }
+.fl-drop-ring { position: absolute; left: 24px; top: 50%; width: 132px; height: 132px; margin-top: -66px; pointer-events: none; animation: fl-spin 38s linear infinite; }
+.fl-drop-ring span {
+  position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px;
+  font-size: 11px; line-height: 14px; text-align: center; color: color-mix(in srgb, var(--fl-gold) 70%, transparent);
+  transform: rotate(calc(var(--i) * 30deg)) translateY(-62px);
+}
+.fl-drop.over .fl-drop-ring { animation-duration: 6s; }
+.fl-drop.still .fl-drop-ring { animation: none; }
+@keyframes fl-spin { to { transform: rotate(360deg); } }
+
+/* ── Arquivos ── */
+.fl-work.empty .fl-run { opacity: .6; }
+.fl-files { display: flex; flex-wrap: wrap; gap: 8px; }
+.fl-file {
+  display: inline-flex; align-items: center; gap: 8px; max-width: 100%;
+  padding: 6px 6px 6px 8px; border-radius: 999px;
+  background: var(--hub-field); border: 1px solid var(--hub-line);
+  animation: fl-pop var(--m-base) var(--m-bouncy) both;
+}
+.fl-rune {
+  display: grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: 50%;
+  font-size: 13px; color: #0b0c0e; background: var(--fl-accent);
+}
+.fl-rune.c-image { background: var(--th-a1, #fb923c); }
+.fl-rune.c-pdf { background: #ff6b6b; }
+.fl-rune.c-video { background: var(--th-a4, #a78bfa); }
+.fl-rune.c-audio { background: #f472b6; }
+.fl-rune.c-archive { background: var(--fl-gold); }
+.fl-rune.c-document, .fl-rune.c-text { background: #3b9eff; }
+.fl-file-name { min-width: 0; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hub-text); font-size: 13px; }
+.fl-file-meta { flex: none; color: var(--hub-muted); font-size: 12px; white-space: nowrap; }
+.fl-x {
+  flex: none; width: 22px; height: 22px; border-radius: 50%; border: 0; cursor: pointer;
+  background: transparent; color: var(--hub-secondary); font-size: 15px; line-height: 22px;
+  transition: background var(--m-fast) var(--m-ease), color var(--m-fast);
+}
+.fl-x:hover { background: rgba(255, 255, 255, .08); color: var(--hub-text); }
+@keyframes fl-pop { from { opacity: 0; transform: scale(.9); } }
+
+/* ── Formatos ── */
+.fl-group-title { color: var(--hub-secondary); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin: 2px 0 -2px; }
+.fl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.fl-target {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-height: 44px; padding: 7px 10px; border-radius: 14px; cursor: pointer;
+  background: var(--hub-field); border: 1px solid var(--hub-line); color: var(--hub-text);
+  font: inherit; font-size: 13px; font-weight: 600;
+  transition: transform var(--m-fast) var(--m-snappy), border-color var(--m-fast), background var(--m-fast);
+}
+.fl-target.tools { font-weight: 550; }
+.fl-target:hover { transform: translateY(var(--m-hover-lift)); border-color: color-mix(in srgb, var(--fl-accent) 50%, transparent); }
+.fl-target.on { background: color-mix(in srgb, var(--fl-accent) 18%, var(--hub-field)); border-color: var(--fl-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--fl-accent) 16%, transparent); }
+.fl-target.locked { color: var(--hub-secondary); }
+.fl-target-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fl-target-need { font-size: 10.5px; font-weight: 500; color: var(--fl-gold); white-space: nowrap; }
+
+.fl-options:empty { display: none; }
+.fl-options { display: flex; flex-direction: column; gap: 6px; }
+.fl-range-wrap { display: flex; align-items: center; gap: 10px; min-width: 200px; }
+.fl-range-wrap b { width: 30px; text-align: right; font-variant-numeric: tabular-nums; color: var(--hub-text); }
+.fl-range { flex: 1; accent-color: var(--fl-accent); }
+
+.fl-run { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap; }
+.fl-where { margin-right: auto; color: var(--hub-muted); font-size: 12px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fl-need { color: var(--fl-gold); font-size: 12px; }
+.fl-out { min-width: 220px; }
+
+/* ── Fila ── */
+.fl-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.fl-queue { display: flex; flex-direction: column; gap: 8px; }
+.fl-q {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px;
+  background: var(--hub-field); border: 1px solid var(--hub-line);
+  animation: fl-pop var(--m-base) var(--m-smooth) both;
+}
+.fl-q-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.fl-q-top { display: flex; gap: 10px; align-items: baseline; }
+.fl-q-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: var(--hub-text); font-weight: 600; }
+.fl-q-state { flex: none; font-size: 12px; color: var(--hub-secondary); font-variant-numeric: tabular-nums; }
+.fl-q.done .fl-q-state { color: var(--th-ok, var(--hub-green)); }
+.fl-q.failed .fl-q-state { color: var(--th-error, var(--hub-red)); }
+.fl-q-detail { font-size: 12px; color: var(--hub-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fl-q-actions { flex: none; display: flex; gap: 6px; }
+.fl-bar { position: relative; height: 5px; border-radius: 999px; background: rgba(255, 255, 255, .07); overflow: hidden; }
+.fl-bar.small { width: 120px; }
+.fl-bar i {
+  position: absolute; inset: 0; transform-origin: left center; border-radius: inherit;
+  background: linear-gradient(90deg, var(--th-a1, #fb923c), var(--fl-accent), var(--th-a4, #a78bfa));
+  transition: transform var(--m-base) var(--m-ease);
+}
+.fl-q.failed .fl-bar i { background: var(--th-error, var(--hub-red)); }
+
+/* ── Ferramentas ── */
+.fl-tools { display: flex; flex-direction: column; gap: 4px; }
+.fl-ok { color: var(--th-ok, var(--hub-green)); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.fl-missing { color: var(--hub-muted); font-size: 12px; white-space: nowrap; }
+.fl-gesture { display: flex; flex-direction: column; gap: 6px; }
+.fl-gesture .hub-segmented { flex: none; }
+
+@media (max-width: 980px) {
+  .fl-gesture .hub-row { flex-wrap: wrap; }
+  .fl-drop { grid-template-columns: 104px 1fr; }
+  .fl-drop-ring { width: 104px; height: 104px; margin-top: -52px; }
+  .fl-drop-ring span { transform: rotate(calc(var(--i) * 30deg)) translateY(-48px); }
+  .fl-drop-raven { width: 84px; height: 84px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fl-drop, .fl-target, .fl-bar i, .fl-x { transition: none; }
+  .fl-drop-ring, .fl-file, .fl-q { animation: none; }
+  .fl-drop.over { transform: none; }
+}

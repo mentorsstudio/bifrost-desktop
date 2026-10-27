@@ -690,3 +690,52 @@ Fonte: Freya Branding v1 (`/workspace/freya-branding/kit`). Bifrost não usa o l
 - Tela cheia só quando há D3D exclusivo/apresentação ou a janela da frente cobre o monitor inteiro (`covers_monitor`); maximizadas param abaixo da faixa.
 - `fsm.floorPetit`: com a reserva ligada a compacta é o piso, nunca recolhe. Orelhas côncavas (`#island::before/::after`) fundem a ilha na barra como o recorte do MacBook.
 - Testes: `covers_monitor`, `parse_rgb`, piso da FSM.
+
+## 11. Conversor e gestos (Filee)
+
+Inspirado no **Filee** (MIT, © 2026 Myeonggu Kim / KnifeLemon) — estudamos o modo de uso
+e reimplementamos tudo do zero; nenhum código, ícone ou asset do Filee está no Bifrost.
+Estudo completo em `filee-re.md`.
+
+### O que existe
+- **Página "Conversor"** (reino *Forja* no Hub): soltar arquivos, escolher o destino,
+  opções (qualidade, lado máximo, %, DPI, pasta de saída), fila com progresso/cancelar/
+  abrir pasta, ferramentas opcionais com download, ajustes do gesto.
+- **Ilha**: soltar arquivo mostra "Enviar para a IA", "Converter…" e "Cancelar".
+- **Gesto**: no Explorer ou na Área de Trabalho, com o mouse sobre um arquivo, segure
+  **Ctrl** e **segure o botão direito** (~280 ms). O corvo Huginn aparece com um balão:
+  Converter para…, Comprimir, Redimensionar, Juntar PDFs, Enviar para a IA (O que é isso?,
+  Resumir, Explicar, Extrair dados, Traduzir) e Abrir no Conversor. Soltar o botão sobre um
+  item o executa; Esc ou clique fora fecha. Um toque rápido devolve o clique direito
+  normal (o menu nativo continua funcionando sem Ctrl).
+- **Menu do Explorer** (opcional, desligado): HKCU `*\shell\Bifrost` com "Converter…" e
+  "Perguntar à IA". Sem admin.
+
+### Implementação
+- Rust: `src-tauri/src/convert/{formats,jobs,engines,tools,prefs,mod}.rs`,
+  `src-tauri/src/gesture/{logic,win,mod}.rs` (WH_MOUSE_LL + WH_KEYBOARD_LL só com o menu
+  aberto; IShellWindows→IShellBrowser→IFolderView2 + UIA ElementFromPoint; se o item sob o
+  mouse estiver selecionado, vale a seleção inteira; nunca sobrescreve: "nome (2).ext").
+- TS: `src/filee/*`, `src/hub/pages/converter.ts`, `src/settings/page-filee.ts`, `fileemenu.html`.
+
+### Formatos
+| Entrada → saída | Precisa de |
+|---|---|
+| PNG/JPG/WebP/BMP/GIF/TIFF/ICO ↔ entre si, → PDF; SVG → PNG/JPG/WebP/PDF | nada (nativo) |
+| HEIC/AVIF → imagem | FFmpeg (ou ImageMagick) |
+| Juntar/dividir/comprimir PDF, imagens → PDF | nada |
+| PDF → imagens, PDF → texto completo | PDFium (download 6 MB) |
+| DOCX/ODT/HTML/MD → texto, MD → HTML | nada |
+| DOCX/XLSX/PPTX/ODT → PDF | LibreOffice |
+| RTF/EPUB/DOCX ↔ MD/HTML | Pandoc |
+| Áudio/vídeo (MP3, WAV, M4A, OGG, FLAC, MP4, WebM, MKV, GIF…) | FFmpeg (download ~80 MB ou WinGet) |
+| ZIP/TAR/TGZ/7z extrair; criar ZIP | nada |
+| RAR extrair | 7-Zip |
+
+Ferramentas baixadas ficam em `%LOCALAPPDATA%\Bifrost\tools`.
+
+### Limites
+- O gesto só funciona no Explorer e na Área de Trabalho (não em diálogos de abrir/salvar
+  nem em outros apps). Janelas elevadas (admin) não recebem o gancho de um Bifrost comum.
+- O overlay fecha com clique fora do retângulo do balão (não é click-through por pixel).
+- Sem OCR, pastas vigiadas, CLI nem rotas multi-salto do Filee nesta fase.
