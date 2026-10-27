@@ -3034,3 +3034,5 @@ html[data-dir="rtl"] #views :is(.bubble, .reply .md-p, .reply .md-h, .reply .md-
 .pill.icon-only .mini { margin-left: 0; }
 .mini.media-mini { width: 24px; height: 24px; display: inline-grid; place-items: center; flex: 0 0 24px; }
 .media-mark { display: block; shape-rendering: geometricPrecision; }
+/* Fase 21: na pílula de mídia a marca ocupa 18 px; o nome ganha o espaço (sem cortar). */
+.np-pill:not(.controls) .lbl { padding: 0 6px 0 30px; }
