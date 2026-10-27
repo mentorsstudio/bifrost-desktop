@@ -735,3 +735,11 @@ Fonte: Freya Branding v1 (`/workspace/freya-branding/kit`). Bifrost não usa o l
   - 15 programas novos detectados (Aider, Goose, Qwen Code, Crush, OpenCode, Amp, Copilot CLI, Cline, Roo, Continue, Windsurf, Kiro, Zed, Warp, JetBrains);
   - importação de `mcpServers` de Windsurf, Gemini CLI, Kiro, LM Studio, Cline e Roo.
 - **Android:** o desktop gera `bifrost-desktop://pair`, mas o app do repositório (`android/`, Coucou for Android) só aceitava `coucou://pair`. Agora aceita os dois (Pairing.kt, manifest, PairingTest). Análise completa e plano do APK em `/workspace/bifrost-roadmap.md`.
+
+#### 10.19.x Personagens (visual dos corvos à parte do tema)
+
+- `src/theme/characters.ts`: 7 estilos (Corvos de Odin, Neve, Brasa, Musgo, Crepúsculo, Ouro de Asgard, Tempestade) + **Seguir o tema** (padrão). Guardado em `localStorage["bifrost.character"]`, propagado entre janelas pelo evento Tauri `bifrost-character` (igual ao tema); `?character=` força nas páginas de dev.
+- `ravenTheme()` sobrepõe `huginn`/`muninn` ao tema ativo; `raven.ts` (`pal()`: ilha, chat, corvo da área de trabalho, pílula, recap) e `mascots.ts` (SVG: hub, bandeja, alertas) leem por ele. `onRavenLookChange` redesenha os SVG vivos.
+- Ajustes → Temas ganhou a seção **Personagens** (radiogroup de cartões com os dois corvos animando em idle; ao escolher, um pulinho curto, desligado com movimento reduzido).
+- Correção junto: ids de gradiente dos SVG agora são únicos por instância (antes, dois corvos iguais num SVG oculto deixavam o outro preto).
+- QA visual: a ilha, a bandeja e a pílula rodam com um personagem diferente por tema/escala.
