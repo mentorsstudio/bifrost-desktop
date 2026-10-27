@@ -2,6 +2,7 @@
 // nove barras e as zonas onde o mouse é da pílula. Tudo puro, para os testes.
 
 import type { PillState } from "../core/flow";
+import { N_ } from "../i18n/i18n";
 
 export const BANDS = 9;
 export const REST = { length: 44, thickness: 8 } as const;
@@ -35,9 +36,9 @@ export const isVertical = (s: PillState) => s.edge !== "bottom";
 
 /** A chave (em inglês, para o t()) da mensagem curta de cada fase. */
 export function messageKey(phase: PillState["phase"]): string | null {
-  return phase === "copied" ? "Copied · press Ctrl+V to paste"
-    : phase === "failed" ? "Microphone unavailable"
-    : phase === "pastedAgain" ? "Last dictation pasted"
+  return phase === "copied" ? N_("Copied · press Ctrl+V to paste")
+    : phase === "failed" ? N_("Microphone unavailable")
+    : phase === "pastedAgain" ? N_("Last dictation pasted")
     : null;
 }
 

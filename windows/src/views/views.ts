@@ -17,7 +17,6 @@ import {
   PlanCard, buildPlanPill, claudePillVisible, codexPillVisible, planCardOpen, refreshCodexPlanUsage,
 } from "./usage";
 import { buildDiffCard } from "./diff";
-import { lastTextStep } from "../core/diff";
 import { Bridge } from "../core/bridge";
 import { buildRecap } from "./recap";
 import { buildWardrobe } from "./wardrobe";
@@ -30,6 +29,7 @@ import { WHATSAPP_ID } from "../core/whatsapp";
 import type { Outfit, OutfitSelection } from "../huginn/wardrobe";
 import { language, t, tl, type Msg } from "../i18n/i18n";
 import type { ViewCommand } from "../island/shortcuts";
+import { approvalView, confusedView, errorView, finishedView, noteView, questionView } from "./alerts";
 
 export interface ViewActions {
   setView(v: IslandViewName): void;
@@ -94,22 +94,6 @@ function btn(
     h("span", { text: label }),
     kbd ? h("span", { class: "kbd", text: kbd }) : null,
   );
-}
-
-/** AgentWho — coloured dot + task name + grey label. */
-function agentWho(task: AgentTask | null, label: string): HTMLElement {
-  const row = h("div", { class: "who-row" });
-  if (task) {
-    row.append(dot(task.color, 8), h("span", { class: "n", text: task.name }));
-  }
-  row.append(h("span", { text: label }));
-  return row;
-}
-
-function stack(padLeft: number, padRight: number, ...children: Node[]): HTMLElement {
-  const el = h("div", { class: "stack" }, ...children);
-  el.style.padding = `4px ${padRight}px 4px ${padLeft}px`;
-  return el;
 }
 
 // ── Header ────────────────────────────────────────────────────────────────────
@@ -507,245 +491,6 @@ function buildEmpty(actions: ViewActions): ViewHost {
   return { el: h("div", { class: "view" }, card(null, body)), sync() {} };
 }
 
-// ── Approval ──────────────────────────────────────────────────────────────────
-
-/** How long a fresh permission card ignores clicks on its buttons. */
-const CLICK_GUARD_MS = 600;
-
-/**
- * The ⌃ in the corner of a waiting card: folds the island to its compact size
- * and leaves the request waiting — nothing is answered (Mac #290). Opening the
- * island again brings the card back.
- */
-function foldButton(actions: ViewActions): HTMLElement {
-  return h(
-    "button",
-    { class: "icon-btn fold", title: tl("Later — keep it waiting"), onclick: () => actions.foldApproval() },
-    svg(ICONS.chevronUp, 8, { stroke: 2.4 }),
-  );
-}
-
-function buildApproval(actions: ViewActions): ViewHost {
-  const who = h("div");
-  const code = h("div", { class: "code" });
-  const row = h("div", { class: "actions" });
-  const el = h("div", { class: "view" },
-    card("amber", stack(116, 16, who, code, row), foldButton(actions)));
-  let rowKey = "";
-  // The card pops up under a cursor that was busy with something else: a click
-  // meant for the window underneath must not land on Allow. Clicks in the first
-  // moments after a new request appears are ignored.
-  let shownFor: string | null = null;
-  let shownAt = 0;
-  const guarded = (d: "allow" | "deny") => () => {
-    if (performance.now() - shownAt < CLICK_GUARD_MS) return;
-    actions.decide(d);
-  };
-  return {
-    el,
-    sync() {
-      const req = State.pendingApproval?.requestId ?? null;
-      if (req !== shownFor) {
-        shownFor = req;
-        shownAt = performance.now();
-      }
-      clear(who);
-      who.append(agentWho(State.focusTask, t("needs permission")));
-      // The whole point of approving here rather than in the terminal: this line
-      // is the command, the file path or the URL being authorised, not just the
-      // name of the tool asking.
-      code.textContent = State.pendingApproval?.command || State.pendingApproval?.tool || "…";
-      // Two buttons, built once. Rebuilding them between a mouse-down and a
-      // mouse-up would swallow the click, and there is nothing left to vary:
-      // "Always" is gone until the remembered-rules list exists to back it.
-      if (rowKey === "built") return;
-      rowKey = "built";
-      clear(row);
-      row.append(
-        btn(tl("Deny"), "secondary", guarded("deny"), "N"),
-        btn(tl("Allow"), "primary", guarded("allow"), "Y"),
-      );
-    },
-  };
-}
-
-// ── Question ──────────────────────────────────────────────────────────────────
-
-function buildQuestion(actions: ViewActions): ViewHost {
-  const who = h("div");
-  const title = h("div", { class: "title question-text" });
-  const row = h("div", { class: "actions options" });
-  const fold = foldButton(actions);
-  const el = h("div", { class: "view" }, card("cyan", stack(116, 16, who, title, row), fold));
-
-  // Where we are in the request on screen: which question, what is answered so
-  // far, and what is ticked in a pick-several question.
-  let requestId = "";
-  let index = 0;
-  let answers: Record<string, string | string[]> = {};
-  let picked = new Set<string>();
-  // The buttons are only rebuilt when what they show changes: rebuilding them
-  // between a mouse-down and a mouse-up would swallow the click.
-  let rowKey = "";
-
-  const next = (question: string, answer: string | string[], total: number) => {
-    answers[question] = answer;
-    picked = new Set();
-    index += 1;
-    if (index >= total) actions.answer(answers);
-    else State.notify();
-  };
-
-  return {
-    el,
-    sync() {
-      const questions = State.pendingApproval?.questions;
-      clear(who);
-      // Only a request that is waiting can be folded away and come back.
-      fold.style.display = State.pendingApproval ? "" : "none";
-
-      // A question that arrived as a notification has nothing to pick from.
-      if (!questions) {
-        who.append(agentWho(State.focusTask, t("is asking a question")));
-        const task = State.focusTask;
-        title.textContent = (task && lastTextStep(task.steps)) ?? t("Claude needs an answer.");
-        if (rowKey !== "terminal") {
-          rowKey = "terminal";
-          clear(row);
-          row.append(h("div", { class: "sub", text: tl("Answer it in your terminal.") }));
-        }
-        return;
-      }
-
-      if (State.pendingApproval!.requestId !== requestId) {
-        requestId = State.pendingApproval!.requestId;
-        index = 0;
-        answers = {};
-        picked = new Set();
-      }
-      const q = questions[Math.min(index, questions.length - 1)];
-      const asking = questions.length > 1
-        ? t("is asking ({index} of {total})", { index: index + 1, total: questions.length })
-        : t("is asking");
-      who.append(agentWho(State.focusTask, asking));
-      title.textContent = q.question;
-      title.title = q.question;
-
-      const key = `${requestId}:${index}:${[...picked].join("|")}`;
-      if (rowKey === key) return;
-      rowKey = key;
-      clear(row);
-      for (const option of q.options) {
-        const on = picked.has(option.label);
-        const button = btn(option.label, on ? "primary" : "secondary", () => {
-          if (!q.multiSelect) {
-            next(q.question, option.label, questions.length);
-            return;
-          }
-          if (on) picked.delete(option.label);
-          else picked.add(option.label);
-          State.notify();
-        });
-        if (option.description) button.title = option.description;
-        row.append(button);
-      }
-      if (q.multiSelect) {
-        const done = btn(tl("Done"), "primary", () => {
-          if (picked.size > 0) next(q.question, [...picked], questions.length);
-        });
-        if (picked.size === 0) done.classList.add("off");
-        row.append(done);
-      }
-      row.append(
-        h("button", {
-          class: "link-btn",
-          style: "color:#8e939c",
-          text: tl("Answer in terminal"),
-          onclick: () => actions.answerInTerminal(),
-        }),
-      );
-    },
-  };
-}
-
-// ── Error ─────────────────────────────────────────────────────────────────────
-
-function buildError(actions: ViewActions): ViewHost {
-  const who = h("div");
-  const title = h("div", { class: "title" });
-  const detail = h("div", { class: "detail" });
-  const row = h("div", { class: "actions" },
-    btn(tl("Retry"), "primary", () => actions.setView(State.defaultView())),
-    btn(tl("Open in n8n"), "secondary", () => actions.openUrl("")),
-  );
-  const el = h("div", { class: "view" }, card("red", stack(116, 16, who, title, detail, row)));
-  return {
-    el,
-    sync() {
-      const task = State.focusTask;
-      clear(who);
-      // agentWho already shows an agent's name: its label is just the kind.
-      const whoLabel = task?.source === "n8n" ? "n8n" : task?.source === "agent" ? t("Agent") : "Claude Code";
-      who.append(agentWho(task, whoLabel));
-      title.textContent = task?.source === "n8n" ? t("Workflow stopped.") : t("Session stopped on an error.");
-      detail.textContent = (task && lastTextStep(task.steps)) ?? t("No detail available.");
-    },
-  };
-}
-
-// ── Finished ──────────────────────────────────────────────────────────────────
-
-function buildFinished(actions: ViewActions): ViewHost {
-  const who = h("div");
-  const title = h("div", { class: "title one-line" });
-  const open = btn(tl("Open terminal"), "primary", () => actions.openTerminal());
-  const row = h("div", { class: "actions" },
-    open,
-    btn(tl("OK"), "secondary", () => actions.collapse()),
-  );
-  const el = h("div", { class: "view" }, card("green", stack(116, 16, who, title, row)));
-  return {
-    el,
-    sync() {
-      clear(who);
-      const agent = State.focusTask?.source === "agent";
-      who.append(agentWho(State.focusTask, agent ? t("finished") : t("Claude Code finished")));
-      // The final message, else the last step that is not a diff (FinishedView).
-      const task = State.focusTask;
-      title.textContent = task?.finalLine || (task && lastTextStep(task.steps)) || t("Session finished");
-      // Sessions from the Claude desktop app live there, not in a terminal.
-      const label = task?.id === "agent_claude-desktop" ? t("Open Claude") : t("Open terminal");
-      const span = open.firstElementChild as HTMLElement;
-      if (span.textContent !== label) span.textContent = label;
-    },
-  };
-}
-
-// ── Confused ──────────────────────────────────────────────────────────────────
-
-function buildConfused(): ViewHost {
-  const body = h(
-    "div",
-    { class: "stack", style: "padding:0 18px 0 128px" },
-    h("div", { class: "title", text: tl("Too many hits at once.") }),
-    h("div", { class: "sub", text: tl("Give me a sec — back to work in three seconds.") }),
-  );
-  return { el: h("div", { class: "view" }, card("pink", body)), sync() {} };
-}
-
-// ── Note ──────────────────────────────────────────────────────────────────────
-
-function buildNote(): ViewHost {
-  const title = h("div", { class: "title" });
-  const el = h("div", { class: "view" }, card(null, h("div", { class: "stack", style: "padding:0 18px 0 98px" }, title)));
-  return {
-    el,
-    sync() {
-      title.textContent = State.noteMessage ?? "";
-    },
-  };
-}
-
 // ── In-island settings ────────────────────────────────────────────────────────
 
 function buildSettings(actions: ViewActions): ViewHost {
@@ -831,12 +576,12 @@ export function buildViews(
   const map = new Map<IslandViewName, ViewHost>();
   map.set("overview", buildOverview(actions));
   map.set("empty", buildEmpty(actions));
-  map.set("approval", buildApproval(actions));
-  map.set("question", buildQuestion(actions));
-  map.set("error", buildError(actions));
-  map.set("finished", buildFinished(actions));
-  map.set("confused", buildConfused());
-  map.set("note", buildNote());
+  map.set("approval", approvalView(actions));
+  map.set("question", questionView(actions));
+  map.set("error", errorView(actions));
+  map.set("finished", finishedView(actions));
+  map.set("confused", confusedView());
+  map.set("note", noteView());
   map.set("settings", buildSettings(actions));
   map.set("prompt", buildPrompt(onChatHeightChange));
   map.set("upload", buildUpload());
