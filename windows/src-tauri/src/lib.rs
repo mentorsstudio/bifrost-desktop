@@ -1082,6 +1082,7 @@ pub fn run() {
             gesture::filee_menu_action,
             gesture::filee_menu_close,
             gesture::filee_menu_radius,
+            gesture::filee_gesture_status,
             gesture::filee_menu_demo,
             gesture::convert_take_pending,
             boot,

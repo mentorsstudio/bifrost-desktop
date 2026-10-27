@@ -244,10 +244,17 @@ export async function converterPage(page: HTMLElement, ctx: HubContext) {
       drawRun();
     };
     gestureBox.append(
-      row("Ctrl + botão direito sobre um arquivo", "No Explorador ou na área de trabalho, o Huginn aparece no cursor com as ações num balão. Solte sobre uma ação, ou clique nela.", toggle(p.gesture, (v) => void save((x) => { x.gesture = v; }))),
-      row("Como abrir", "Segurar evita conflito: um toque rápido continua abrindo o menu normal.", segmented<FileePrefs["trigger"]>([["ctrl-hold", "Ctrl + segurar"], ["ctrl", "Ctrl + clique"], ["ctrl-alt", "Ctrl + Alt + clique"]], p.trigger, (v) => void save((x) => { x.trigger = v; }))),
+      row("Ctrl + botão direito sobre um arquivo", "No Explorador ou na área de trabalho, um anel de fatias abre em volta do cursor com as conversões do tipo do arquivo. Solte sobre uma fatia; solte no meio para cancelar.", toggle(p.gesture, (v) => void save((x) => { x.gesture = v; }))),
+      row("Como abrir", "Segurar evita conflito: um toque rápido continua abrindo o menu normal.", segmented<FileePrefs["trigger"]>([["ctrl-hold", "Ctrl + segurar"], ["ctrl", "Ctrl + clique"], ["ctrl-alt", "Ctrl + Alt + clique"], ["alt-hold", "Alt + segurar"]], p.trigger, (v) => void save((x) => { x.trigger = v; }))),
       row("“Bifrost ›” no menu do Explorador", "Entrada clássica (em “Mostrar mais opções” no Windows 11). Só para o seu usuário, sem administrador.", toggle(p.contextMenu, (v) => void save((x) => { x.contextMenu = v; }))),
     );
+    const warn = h("div", { class: "fl-hint" });
+    gestureBox.append(warn);
+    void Convert.gestureStatus(p.trigger).then((st) => {
+      if (!st?.filee) return;
+      warn.textContent = st.conflict ?? `O Filee também está instalado (${st.fileeTriggers.join(", ") || "sem gatilhos"}). Sem conflito com este gatilho.`;
+      warn.classList.toggle("warn", !!st.conflict);
+    }).catch(() => undefined);
     const out = h("input", { class: "hub-input fl-out", placeholder: "Ao lado do original", value: p.outDir, "aria-label": "Pasta de saída" }) as HTMLInputElement;
     out.addEventListener("change", () => void save((x) => { x.outDir = out.value.trim(); }));
     gestureBox.append(row("Pasta de saída", "Vazia = ao lado de cada arquivo original.", out));

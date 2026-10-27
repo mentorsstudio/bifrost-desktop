@@ -12,6 +12,8 @@ pub enum Trigger {
     Ctrl,
     /// Ctrl + Alt + botão direito.
     CtrlAlt,
+    /// Alt + segurar o botão direito (para quem usa o Ctrl em outro app, como o Filee).
+    AltHold(u32),
 }
 
 impl Trigger {
@@ -19,6 +21,7 @@ impl Trigger {
         match trigger {
             "ctrl" => Trigger::Ctrl,
             "ctrl-alt" => Trigger::CtrlAlt,
+            "alt-hold" => Trigger::AltHold(hold_ms),
             _ => Trigger::CtrlHold(hold_ms),
         }
     }
@@ -26,6 +29,7 @@ impl Trigger {
         match self {
             Trigger::CtrlHold(_) | Trigger::Ctrl => ctrl && !alt,
             Trigger::CtrlAlt => ctrl && alt,
+            Trigger::AltHold(_) => alt && !ctrl,
         }
     }
 }
@@ -89,7 +93,7 @@ impl Machine {
                 }
                 self.swallow_up = true;
                 match self.trigger {
-                    Trigger::CtrlHold(ms) => {
+                    Trigger::CtrlHold(ms) | Trigger::AltHold(ms) => {
                         self.token += 1;
                         self.phase = Phase::Pending { token: self.token, x, y };
                         (Out::Swallow, Effect::StartTimer { token: self.token, ms })

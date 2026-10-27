@@ -34,7 +34,7 @@ pub fn load() -> FileePrefs {
 }
 
 pub fn sanitize(mut p: FileePrefs) -> FileePrefs {
-    if !matches!(p.trigger.as_str(), "ctrl-hold" | "ctrl" | "ctrl-alt") {
+    if !matches!(p.trigger.as_str(), "ctrl-hold" | "ctrl" | "ctrl-alt" | "alt-hold") {
         p.trigger = "ctrl-hold".into();
     }
     p.hold_ms = p.hold_ms.clamp(150, 1200);

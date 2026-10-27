@@ -29,7 +29,8 @@ export interface Plan { files: FileInfo[]; targets: TargetInfo[]; tools: ToolSta
 export interface Options { quality?: number; maxSide?: number; percent?: number; outDir?: string; dpi?: number }
 export type ItemState = "queued" | "running" | "done" | "failed" | "cancelled";
 export interface ItemReport { job: number; index: number; name: string; state: ItemState; progress: number; outputs: string[]; error: string | null }
-export interface FileePrefs { gesture: boolean; trigger: "ctrl-hold" | "ctrl" | "ctrl-alt"; holdMs: number; contextMenu: boolean; outDir: string }
+export interface FileePrefs { gesture: boolean; trigger: "ctrl-hold" | "ctrl" | "ctrl-alt" | "alt-hold"; holdMs: number; contextMenu: boolean; outDir: string }
+export interface GestureStatus { conflict: string | null; filee: boolean; fileeTriggers: string[] }
 export interface ToolProgress { id: ToolId; got: number; total: number; done: boolean; error: string | null }
 
 export const Convert = {
@@ -46,6 +47,7 @@ export const Convert = {
   takePending: () => call<string[]>("convert_take_pending"),
   menuAction: (action: string, paths: string[], prompt?: string) => call<number | null>("filee_menu_action", { action, paths, prompt: prompt ?? null }),
   menuClose: () => call<void>("filee_menu_close"),
+  gestureStatus: (trigger: string) => call<GestureStatus>("filee_gesture_status", { trigger }),
   menuRadius: (radius: number) => call<void>("filee_menu_radius", { radius }),
 };
 

@@ -5,6 +5,7 @@
 // ligada em Ajustes. Também: a entrada clássica "Bifrost ›" do Explorador (HKCU)
 // e o diálogo "Escolher arquivos…" do Conversor.
 
+pub mod conflict;
 pub mod logic;
 #[cfg(windows)]
 mod win;
@@ -116,8 +117,13 @@ pub fn handle_args(app: &AppHandle, args: &[String]) -> bool {
 
 pub fn apply(app: &AppHandle, p: &FileePrefs) {
     let _ = app;
+    // Se o Filee instalado usa o mesmo gatilho, não abrimos um segundo menu.
+    let clash = conflict::read_filee_settings().and_then(|s| conflict::conflict(&s, &p.trigger));
+    if let Some(c) = &clash {
+        crate::log::line(format!("filee: gesto desligado — {c}"));
+    }
     #[cfg(windows)]
-    win::set_enabled(p.gesture, logic::Trigger::from_prefs(&p.trigger, p.hold_ms));
+    win::set_enabled(p.gesture && clash.is_none(), logic::Trigger::from_prefs(&p.trigger, p.hold_ms));
     #[cfg(not(windows))]
     let _ = p;
 }
@@ -327,4 +333,26 @@ pub fn convert_take_pending() -> Vec<String> {
 pub fn filee_menu_demo(paths: Vec<String>) {
     let (x, y) = (600, 500);
     open_at(x, y, move || Ok(paths));
+}
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct GestureStatus {
+    /// Aviso de conflito com o Filee instalado (gesto desligado), se houver.
+    conflict: Option<String>,
+    /// O Filee está instalado (achamos o settings.json dele).
+    filee: bool,
+    /// Os gatilhos do Filee, em texto.
+    filee_triggers: Vec<String>,
+}
+
+/// Para os Ajustes: o gatilho escolhido briga com o do Filee?
+#[tauri::command]
+pub fn filee_gesture_status(trigger: String) -> GestureStatus {
+    let s = conflict::read_filee_settings();
+    GestureStatus {
+        conflict: s.as_deref().and_then(|j| conflict::conflict(j, &trigger)),
+        filee: s.is_some(),
+        filee_triggers: s.as_deref().map(conflict::filee_triggers).unwrap_or_default(),
+    }
 }

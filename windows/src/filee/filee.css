@@ -146,3 +146,8 @@
   .fl-drop-ring, .fl-file, .fl-q { animation: none; }
   .fl-drop.over { transform: none; }
 }
+
+/* Aviso do Filee instalado (gatilhos em conflito). */
+.fl-hint { margin-top: 6px; font-size: 12.5px; line-height: 1.4; color: var(--hub-secondary, #a2a7b0); }
+.fl-hint:empty { display: none; }
+.fl-hint.warn, .hint.warn { color: var(--th-a3, #f7b32b); }
