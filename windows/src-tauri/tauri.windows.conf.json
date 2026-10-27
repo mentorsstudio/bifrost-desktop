@@ -1,0 +1,9 @@
+{
+  "bundle": {
+    "resources": {
+      "../target/release/bifrost-hook.exe": "bifrost-hook.exe",
+      "pdfium/pdfium.dll": "pdfium/pdfium.dll",
+      "pdfium/LICENSE": "pdfium/LICENSE"
+    }
+  }
+}

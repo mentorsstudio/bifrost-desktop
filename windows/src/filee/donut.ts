@@ -28,9 +28,9 @@ function svgEl(tag: string, attrs: Record<string, string | number> = {}): SVGEle
   return e;
 }
 
-/** Palavras longas ganham um hífen opcional no meio ("Redimen-sionar"). */
+/** Sem hífen: palavras nunca se partem ("Redimensionar" inteiro); o fit() diminui a letra até caber. */
 export function softHyphens(label: string): string {
-  return label.split(" ").map((w) => (w.length > 10 ? `${w.slice(0, Math.ceil(w.length / 2) + 1)}\u00AD${w.slice(Math.ceil(w.length / 2) + 1)}` : w)).join(" ");
+  return label.replace(/\u00AD/g, "");
 }
 
 /** Diminui a letra até o nome caber (no máximo 2 linhas, sem partir palavra). */
@@ -38,6 +38,25 @@ export function fit(lab: HTMLElement) {
   const name = lab.querySelector<HTMLElement>(".fm-label-name");
   if (!name) return;
   let size = parseFloat(getComputedStyle(name).fontSize) || 12;
+  // Primeiro a palavra mais longa cabe inteira numa linha (nada de "Redimen-sionar"
+  // nem "Redimensiona" cortado): mede cada palavra sem quebra e reduz a letra.
+  const room = lab.clientWidth;
+  if (room > 0) {
+    const probe = el("span", "fm-label-name");
+    probe.style.cssText = `position:absolute;visibility:hidden;white-space:nowrap;display:inline;max-width:none;width:auto;font-size:${size}px`;
+    lab.append(probe);
+    const widest = Math.max(...(name.textContent ?? "").split(/\s+/).map((w) => { probe.textContent = w; return probe.getBoundingClientRect().width / (lab.getBoundingClientRect().width / Math.max(1, lab.offsetWidth) || 1); }));
+    probe.remove();
+    if (widest > room - 1) {
+      const want = Math.floor((size * (room - 1)) / widest * 2) / 2;
+      size = Math.max(8.5, want);
+      name.style.fontSize = `${size}px`;
+      // No piso de 8,5 px e ainda sem caber: o rótulo alarga um pouco (a fatia
+      // tem folga dos lados), em vez de cortar ou partir a palavra.
+      const need = Math.ceil((widest * size) / (parseFloat(probe.style.fontSize) || size)) + 2;
+      if (need > room) lab.style.width = `${need}px`;
+    }
+  }
   while ((name.scrollWidth > name.clientWidth + 0.5 || name.scrollHeight > name.clientHeight + 0.5) && size > 8.5) {
     size -= 0.5;
     name.style.fontSize = `${size}px`;
@@ -45,7 +64,6 @@ export function fit(lab: HTMLElement) {
   const cap = lab.querySelector<HTMLElement>(".fm-label-cap");
   if (!cap) return;
   // Mede o texto inteiro (largura de layout, sem o arredondamento do scrollWidth).
-  const room = lab.clientWidth;
   const need = () => { cap.style.maxWidth = "none"; const w = cap.getBoundingClientRect().width / (lab.getBoundingClientRect().width / Math.max(1, lab.offsetWidth) || 1); cap.style.maxWidth = ""; return w; };
   let cs = parseFloat(getComputedStyle(cap).fontSize) || 10;
   while (need() > room - 0.5 && cs > 8) {
@@ -57,6 +75,8 @@ export function fit(lab: HTMLElement) {
 export class Donut {
   readonly stage = el("div", "fm-stage");
   readonly svg = svgEl("svg", { class: "fm-svg", viewBox: `${-DONUT.size / 2} ${-DONUT.size / 2} ${DONUT.size} ${DONUT.size}` }) as SVGSVGElement;
+  /** Disco sólido por baixo de tudo: nada da área de trabalho atravessa o anel (nem o vão entre o miolo e as fatias). */
+  readonly disc = el("div", "fm-disc");
   readonly band = el("div", "fm-band");
   readonly aura = el("div", "fm-aura");
   readonly decor = svgEl("g", { class: "fm-decor" });
@@ -93,7 +113,7 @@ export class Donut {
     this.svg.append(defs, this.decor, this.seps, this.subG, this.slicesG);
     this.hub.append(this.progress, this.hubIcon, this.badge, this.hubTitle, this.hubHint);
     this.perch.append(this.ravenBox);
-    this.stage.append(this.aura, this.band, this.svg, this.labels, this.subLabels, this.hub, this.perch);
+    this.stage.append(this.disc, this.aura, this.band, this.svg, this.labels, this.subLabels, this.hub, this.perch);
     root.append(this.stage);
     this.drawDecor();
   }

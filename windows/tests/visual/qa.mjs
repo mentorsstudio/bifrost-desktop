@@ -13,6 +13,35 @@ const here = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 const BASE = process.env.BIFROST_QA_URL || "http://localhost:5191";
 const CHECKS = readFileSync(join(here, "checks.js"), "utf8");
+// Checagens próprias do anel do gesto (rodam na página).
+const RING_CHECKS = () => {
+  const out = [];
+  const hub = document.querySelector(".fm-hub")?.getBoundingClientRect();
+  const round = (cs, r) => cs.borderTopLeftRadius.endsWith("%") ? parseFloat(cs.borderTopLeftRadius) >= 50 : parseFloat(cs.borderTopLeftRadius) >= Math.min(r.width, r.height) / 2 - 1;
+  if (hub) for (const e of document.querySelectorAll("#fm-root *")) {
+    if (e instanceof SVGElement) continue;
+    const cs = getComputedStyle(e), r = e.getBoundingClientRect();
+    if (!r.width || cs.display === "none" || cs.visibility === "hidden") continue;
+    const near = r.left < hub.right + 6 && r.right > hub.left - 6 && r.top < hub.bottom + 6 && r.bottom > hub.top - 6;
+    const ring = (cs.outlineStyle !== "none" && parseFloat(cs.outlineWidth) > 0) || ((parseFloat(cs.borderTopWidth) > 0 || cs.boxShadow !== "none") && !round(cs, r));
+    if (near && ring) out.push({ kind: "hub-rect", what: String(e.className), detail: "contorno retangular perto do miolo" });
+  }
+  const disc = document.querySelector(".fm-disc");
+  if (!disc) out.push({ kind: "ring-bleed", what: "fm-disc", detail: "sem disco de apoio" });
+  else {
+    const cs = getComputedStyle(disc); const bg = cs.backgroundColor; const m = bg.match(/\/\s*([\d.]+)\s*\)$/) || bg.match(/^rgba\([^)]*,\s*([\d.]+)\)$/); const a = bg === "transparent" ? "0" : m ? m[1] : "1";
+    if (+a < 1 || +cs.opacity < 1 || !round(cs, disc.getBoundingClientRect())) out.push({ kind: "ring-bleed", what: "fm-disc", detail: `fundo ${cs.backgroundColor}, opacidade ${cs.opacity}` });
+    if (disc.getBoundingClientRect().width / 2 < 166) out.push({ kind: "ring-bleed", what: "fm-disc", detail: "não cobre até a borda" });
+  }
+  for (const n of document.querySelectorAll(".fm-label-name")) {
+    if (/\u00AD|-/.test(n.textContent)) out.push({ kind: "word-split", what: n.textContent, detail: "hífen no rótulo" });
+    if (n.scrollWidth > n.clientWidth + 0.5 || n.scrollHeight > n.clientHeight + 0.5) out.push({ kind: "word-split", what: n.textContent, detail: "rótulo cortado" });
+    const words = n.textContent.trim().split(/\s+/);
+    const lh = parseFloat(getComputedStyle(n).lineHeight) || parseFloat(getComputedStyle(n).fontSize) * 1.15;
+    if (words.length === 1 && n.getBoundingClientRect().height > lh * 1.5) out.push({ kind: "word-split", what: n.textContent, detail: "palavra partida em duas linhas" });
+  }
+  return out;
+};
 const FULL = process.argv.includes("--full");
 const jsonAt = process.argv.indexOf("--json");
 
@@ -108,6 +137,21 @@ async function main() {
       await page.evaluate(() => window.__emit("convert-item", { job: 7, index: 0, name: "x", state: "done", progress: 1, outputs: ["C:\\Users\\paulo\\Documents\\contrato-unido.pdf"], error: null })); await ring("pronto"); }
     await page.evaluate(() => window.__emit("filee-menu-open", null));
     await page.evaluate(() => window.__emit("filee-menu-plan", { plan: null, error: "Não achei um arquivo aqui." })); await ring("erro");
+    await ctx.close();
+  }
+  // v24: os 4 estilos do anel × 100/125/150 % × PNG/PDF. Nada retangular em volta
+  // do miolo (contorno, borda ou sombra num elemento de cantos retos), o disco de
+  // apoio opaco cobre do centro até o cinto (nada da área de trabalho atravessa) e
+  // nenhuma palavra do rótulo se parte nem é cortada.
+  for (const style of ["runa", "aurora", "escudo", "minimal"]) for (const scale of SCALES) for (const kind of ["png", "pdf"]) {
+    const ctx = await browser.newContext({ viewport: { width: 460, height: 460 }, deviceScaleFactor: scale, reducedMotion: "reduce" });
+    const page = await ctx.newPage();
+    await page.goto(`${BASE}/dev/filee-menu.html?theme=bifrost&ring=${style}`);
+    await page.waitForTimeout(900);
+    await page.evaluate(() => window.__emit("filee-menu-open", null)); await page.waitForTimeout(450);
+    await page.evaluate((k) => window.__emit("filee-menu-plan", { plan: { ...(k === "pdf" ? window.__FILEE_PDFS__ : window.__FILEE_PLAN__), ring: window.__FILEE_RINGS__[k] }, error: null }), kind);
+    await page.waitForTimeout(700);
+    add({ scene: `anel:${style}:${kind}`, theme: "bifrost", scale, width: 460 }, [...await page.evaluate(CHECKS), ...await page.evaluate(RING_CHECKS)]);
     await ctx.close();
   }
   // Com movimento: a aba ativa abre o rótulo numa transição; o indicador tem de acabar igual a ela.

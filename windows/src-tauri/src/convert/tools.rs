@@ -80,6 +80,13 @@ pub fn locate(tool: Tool) -> Option<PathBuf> {
         }
         Tool::Pdfium => {
             c.push(own.join("pdfium").join(pdfium_lib_name()));
+            // O instalador traz o pdfium.dll junto (recurso do Tauri, ao lado do
+            // bifrost-desktop.exe): PDF → PNG/JPG funciona sem baixar nada.
+            if let Some(dir) = std::env::current_exe().ok().and_then(|e| e.parent().map(|p| p.to_path_buf())) {
+                c.push(dir.join("pdfium").join(pdfium_lib_name()));
+                c.push(dir.join("resources").join("pdfium").join(pdfium_lib_name()));
+                c.push(dir.join(pdfium_lib_name()));
+            }
         }
         Tool::Pandoc => {
             if let Some(p) = which("pandoc") {
