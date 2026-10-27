@@ -189,8 +189,5 @@ export function releasePage(platform: "windows" | "linux", version: string): str
   return `https://github.com/Louis-CFM/coucou/releases/tag/${platform}-v${encodeURIComponent(version)}`;
 }
 
-/** Buy Huginn a coffee: the same Stripe link as the Bifrost page (docs/index.html). */
-export const COFFEE_URL = "https://buy.stripe.com/dRm6oGbfa7Kqcqs0hxes003";
-
 /** The blue of an update, and of the arrow badge. */
 export const UPDATE_BLUE = "#3B82F6";

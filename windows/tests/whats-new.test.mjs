@@ -9,7 +9,7 @@ import { NO_UPDATE } from "../src/core/update.ts";
 import { BotEngine } from "../src/bifrost/raven.ts";
 import { WHATS_NEW_ICONS } from "../src/whats-new/icons.ts";
 import {
-  COFFEE_URL, ICON_NAMES, LATER_MS, compareVersions, decideOnLaunch, iconName, localized, releaseFor,
+  ICON_NAMES, LATER_MS, compareVersions, decideOnLaunch, iconName, localized, releaseFor,
   releasePage, showsUpdateHint, soFar, updateWaiting, usedBefore,
 } from "../src/whats-new/whats-new.ts";
 
@@ -153,9 +153,9 @@ test("the blue only when Huginn has nothing else to say", () => {
   assert.equal(showsUpdateHint(false, "idle", false), false);
 });
 
-test("All changes and the coffee", () => {
+test("All changes, and no third-party donation link", () => {
   assert.equal(releasePage("windows", "0.5.2"), "https://github.com/Louis-CFM/coucou/releases/tag/windows-v0.5.2");
   assert.equal(releasePage("linux", "0.5.2"), "https://github.com/Louis-CFM/coucou/releases/tag/linux-v0.5.2");
-  const site = readFileSync(new URL("../../docs/index.html", import.meta.url), "utf8");
-  assert.ok(site.includes(COFFEE_URL), "the same link as the Bifrost page");
+  const src = readFileSync(new URL("../src/whats-new/whats-new.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(src, /buy\.stripe\.com|COFFEE_URL/);
 });
