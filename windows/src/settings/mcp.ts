@@ -20,11 +20,14 @@ function describe(c: McpServerConfig): string {
   return "url" in c ? c.url : [c.command, ...(c.args ?? [])].join(" ");
 }
 
-export function mcpSections(settings: Settings, save: () => Promise<void>): HTMLElement[] {
+/** chat: provedor do chat e servidor do Bifrost; integrations: detectados e servidores (cartões). */
+export function mcpSections(settings: Settings, save: () => Promise<void>, which: "chat" | "integrations" | "all" = "all"): HTMLElement[] {
   const serversBody = h("div", { style: "display:flex;flex-direction:column;gap:10px" });
   const chatBody = h("div", { style: "display:flex;flex-direction:column;gap:8px" });
   const ownBody = h("div", { style: "display:flex;flex-direction:column;gap:8px" });
   let status: McpStatus | null = null;
+  /** Nomes do catálogo encontrados neste PC (selo «detectado» nos cartões). */
+  let detectedNames = new Set<string>();
 
   const redraw = () => {
     drawServers();
@@ -44,7 +47,9 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
       return;
     }
     if (!status.servers.length) serversBody.append(notice("hint", "Nenhum servidor ainda. Adicione um ou cole um JSON mcpServers."));
-    for (const s of status.servers) serversBody.append(serverRow(s));
+    const grid = h("div", { class: "bf-grid mcp-servers" });
+    for (const s of status.servers) grid.append(serverRow(s));
+    if (status.servers.length) serversBody.append(grid);
     const add = formBtn("Adicionar servidor", "primary");
     add.addEventListener("click", () => {
       clear(serversBody);
@@ -84,17 +89,23 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
       status = await Bridge.mcpRemoveServer(s.name);
       redraw();
     });
-    const kind = "url" in s.config ? "HTTP" : "stdio";
-    return h(
-      "div",
-      { style: "display:flex;flex-direction:column;gap:4px" },
-      h(
-        "div",
-        { class: "row" },
-        h("label", {}, statusDot(!s.config.disabled), h("span", { text: ` ${s.name}`, style: "margin-left:6px" })),
-        h("span", { class: "path", text: `${kind} · ${describe(s.config)}${s.hasToken ? " · token salvo" : ""}` }),
-        test, edit, remove,
-      ),
+    const remote = "url" in s.config;
+    const on = !s.config.disabled;
+    // Remoto (mcp-remote / HTTP): conectar abre o login OAuth no navegador, sem chave.
+    const login = remote && !s.hasToken ? formBtn("Entrar", "primary") : null;
+    login?.addEventListener("click", () => test.click());
+    const badges = h("div", { class: "bf-chips" },
+      h("span", { class: `bf-badge ${on ? "ok" : "off"}`, text: on ? "ligado" : "desligado" }),
+      h("span", { class: "bf-badge", text: remote ? "remoto · HTTP" : "comando · stdio" }),
+      ...(s.hasToken ? [h("span", { class: "bf-badge ok", text: "token salvo" })] : []),
+      ...(detectedNames.has(s.name) ? [h("span", { class: "bf-badge ok", text: "detectado" })] : []));
+    return h("div", { class: `bf-card mcp-server${on ? " on" : ""}` },
+      h("div", { class: "row", style: "justify-content:space-between;gap:8px" },
+        h("span", { class: "bf-card-name" }, statusDot(on), h("span", { text: ` ${s.name}` })),
+        login ?? ""),
+      badges,
+      h("div", { class: "bf-card-note path", title: describe(s.config), text: describe(s.config) }),
+      h("div", { class: "row", style: "gap:6px;flex-wrap:wrap" }, test, edit, remove),
       out,
     );
   }
@@ -372,6 +383,8 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
       detBody.append(notice("err", "Não consegui ler os programas do PC."));
       return;
     }
+    detectedNames = new Set(scan.catalog.filter((e) => e.detected).map((e) => e.name));
+    drawServers();
     huginn.set("success");
     setTimeout(() => huginn.set("idle"), 1400);
     const chips = h("div", { class: "bf-chips" });
@@ -422,8 +435,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
   }
 
   void load().then(drawDetected);
-  return [
-    h("section", { class: "bf-section" },
+  const detected = h("section", { class: "bf-section" },
       h("div", { class: "row", style: "align-items:center;gap:14px" },
         h("div", { class: "bf-mascot-pair" }, huginn.el, muninn.el),
         h("div", {},
@@ -432,12 +444,14 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
         ),
       ),
       h("div", { class: "bf-bridge" }),
-      detBody),
-    h("section", {}, h("h2", {}, h("span", { text: "Servidores MCP" })),
-      notice("hint", "Todos os servidores ligados ao Huginn: Hermes, Alethe, Orca, Freya, os detectados no PC e os importados."), serversBody),
-    h("section", {}, h("h2", {}, h("span", { text: "Chat via MCP" })),
-      notice("hint", "Como a mensagem chega ao agente. Para o Hermes: modo Tarefa, hermes_task_start / prompt, status hermes_task_status / job_id."), chatBody),
-    h("section", {}, h("h2", {}, h("span", { text: "Servidor MCP do Bifrost" })),
-      notice("hint", "Deixa outros agentes (Grok Bot, Hermes…) mostrarem avisos, pedirem aprovação e abrirem sessões no Huginn."), ownBody),
-  ];
+      detBody);
+  const servers = h("section", { class: "mcp-servers-section" }, h("h2", {}, h("span", { text: "Servidores MCP" })),
+    notice("hint", "Todos os servidores ligados ao Huginn: Hermes, Alethe, Orca, Freya, os detectados no PC e os importados. Os remotos pedem login no navegador ao conectar."), serversBody);
+  const chat = h("section", {}, h("h2", {}, h("span", { text: "Chat via MCP" })),
+    notice("hint", "Como a mensagem chega ao agente. Para o Hermes: modo Tarefa, hermes_task_start / prompt, status hermes_task_status / job_id."), chatBody);
+  const own = h("section", {}, h("h2", {}, h("span", { text: "Servidor MCP do Bifrost" })),
+    notice("hint", "Deixa outros agentes (Grok Bot, Hermes…) mostrarem avisos, pedirem aprovação e abrirem sessões no Huginn."), ownBody);
+  if (which === "chat") return [chat, own];
+  if (which === "integrations") return [detected, servers];
+  return [detected, servers, chat, own];
 }

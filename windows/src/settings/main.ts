@@ -123,8 +123,8 @@ async function render() {
     general: () => [generalSection()],
     pills: () => [activePillsSection(connected)],
     agents: () => [claudeSection(status), agentsSection(agents), planSection(status)],
-    chat: () => [aiSection(), ...mcpSections(S.settings, save), localSection(false)],
-    integrations: () => [integrationsSection(present), ...whatsappSections()],
+    chat: () => [aiSection(), ...mcpSections(S.settings, save, "chat"), localSection(false)],
+    integrations: () => [integrationsSection(present), ...whatsappSections(), ...mcpSections(S.settings, save, "integrations")],
     phone: () => [phoneSection(S.settings.phoneLink ?? false, toggle, S.settings)],
     shortcuts: () => [shortcutsSection(shortcutReport)],
   };

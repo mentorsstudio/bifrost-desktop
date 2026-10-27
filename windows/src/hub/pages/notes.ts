@@ -72,7 +72,11 @@ export async function notesPage(page: HTMLElement, ctx: HubContext) {
     listEl.append(rb);
     if (startError) listEl.append(h("div", { class: "hub-warn", text: startError }));
     if (state.notes.length === 0) {
-      listEl.append(h("div", { class: "hub-note", style: "padding:14px 4px", text: t("Your calls will show here. Click Record a call when one starts.") }));
+      // Sem chamadas ainda: os três passos, em vez de uma coluna vazia.
+      const steps = [t("Click Record when the call starts."), t("Bifrost transcribes and tells the voices apart, offline."), t("The summary and the to-dos show up here.")];
+      listEl.append(h("div", { class: "hub-notes-how" },
+        h("div", { class: "hub-group", text: t("How it works") }),
+        ...steps.map((s, i) => h("div", { class: "hub-notes-step" }, h("b", { text: String(i + 1) }), h("span", { text: s })))));
     }
     let day = "";
     for (const n of state.notes) {
@@ -97,12 +101,13 @@ export async function notesPage(page: HTMLElement, ctx: HubContext) {
       if (n.status === "recording") item.querySelector(".m")!.prepend(h("span", { class: "hub-rec", style: "margin-inline-end:6px" }));
       listEl.append(item);
     }
-    listEl.append(h("div", { style: "flex:1" }), h("div", { class: "hub-note", style: "padding:10px;border-radius:10px;background:rgba(255,255,255,0.04)", text: t("Everything stays on this computer. Tell the people in the call that you are recording.") }));
+    listEl.append(h("div", { class: "hub-note", style: "margin-top:8px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.04)", text: t("Everything stays on this computer. Tell the people in the call that you are recording.") }));
   }
 
   function drawDetail() {
     clear(detail);
     const note = state.notes.find((n) => n.id === selected);
+    detail.classList.toggle("is-empty", !note);
     if (!note) {
       detail.append(emptyState(t("Your calls will show here. Click Record a call when one starts."), "sleeping", "#3B9EFF"));
       return;

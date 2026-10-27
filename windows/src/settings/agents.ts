@@ -3,6 +3,7 @@
 // only then does agents.rs back the file up and write it.
 
 import { formBtn } from "../views/kit";
+import { S } from "./store";
 import { Bridge, type AgentHookStatus } from "../core/bridge";
 import { clear, h } from "../views/dom";
 import { renderDiff, statusDot } from "./parts";
@@ -44,7 +45,11 @@ function errorText(err: unknown): string {
 export function agentsSection(list: AgentHookStatus[] | null): HTMLElement {
   const blocks = h("div", { style: "display:flex;flex-direction:column;gap:14px" });
   if (!list || list.length === 0) {
-    blocks.append(h("div", { class: "hint", text: TEXT.none }));
+    // Uma explicação e o que fazer, em vez de só o erro.
+    const again = formBtn(t("Look again"), "primary", () => S.hub?.redraw());
+    blocks.append(h("div", { class: "hint", text: TEXT.none }),
+      h("div", { class: "hint", text: t("It usually means Bifrost has just started or couldn't read the running programs. Try again; if it keeps happening, restart Bifrost.") }),
+      h("div", { class: "row" }, again));
   }
   for (const status of list ?? []) blocks.append(agentBlock(status));
   return h(

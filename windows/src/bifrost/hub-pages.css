@@ -104,3 +104,16 @@
   opacity: 1 !important; cursor: not-allowed; filter: none !important;
 }
 .hub-page .hint.inline { margin: 0 0 0 10px; font-size: 12px; color: #c9a45a; align-self: center; }
+
+/* Escriba: colunas na altura do conteúdo; sem chamadas, os passos ocupam a coluna. */
+.hub-page[data-page="notes"] .hub-notes { align-items: start; }
+.hub-page[data-page="notes"] .hub-note-detail.is-empty { min-height: 220px; display: flex; flex-direction: column; justify-content: center; }
+.hub-notes-how { display: flex; flex-direction: column; gap: 8px; padding: 12px 2px 4px; }
+.hub-notes-step { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; font-size: 12px; color: #c9d0e0; line-height: 1.35; }
+.hub-notes-step b { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 700 11px var(--bf-heading-font, serif); color: #1a1205; background: linear-gradient(180deg, #f2cf7c, #c9973f); }
+
+/* Integrações: catálogo e servidores MCP ocupam a largura toda, em cartões. */
+.hub-page[data-page="integrations"] #settings-root > .bf-section, .hub-page[data-page="integrations"] #settings-root > .mcp-servers-section { grid-column: 1 / -1; }
+.mcp-servers { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.mcp-server .path { font-family: var(--bf-mono-font, ui-monospace, monospace); font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mcp-server .bf-card-name { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
