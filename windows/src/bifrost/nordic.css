@@ -26,7 +26,7 @@
   --bf-quick: 220ms;
   --bf-step: 360ms;
   --bf-glide: 620ms;
-  --bf-rune-font: "Segoe UI Historic", "Segoe UI Symbol", "Noto Sans Runic", serif;
+  --bf-rune-font: "Bifrost Runic", "Segoe UI Historic", "Segoe UI Symbol", "Noto Sans Runic", serif;
   --bf-heading-font: "Palatino Linotype", "Book Antiqua", Georgia, serif;
 }
 
@@ -200,3 +200,4 @@ body.bf-sky, .bf-sky {
   *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
   .bf-aurora, .bf-bridge { animation: none !important; }
 }
+.bf-raven-rune, .bf-err { font-family: var(--bf-rune-font); }

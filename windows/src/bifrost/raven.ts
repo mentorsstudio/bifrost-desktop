@@ -651,7 +651,7 @@ export class RavenEngine {
     if (!this.isMini && !(dressed && this.outfit === "runeBand")) {
       x.save();
       x.fillStyle = GOLD_A; x.globalAlpha *= 0.9;
-      x.font = '700 12px "Segoe UI Historic","Segoe UI Symbol",serif';
+      x.font = '700 12px "Bifrost Runic","Segoe UI Historic","Segoe UI Symbol",serif';
       x.textAlign = "center"; x.textBaseline = "middle";
       x.fillText("ᚨ", 60, 82);
       x.restore();

@@ -4,6 +4,12 @@
    empacotada em ./fonts — nada vem de CDN. */
 
 @font-face {
+  font-family: "Bifrost Runic";
+  src: url("./fonts/NotoSansRunic-Regular.ttf") format("truetype");
+  font-display: block;
+}
+
+@font-face {
   font-family: "Space Grotesk";
   src: url("./fonts/SpaceGrotesk-Variable.woff2") format("woff2");
   font-weight: 300 700;

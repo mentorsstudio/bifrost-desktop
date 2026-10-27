@@ -50,7 +50,7 @@ function amulet(c: Ctx, h: RavenHead) {
   c.beginPath(); c.arc(h.x, y, h.r * 0.34, 0, Math.PI * 2);
   c.fillStyle = lin(c, h.x - h.r * 0.3, y - h.r * 0.3, h.x + h.r * 0.3, y + h.r * 0.3, GOLD[0], GOLD[1]);
   c.fill(); outline(c, h.r * 0.06);
-  c.fillStyle = INK; c.font = `700 ${h.r * 0.42}px "Segoe UI Historic","Segoe UI Symbol",serif`;
+  c.fillStyle = INK; c.font = `700 ${h.r * 0.42}px "Bifrost Runic","Segoe UI Historic","Segoe UI Symbol",serif`;
   c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("ᚨ", h.x, y + h.r * 0.02);
   c.restore();
 }
