@@ -73,7 +73,7 @@ test("a cascata de entrada respeita o movimento reduzido", () => {
   const m = css("theme/motion.css");
   assert.match(m, /prefers-reduced-motion: reduce\) \{ \.m-rise \{ animation: none !important; \} \}/);
   const sh = readFileSync(new URL("../src/hub/shell.ts", import.meta.url), "utf8");
-  assert.match(sh, /export function animatePage\(page: HTMLElement\): void \{\n  riseIn\(page\);/);
+  assert.match(sh, /export function animatePage\(page: HTMLElement\): void \{\s*riseIn\(page\);/);
 });
 
 test("Dicionário: a linha de substituição tem 4 colunas (campo → campo botão)", () => {
