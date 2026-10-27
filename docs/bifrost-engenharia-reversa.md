@@ -536,3 +536,12 @@ Credenciais no cofre do sistema (`secrets.rs`): `mcp-token:<nome>` (Hermes VPS e
 | Textos | pt-BR; "Session" → "Sessão"; teste `ui-english.test.mjs` varre inglês esquecido | — | PASS |
 | Doação de terceiros | Constante `COFFEE_URL` removida | — | PASS |
 | Protocolo (`coucou-relay/v1`, `mochiOutfit`, janela `mochi`) | — | Mantido de propósito | HERDADO (protocolo) |
+
+### 10.6 Fase 6 (26/10/2026)
+
+- **Painel de agentes** (`src/views/agents-model.ts`, `agents-panel.ts`): o cartão da direita da ilha lista cada sessão viva (Claude Code, Codex, Gemini, Cursor, VS Code, terminais, agentes MCP), com status (trabalhando / aguardando você / terminou / erro / parado), última ação, pasta e tempo; ações: ir para a janela (`openSession`), abrir a pasta, conversar no Bifrost. Estado vazio próprio. Aviso de conclusão: "terminou em <pasta>". Chips abaixo só para serviços.
+- **Chat Saga**: troca de provedor grava provedor + modelo válido de uma vez (`switchProvider`); a pergunta espera a gravação; o eco `settings-changed` de uma gravação antiga não desfaz a escolha (`keepChatChoice`); lista vazia mostra aviso; cabeçalho mostra o rótulo do modelo; `providerDef` desconhecido → IA do PC (como o Rust).
+- **Corvos**: `src/bifrost/raven-shape.ts`, silhueta única em Bézier, simétrica em x=60, sem contorno; usada pelo canvas e pelo SVG; testes de simetria e de não-colisão.
+- **Runas**: `runes.ts` (z → ᛉ). **Links**: versões/resumo → mentorsstudio/bifrost-desktop.
+- **Hub**: sem crossfade de duas páginas; keyframes só transform/opacity; content-visibility; contador após a entrada. Trace: 59,1 fps, p95 19,9 ms (antes 54,9 / 24,7).
+- Varredura: 0 textos visíveis com Coucou/Mochi (restam só ids internos de evento/protocolo), 0 literais em inglês conhecidos fora de t(), 0 arquivos com nome herdado.
