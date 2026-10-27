@@ -75,7 +75,7 @@ test("with a key, the models are listed and picking one saves it", async () => {
   assert.equal(State.settings.model, "claude-sonnet-5");
   assert.equal(sent("save_settings").at(-1).settings.model, "claude-sonnet-5");
   assert.ok(!$(".chat-body").classList.contains("picking"));
-  assert.equal($(".model-name").textContent, "claude-sonnet-5");
+  assert.equal($(".model-name").textContent, "Claude Sonnet 5");
 });
 
 test("switching provider saves it and asks the new provider only", async () => {
