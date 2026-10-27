@@ -702,21 +702,30 @@ Estudo completo em `filee-re.md`.
   opções (qualidade, lado máximo, %, DPI, pasta de saída), fila com progresso/cancelar/
   abrir pasta, ferramentas opcionais com download, ajustes do gesto.
 - **Ilha**: soltar arquivo mostra "Enviar para a IA", "Converter…" e "Cancelar".
-- **Gesto**: no Explorer ou na Área de Trabalho, com o mouse sobre um arquivo, segure
-  **Ctrl** e **segure o botão direito** (~280 ms). O corvo Huginn aparece com um balão:
-  Converter para…, Comprimir, Redimensionar, Juntar PDFs, Enviar para a IA (O que é isso?,
-  Resumir, Explicar, Extrair dados, Traduzir) e Abrir no Conversor. Soltar o botão sobre um
-  item o executa; Esc ou clique fora fecha. Um toque rápido devolve o clique direito
-  normal (o menu nativo continua funcionando sem Ctrl).
+- **Gesto — o anel (rondó)**: no Explorer ou na Área de Trabalho, com o mouse sobre um
+  arquivo, segure **Ctrl** e **segure o botão direito** (~280 ms). Abre um anel em volta do
+  cursor: no miolo, o **ícone do arquivo** como o Windows o mostra (ou uma runa do tipo, se
+  não houver ícone), com um selo de contagem quando há vários arquivos selecionados. Em
+  volta, botões redondos surgem um atrás do outro (35 ms entre eles, mola contida dos
+  tokens `--m-snappy`): Converter para…, Comprimir, Redimensionar, Juntar PDFs (só quando
+  todos são PDF), Enviar para a IA e Abrir no Conversor. O Huginn fica pequeno, pousado no
+  topo do anel, e o balãozinho dele diz o nome do botão sob o mouse. "Converter para…" e
+  "Enviar para a IA" abrem um **segundo arco** por fora (formatos / atalhos de pergunta);
+  com ele aberto, o nome vai para o miolo. Soltar o botão sobre um item o executa; Esc ou
+  clique fora do **círculo** fecha, e o anel recolhe na ordem inversa. Um toque rápido devolve
+  o clique direito normal. Perto das bordas, a janela do anel é empurrada para dentro da
+  tela (o centro se desloca), em 100/125/150%.
 - **Menu do Explorer** (opcional, desligado): HKCU `*\shell\Bifrost` com "Converter…" e
   "Perguntar à IA". Sem admin.
 
 ### Implementação
 - Rust: `src-tauri/src/convert/{formats,jobs,engines,tools,prefs,mod}.rs`,
-  `src-tauri/src/gesture/{logic,win,mod}.rs` (WH_MOUSE_LL + WH_KEYBOARD_LL só com o menu
+  `src-tauri/src/gesture/{logic,win,mod}.rs` (anel: `place_ring`/`inside_ring` em logic.rs,
+  ícone por SHGetFileInfoW → PNG em win.rs; WH_MOUSE_LL + WH_KEYBOARD_LL só com o menu
   aberto; IShellWindows→IShellBrowser→IFolderView2 + UIA ElementFromPoint; se o item sob o
   mouse estiver selecionado, vale a seleção inteira; nunca sobrescreve: "nome (2).ext").
-- TS: `src/filee/*`, `src/hub/pages/converter.ts`, `src/settings/page-filee.ts`, `fileemenu.html`.
+- TS: `src/filee/*` (`ring.ts` = geometria e acerto por fatia, testado em
+  `tests/filee-ring.test.mjs`; `menu.ts`/`menu.css` = o anel), `src/hub/pages/converter.ts`, `src/settings/page-filee.ts`, `fileemenu.html`.
 
 ### Formatos
 | Entrada → saída | Precisa de |
@@ -737,5 +746,7 @@ Ferramentas baixadas ficam em `%LOCALAPPDATA%\Bifrost\tools`.
 ### Limites
 - O gesto só funciona no Explorer e na Área de Trabalho (não em diálogos de abrir/salvar
   nem em outros apps). Janelas elevadas (admin) não recebem o gancho de um Bifrost comum.
-- O overlay fecha com clique fora do retângulo do balão (não é click-through por pixel).
+- O acerto é pela geometria do anel (fatia e raio), e o clique-fora usa o círculo, não o
+  retângulo da janela. A janela ainda é um quadrado transparente: um clique nos cantos
+  fecha o anel em vez de passar direto para o que está embaixo.
 - Sem OCR, pastas vigiadas, CLI nem rotas multi-salto do Filee nesta fase.

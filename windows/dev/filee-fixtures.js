@@ -27,3 +27,13 @@ window.__FIXTURES__ = window.__FIXTURES__ || {};
   });
   window.__FILEE_PLAN__ = plan;
 })();
+// Seleção de 3 PDFs (para "Juntar PDFs" e o selo de contagem no anel).
+(() => {
+  const tools = window.__FILEE_PLAN__.tools;
+  const t = (id, label, group = "convert", needs = null, ready = true, needsLabel = null) => ({ id, label, group, needs, ready, needsLabel });
+  window.__FILEE_PDFS__ = {
+    files: ["contrato.pdf", "anexo-1.pdf", "anexo-2.pdf"].map((n) => ({ path: `C:\\Users\\paulo\\Documents\\${n}`, name: n, ext: "pdf", category: "pdf", categoryLabel: "PDF", size: 812345 })),
+    targets: [t("to:png", "PNG", "convert", "pdfium", false, "PDFium"), t("to:jpg", "JPG", "convert", "pdfium", false, "PDFium"), t("to:txt", "TXT"), t("merge-pdf", "Juntar PDFs", "tools"), t("compress", "Comprimir", "tools"), t("split-pdf", "Dividir", "tools"), t("zip", "ZIP", "tools")],
+    tools,
+  };
+})();

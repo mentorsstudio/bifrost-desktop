@@ -25,6 +25,8 @@ interface PlanPayload { plan: Plan | null; error: string | null; icon?: string |
 export type Slice = { id: string; label: string; rune: string; sub?: "convert" | "ask"; hint?: string; disabled?: boolean; run?: () => void };
 
 const STAGGER = 35;
+/** Rótulos curtos para os botões pequenos do segundo arco (o nome inteiro vai no miolo). */
+const SHORT: Record<string, string> = { "O que é isso?": "O quê?", Resumir: "Resumo", Explicar: "Explica", "Extrair dados": "Dados", Traduzir: "Traduz" };
 const POP = 260;
 
 const root = document.getElementById("fm-root")!;
@@ -72,9 +74,19 @@ function center() {
   return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 }
 
+/** O nome do botão sob o mouse: no balãozinho do Huginn ou, com o segundo arco
+ *  aberto (que passa por cima do corvo), no miolo, sob o ícone. */
 function say(text: string) {
-  bubble.textContent = text;
-  bubble.classList.toggle("on", !!text);
+  const inCore = subOf >= 0;
+  bubble.textContent = inCore ? "" : text;
+  bubble.classList.toggle("on", !inCore && !!text);
+  core.classList.toggle("speaking", inCore);
+  coreLabel.textContent = inCore ? text : fileLabel();
+}
+
+function fileLabel(): string {
+  const files = plan?.files ?? [];
+  return files.length > 1 ? `${files.length} arquivos` : files[0]?.name ?? "";
 }
 
 function target(id: string) {
@@ -107,8 +119,8 @@ function subSlices(kind: "convert" | "ask"): Slice[] {
       disabled: !t.ready, hint: t.ready ? `Converter para ${t.label}` : `Precisa do ${t.needsLabel}`, run: () => void runAction(t.id),
     }));
   }
-  const ask: Slice[] = QUICK_PROMPTS.map((q) => ({ id: `ask:${q.label}`, label: q.label, rune: "ᚨ", run: () => void Convert.menuAction("ask", paths(), q.prompt) }));
-  ask.push({ id: "ask-open", label: "Só abrir o chat", rune: "ᛉ", run: () => void Convert.menuAction("ask", paths()) });
+  const ask: Slice[] = QUICK_PROMPTS.map((q) => ({ id: `ask:${q.label}`, label: q.label, rune: SHORT[q.label] ?? q.label.slice(0, 5), run: () => void Convert.menuAction("ask", paths(), q.prompt) }));
+  ask.push({ id: "ask-open", label: "Só abrir o chat", rune: "Chat", run: () => void Convert.menuAction("ask", paths()) });
   return ask;
 }
 
@@ -144,7 +156,7 @@ function drawCore() {
   }
   badge.textContent = files.length > 1 ? String(files.length) : "";
   badge.classList.toggle("on", files.length > 1);
-  coreLabel.textContent = files.length > 1 ? `${files.length} arquivos` : f?.name ?? "";
+  coreLabel.textContent = fileLabel();
 }
 
 function stagger(nodes: HTMLElement[], reverse = false) {
@@ -179,8 +191,10 @@ function openSub(index: number) {
   subA = subAngles(angles[index], subs.length);
   subBox.replaceChildren(...subs.map((x, i) => button(x, subA[i], RING.subR, i, "fm-sub")));
   stagger([...subBox.children] as HTMLElement[]);
+  for (const c of slicesBox.children) c.classList.remove("parent");
   slicesBox.children[index]?.classList.add("parent");
   requestAnimationFrame(() => subBox.classList.add("open"));
+  say(s.label);
   void Convert.menuRadius(hitRadius(true));
 }
 
@@ -191,6 +205,8 @@ function closeSub() {
   subBox.classList.remove("open");
   subBox.replaceChildren();
   for (const c of slicesBox.children) c.classList.remove("parent");
+  core.classList.remove("speaking");
+  coreLabel.textContent = fileLabel();
   void Convert.menuRadius(hitRadius(false));
 }
 
@@ -270,7 +286,7 @@ export function retract() {
   const all = [...subBox.children, ...slicesBox.children] as HTMLElement[];
   stagger(all, true);
   root.classList.add("closing");
-  ring.classList.remove("open");
+  ring.classList.remove("open", "shown");
   subBox.classList.remove("open");
   const wait = reducedMotion() ? 0 : all.length * STAGGER + POP;
   window.setTimeout(() => {
@@ -287,7 +303,7 @@ void on<unknown>("filee-menu-open", () => {
   busy = false;
   window.clearTimeout(closeTimer);
   root.classList.remove("closing", "busy");
-  ring.classList.remove("open");
+  ring.classList.remove("open", "shown");
   slicesBox.replaceChildren();
   closeSub();
   slices = [];
