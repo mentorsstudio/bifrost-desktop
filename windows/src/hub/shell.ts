@@ -162,7 +162,9 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
   // Uma página é montada com um contexto só dela (o onLeave dela, não o da ativa).
   // Montada de antemão (a próxima da lista, no ócio; no hover custava um quadro longo),
   // ela já tem layout e pintura prontos num palco escondido; o clique só a ativa.
-  interface Built { id: PageId; el: HTMLElement; local: HubContext; activate?: () => void; at: number }
+  interface Built { id: PageId; el: HTMLElement; local: HubContext; activate?: () => void; at: number; epoch: number }
+  // Páginas da ilha já mostradas ficam vivas (desanexadas) por 60 s: voltar a uma não remonta nada.
+  const alive = new Map<PageId, Built>();
   const prefetchHolder = h("div", { class: "hub-prefetch", "aria-hidden": "true" });
   scroll.append(prefetchHolder);
   let pre: Built | null = null;
@@ -185,7 +187,7 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
       page_.append(container);
       activate = (await opts.renderNotch(def.id, container, prefetch)) ?? undefined;
     }
-    return { id: def.id, el: page_, local, activate, at: Date.now() };
+    return { id: def.id, el: page_, local, activate, at: Date.now(), epoch };
   }
 
   function drop(b: Built | null) {
@@ -219,7 +221,10 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
     for (const [id, el] of items) el.classList.toggle("on", id === current);
     const token = ++rendering;
     let next: Built;
-    if (pre && pre.id === def.id && Date.now() - pre.at < 20_000) {
+    const kept = alive.get(def.id);
+    if (kept && kept.epoch === epoch && Date.now() - kept.at < 60_000) {
+      next = kept;
+    } else if (pre && pre.id === def.id && Date.now() - pre.at < 20_000) {
       next = pre;
       pre = null;
       if (next.el.querySelector("#settings-root-next")) next.el.querySelector("#settings-root-next")!.id = "settings-root";
@@ -231,6 +236,7 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
     if (token !== rendering) { drop(next); return; }
     next.activate?.();
     active = next;
+    if (next.activate) { next.at = Date.now(); alive.set(next.id, next); }
     await swapPage(next.el, token);
     // No ócio: a próxima página da lista fica pronta.
     const i = ALL.findIndex((p) => p.id === current);
@@ -257,7 +263,12 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
     }
     // Sem crossfade de duas páginas inteiras (pintura dobrada em raster de software):
     // a antiga sai de uma vez e só a nova entra, numa camada própria (opacity/transform).
-    for (const el of [...stage.children]) { if (el !== page_) el.remove(); }
+    for (const el of [...stage.children]) {
+      if (el === page_) continue;
+      // Uma página viva vai para o palco escondido (já tem estilo e layout); as outras saem.
+      const id = (el as HTMLElement).dataset.page as PageId | undefined;
+      if (id && alive.get(id)?.el === el) prefetchHolder.append(el); else el.remove();
+    }
     scroll.scrollTop = 0;
     page_.classList.remove("m-premount");
     page_.classList.add("m-entering");
@@ -304,7 +315,7 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
     drawStatus();
   });
   return {
-    redraw: () => { epoch++; drop(pre); pre = null; void show(current); },
+    redraw: () => { epoch++; drop(pre); pre = null; for (const b of alive.values()) if (b !== active) b.el.remove(); alive.clear(); void show(current); },
     current: () => current,
   };
 }
