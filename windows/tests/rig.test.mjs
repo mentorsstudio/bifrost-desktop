@@ -32,11 +32,13 @@ test("Muninn: pisca em 1–1,5, inclina em 1,5–2,5, ergue UMA asa e acena 2x e
   assert.equal(signature("muninn", 3.5).wingL, 0, "uma asa só");
   assert.ok(near(signature("muninn", 5).wingR, 0));
 });
-test("paletas: Clássico = referência; Seguir o tema mantém preto/prata; estilos recolorem", () => {
+test("paletas: todos os estilos usam a arte raster recolorida; Seguir o tema segue o tema", () => {
   assert.equal(rigPalette("huginn", "classic", null), REF_PALETTE.huginn);
-  const t = rigPalette("muninn", "theme", null, "#ff0000");
+  const t = rigPalette("muninn", "theme", null, "#ff0000", "bifrost");
   assert.equal(t.body, REF_PALETTE.muninn.body);
-  const r = rigPalette("huginn", "ember", { dark: "#331100", lit: "#aa5500", wing: "#552200", markColor: "#ff8800", beak: ["#fff", "#cc9900"] });
-  assert.equal(r.body, "#331100");
+  assert.equal(rigPalette("huginn", "theme", null, undefined, "muspelheim").style, "ember");
+  const r = rigPalette("huginn", "ember", null);
+  assert.equal(r.original, true, "estilo usa os desenhos originais");
+  assert.equal(r.style, "ember");
   assert.equal(r.ink, REF_PALETTE.huginn.ink, "contorno mantido");
 });

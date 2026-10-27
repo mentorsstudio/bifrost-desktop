@@ -170,7 +170,7 @@ export class Mascot {
     x.setTransform(dpr, 0, 0, dpr, 0, 0);
     x.clearRect(0, 0, w, hgt);
     x.translate(w / 2, hgt / 2 + size * 0.05);
-    drawRig(x, this.name, this.pose(), rigPalette(this.name, id, look, (this.theme ?? currentTheme()).accent), (size * 0.8) / 112);
+    drawRig(x, this.name, this.pose(), rigPalette(this.name, id, look, (this.theme ?? currentTheme()).accent, (this.theme ?? currentTheme()).id), (size * 0.8) / 112);
   }
 
   set(state: MascotState): void {

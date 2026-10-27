@@ -7,7 +7,7 @@
 // (inferior com língua, superior). Coordenadas: caixa de 100 unidades centrada
 // em (0,0), pés em y≈+47. Só transforms e Path2D — nada de 3D nem detalhe extra.
 
-import { drawRaster, rasterReady } from "./rig-raster";
+import { drawRaster, rasterReady, STYLE_TINTS, THEME_STYLE } from "./rig-raster";
 export { onRasterReady } from "./rig-raster";
 
 export type Who = "huginn" | "muninn";
@@ -36,7 +36,7 @@ export const REST_POSE: RigPose = { breath: 0, tilt: 0, px: 0, py: 0, lid: 0, br
 export interface RigPalette {
   body: string; head: string; crest: string; wing: string; wingDark: string;
   beak: string; beakDark: string; feet: string; ink: string; sticker: string;
-  beakHi?: string; original?: boolean; medal: string; medalHi: string; cord: string; tongue: string; mouth: string; eye: string; pupil: string;
+  beakHi?: string; original?: boolean; style?: string; medal: string; medalHi: string; cord: string; tongue: string; mouth: string; eye: string; pupil: string;
 }
 
 /** As cores da referência. */
@@ -104,7 +104,8 @@ export function signature(who: Who, t: number): RigPose {
 /** Desenha o corvo com centro em (0,0) e escala `s` px por unidade. `lod` simplifica abaixo de ~40 px. */
 export function drawRig(x: CanvasRenderingContext2D, who: Who, pose: RigPose, pal: RigPalette, s: number, opts: { alpha?: number; face?: number } = {}) {
   // "Clássico" e "Seguir o tema": os desenhos originais da referência, animados.
-  if (pal.original && rasterReady(who)) { drawRaster(x, who, pose, s, opts.alpha ?? 1); return; }
+  // Todos os estilos usam os desenhos originais (recoloridos); o vetor só cobre o carregamento.
+  if (pal.original && rasterReady(who)) { drawRaster(x, who, pose, s, opts.alpha ?? 1, pal.style ?? "classic"); return; }
   const px = s * 100;
   const lod = px < 44;
   const ink = Math.max(lod ? 2.6 : 2.2, (lod ? 1.3 : 1.05) / s * 0.9);
@@ -254,12 +255,15 @@ export function drawRig(x: CanvasRenderingContext2D, who: Who, pose: RigPose, pa
  *  - "classic" (padrão) e sem look: as cores da referência;
  *  - "theme" (Seguir o tema): preto/prata fixos, o topete e o brilho do medalhão no acento do tema;
  *  - os outros: recolor do mesmo rig (contornos mantidos). */
-export function rigPalette(who: Who, characterId: string, look: { dark: string; lit: string; wing: string; markColor: string; beak: readonly string[] } | null, accent?: string): RigPalette {
+export function rigPalette(who: Who, characterId: string, _look: { dark: string; lit: string; wing: string; markColor: string; beak: readonly string[] } | null, _accent?: string, themeId?: string): RigPalette {
   const ref = REF_PALETTE[who];
-  if (characterId === "theme") return { ...ref, crest: who === "huginn" ? mixHex(ref.crest, accent ?? ref.crest, 0.35) : ref.crest, medalHi: accent ?? ref.medalHi };
-  if (characterId === "classic" || !look) return ref;
-  const body = who === "huginn" ? look.dark : look.lit;
-  return { ...ref, body, head: body, wing: look.wing, wingDark: mixHex(look.wing, "#000000", 0.3), crest: look.markColor, beak: look.beak[1] ?? ref.beak, beakDark: mixHex(look.beak[1] ?? ref.beak, "#000000", 0.25), beakHi: mixHex(look.beak[1] ?? ref.beak, "#FFFFFF", 0.3), original: false };
+  // "Seguir o tema": o estilo do tema atual (o id do tema pode vir com sufixo).
+  const style = characterId === "theme" ? (THEME_STYLE[(themeId ?? "").split("-")[0]] ?? "classic") : characterId;
+  if (style === "classic" || !STYLE_TINTS[style]) return ref;
+  // Fallback vetorial (só enquanto as imagens carregam): recolor aproximado.
+  const t = STYLE_TINTS[style][who]!;
+  const body = t.feather;
+  return { ...ref, body, head: body, wing: t.wing ?? mixHex(body, "#000000", 0.25), wingDark: mixHex(t.wing ?? body, "#000000", 0.35), crest: t.crest ?? ref.crest, original: true, style };
 }
 function mixHex(a: string, b: string, t: number): string {
   const p = (h: string) => { const m = h.replace("#", ""); const n = m.length === 3 ? m.split("").map((c) => c + c).join("") : m.slice(0, 6); return [0, 2, 4].map((i) => parseInt(n.slice(i, i + 2), 16)); };

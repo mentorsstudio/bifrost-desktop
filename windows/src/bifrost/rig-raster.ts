@@ -68,9 +68,73 @@ const rgb = (c: readonly number[]) => `rgb(${c[0]},${c[1]},${c[2]})`;
 export const RASTER_LIMITS = { tilt: 0.065, wing: 0.5, beak: 0.14 };
 
 /** Desenha o corvo original com o centro do rig em (0,0); `s` = px por unidade do rig (112 = altura). */
-export function drawRaster(x: C2, who: Who, pose: RigPose, s: number, alpha = 1) {
+// ── Estilos (Ajustes › Personagens): recolor dos desenhos originais ────────────────
+// Remapeia só as penas (corpo/asa) e o topete, pela luminância de cada pixel; tinta,
+// branco dos olhos, pupilas, bico, língua e medalhão de bronze ficam intactos.
+type Tint = { feather: string; wing?: string; crest?: string };
+export const STYLE_TINTS: Record<string, Partial<Record<Who, Tint>>> = {
+  snow:  { huginn: { feather: "#cdd6ea", crest: "#7fb2ff" }, muninn: { feather: "#f3f5fb", wing: "#aab6cc" } },
+  ember: { huginn: { feather: "#3b2a25", crest: "#ff8a3a" }, muninn: { feather: "#e8955c", wing: "#4a2a22" } },
+  moss:  { huginn: { feather: "#24452f", crest: "#a6e88a" }, muninn: { feather: "#a9c48a", wing: "#2f4a30" } },
+  dusk:  { huginn: { feather: "#4a3470", crest: "#ff9fd2" }, muninn: { feather: "#e4b8d8", wing: "#6a4a86" } },
+  gold:  { huginn: { feather: "#8a6420", crest: "#fff2c4" }, muninn: { feather: "#f1e3c3", wing: "#a07a34" } },
+  storm: { huginn: { feather: "#3a4550", crest: "#5ee8ff" }, muninn: { feather: "#aeb6c0", wing: "#3a424c" } },
+};
+/** "Seguir o tema": cada tema do app vira um dos estilos. */
+export const THEME_STYLE: Record<string, string> = {
+  bifrost: "classic", asgard: "gold", muspelheim: "ember", niflheim: "snow", yggdrasil: "moss", valhalla: "storm", ragnarok: "dusk",
+};
+const hex = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+// Faixas de luminância das penas na arte original (referência de cada corvo).
+const REFL: Record<Who, { dark: [number, number, number]; light?: [number, number, number] }> = {
+  huginn: { dark: [33, 96, 50] },                       // corpo+asa; ref ≈ 50
+  muninn: { dark: [33, 96, 62], light: [150, 233, 198] }, // asa ≈ 62; corpo ≈ 198
+};
+function tintPixel(who: Who, t: Tint, r: number, g: number, b: number): [number, number, number] | null {
+  const l = 0.299 * r + 0.587 * g + 0.114 * b;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+  const R = REFL[who];
+  let target: number[] | null = null, ref = 1;
+  if (who === "huginn" && t.crest && b - r > 24 && b > g && l > 30 && l < 120) { target = hex(t.crest); ref = 62; }
+  else if (mx > 0 && (mx - mn) / mx > 0.32) return null; // medalhão, língua, rosa: intactos
+  else if (l >= R.dark[0] && l <= R.dark[1]) { target = hex(who === "muninn" ? (t.wing ?? t.feather) : t.feather); ref = R.dark[2]; }
+  else if (R.light && l >= R.light[0] && l <= R.light[1]) { target = hex(t.feather); ref = R.light[2]; }
+  if (!target) return null;
+  const k = l / ref;
+  return [Math.min(255, target[0] * k), Math.min(255, target[1] * k), Math.min(255, target[2] * k)];
+}
+const TINTED = ["under", "base", "head", "wing", "beakLo"];
+const tintCache = new Map<string, HTMLCanvasElement>();
+function tinted(who: Who, style: string, layer: string): CanvasImageSource | undefined {
+  const src = imgs.get(`${who}-${layer}`);
+  const t = STYLE_TINTS[style]?.[who];
+  if (!src || !t || !TINTED.includes(layer)) return src;
+  const key = `${who}-${style}-${layer}`;
+  let c = tintCache.get(key);
+  if (!c) {
+    c = canv(src.naturalWidth, src.naturalHeight);
+    const g = c.getContext("2d", { willReadFrequently: true })!;
+    g.drawImage(src, 0, 0);
+    const d = g.getImageData(0, 0, c.width, c.height), p = d.data;
+    for (let i = 0; i < p.length; i += 4) {
+      if (p[i + 3] === 0) continue;
+      const o = tintPixel(who, t, p[i], p[i + 1], p[i + 2]);
+      if (o) { p[i] = o[0]; p[i + 1] = o[1]; p[i + 2] = o[2]; }
+    }
+    g.putImageData(d, 0, 0);
+    tintCache.set(key, c);
+  }
+  return c;
+}
+const tintRgb = (who: Who, style: string, c: readonly number[]) => {
+  const t = STYLE_TINTS[style]?.[who];
+  const o = t ? tintPixel(who, t, c[0], c[1], c[2]) : null;
+  return o ? o.map(Math.round) : c;
+};
+
+export function drawRaster(x: C2, who: Who, pose: RigPose, s: number, alpha = 1, style = "classic") {
   const m = META[who];
-  const im = (l: string) => imgs.get(`${who}-${l}`)!;
+  const im = (l: string) => (tinted(who, style, l) ?? imgs.get(`${who}-${l}`))!;
   const W = m.w + pad * 2, H = m.h + pad * 2;
   const f = sc(`${who}-frame`, W, H), g = f.getContext("2d")!;
   g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
@@ -127,7 +191,7 @@ export function drawRaster(x: C2, who: Who, pose: RigPose, s: number, alpha = 1)
         cover.moveTo(-W2, T); cover.lineTo(W2, T); cover.lineTo(W2, -D); cover.lineTo(ae, -D);
         cover.ellipse(0, -D, ae, be, 0, 0, Math.PI, false);
         cover.lineTo(-W2, -D); cover.closePath();
-        gl.fillStyle = `rgb(${lr ?? m.lid[0]},${lg ?? m.lid[1]},${lb ?? m.lid[2]})`;
+        gl.fillStyle = rgb(tintRgb(who, style, [lr ?? m.lid[0], lg ?? m.lid[1], lb ?? m.lid[2]]));
         gl.fill(cover);
         gl.strokeStyle = rgb(m.ink); gl.lineWidth = lw; gl.lineCap = "round";
         gl.beginPath(); gl.ellipse(0, -D, ae, be, 0, 0.2, Math.PI - 0.2, false); gl.stroke();
@@ -145,7 +209,7 @@ export function drawRaster(x: C2, who: Who, pose: RigPose, s: number, alpha = 1)
       const p = new Path2D();
       p.rect(cx - rx - 8, cy - ry - 8, rx * 2 + 16, ry * 2 + 16);
       p.ellipse(cx, cy + d - 2, rx * 1.08, ry * 1.04, 0, 0, Math.PI * 2);
-      ge.fillStyle = rgb(m.lid); ge.fill(p, "evenodd");
+      ge.fillStyle = rgb(tintRgb(who, style, m.lid)); ge.fill(p, "evenodd");
       ge.save(); ge.clip(p, "evenodd");
       ge.strokeStyle = rgb(m.ink); ge.lineWidth = Math.max(7, ry * 0.14);
       ge.beginPath(); ge.ellipse(cx, cy + d - 2, rx * 1.08, ry * 1.04, 0, Math.PI, Math.PI * 2); ge.stroke();

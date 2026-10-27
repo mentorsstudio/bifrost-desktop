@@ -738,7 +738,7 @@ export class RavenEngine {
     const ch = currentCharacter();
     const t = ravenTheme();
     const who = this.identity;
-    const pal = rigPalette(who, ch.id, ch.huginn ? (who === "huginn" ? t.huginn : t.muninn) : null, currentTheme().accent);
+    const pal = rigPalette(who, ch.id, ch.huginn ? (who === "huginn" ? t.huginn : t.muninn) : null, currentTheme().accent, currentTheme().id);
     x.save();
     x.translate(0, k * 6);
     drawRig(x, who, this.rigPose(), pal, k * 0.88, { alpha: a, face: this.face });
