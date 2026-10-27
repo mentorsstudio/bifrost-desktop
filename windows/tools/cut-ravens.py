@@ -95,8 +95,7 @@ for who, cfg in CFG.items():
     headM &= ~(wingPix & (yy >= cut - 30))  # asas não vão com a cabeça
     layers = {}
     Hc = C.copy()
-    if who != "muninn":
-        Hc[pupD] = sclera  # pupilas em camada própria
+    # (pupilas ficam na própria cabeça nos dois corvos: deslizar a pupila abria frestas brancas)
     # (Muninn: a pupila fica na própria cabeça — ela encosta no contorno e a máscara convexa
     #  do branco cortava a pupila numa reta, que virava uma fresta clara ao mexer a cabeça.)
     # sobrancelha (Huginn): camada própria; por baixo, pena
@@ -195,7 +194,7 @@ for who, cfg in CFG.items():
     save(f"{who}-head", bleed(Hc, headA), headA)
     Pc = np.zeros_like(C); Pc[:] = ink
     # pupila = os pixels originais (com o brilho), opaca na própria máscara: sem fresta
-    save(f"{who}-pupils", Pc, pupA if who != "muninn" else np.zeros_like(pupA))
+    save(f"{who}-pupils", Pc, np.zeros_like(pupA))
     save(f"{who}-eyes", np.full_like(C, 255), eyeAll.astype(np.float32))
     if who == "muninn":
         # máscara da pálpebra: o olho com o contorno de fora inteiro (+3 px), por olho

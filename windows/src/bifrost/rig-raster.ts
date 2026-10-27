@@ -102,7 +102,7 @@ export function drawRaster(x: C2, who: Who, pose: RigPose, s: number, alpha = 1)
   const small = Math.min(...m.eyes.map((q) => q[2]));
   // Muninn não desliza a pupila: a pupila dela encosta no contorno do olho e qualquer
   // deslocamento abria uma fresta branca (esclera) ao lado do olho esquerdo.
-  const gaze = who === "muninn" ? 0 : 1;
+  const gaze = 0; // pupilas ficam na cabeça (sem fresta branca ao olhar)
   ge.drawImage(im("pupils"), pose.px * small * 0.3 * gaze, pose.py * small * 0.25 * gaze);
   const lid = Math.max(0, Math.min(1, pose.lid));
   if (who === "muninn") {
