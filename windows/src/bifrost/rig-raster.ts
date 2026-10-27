@@ -9,7 +9,7 @@ import type { RigPose, Who } from "./rig";
 
 type Meta = { w: number; h: number; pivot: readonly number[]; eyes: readonly (readonly number[])[]; brow: readonly number[] | null;
   beakRoot: readonly number[] | null; shoulder: readonly number[] | null; lid: readonly number[]; ink: readonly number[];
-  sticker: readonly number[]; stickerW: number; layers: readonly string[] };
+  sticker: readonly number[]; stickerW: number; eyeFit?: readonly (readonly number[])[]; layers: readonly string[] };
 const META = ART_META as unknown as Record<Who, Meta>;
 
 const URLS: Record<string, string> = {
@@ -24,7 +24,6 @@ const URLS: Record<string, string> = {
   "muninn-eyes": new URL("./art/muninn-eyes.webp", import.meta.url).href,
   "muninn-beakLo": new URL("./art/muninn-beakLo.webp", import.meta.url).href,
   "muninn-wing": new URL("./art/muninn-wing.webp", import.meta.url).href,
-  "muninn-chest": new URL("./art/muninn-chest.webp", import.meta.url).href,
 };
 
 const imgs = new Map<string, HTMLImageElement>();
@@ -99,6 +98,38 @@ export function drawRaster(x: C2, who: Who, pose: RigPose, s: number, alpha = 1)
   const small = Math.min(...m.eyes.map((q) => q[2]));
   ge.drawImage(im("pupils"), pose.px * small * 0.3, pose.py * small * 0.25);
   const lid = Math.max(0, Math.min(1, pose.lid));
+  if (who === "muninn") {
+    // Muninn: pupilas recortadas pelo olho; a pálpebra vai numa camada própria, recortada
+    // pelo olho um tico maior (sem franja branca), com UM traço de cílio curvo.
+    ge.globalCompositeOperation = "destination-in"; ge.drawImage(im("eyes"), 0, 0);
+    ge.globalCompositeOperation = "source-over";
+    g.drawImage(e, 0, 0);
+    if (lid > 0.01 && m.eyeFit) {
+      // Pálpebra: a elipse do olho (ajustada ao contorno de fora) cheia de pena prateada,
+      // o contorno do olho redesenhado por cima no mesmo lugar e UM cílio curvo.
+      const lw = 6.5; // a mesma espessura das linhas dela (px da arte)
+      m.eyeFit.forEach(([fx, fy, a, b, ang], i) => {
+        const [cx, cy, rx, ry] = m.eyes[i];
+        const inner = new Path2D(); inner.ellipse(fx, fy, a - lw * 0.5, b - lw * 0.5, ang, 0, Math.PI * 2);
+        g.save(); g.clip(inner);
+        const xL = cx - rx - 12, xR = cx + rx + 12;
+        const yE = cy - ry - 8 + (ry * 2 + 20) * lid, sagE = ry * 0.32 * Math.min(1, lid * 1.6);
+        g.fillStyle = rgb(m.lid);
+        g.beginPath(); g.moveTo(xL, cy - ry - 16); g.lineTo(xR, cy - ry - 16); g.lineTo(xR, yE - sagE);
+        g.quadraticCurveTo(cx, yE + sagE, xL, yE - sagE); g.closePath(); g.fill();
+        const yC = cy + ry * 0.05, sagC = ry * 0.42;
+        const yl = Math.min(yE, yC), sl = Math.min(sagE, sagC);
+        g.strokeStyle = rgb(m.ink); g.lineWidth = lw; g.lineCap = "round";
+        g.beginPath(); g.moveTo(xL, yl - sl); g.quadraticCurveTo(cx, yl + sl, xR, yl - sl); g.stroke();
+        g.restore();
+        // o contorno do olho, inteiro e limpo, por cima da borda da pálpebra
+        g.save(); g.globalAlpha *= Math.min(1, lid * 2.5);
+        g.strokeStyle = rgb(m.ink); g.lineWidth = lw;
+        g.beginPath(); g.ellipse(fx, fy, a - lw * 0.5, b - lw * 0.5, ang, 0, Math.PI * 2); g.stroke();
+        g.restore();
+      });
+    }
+  } else {
   if (lid > 0.01) {
     for (const [cx, cy, rx, ry] of m.eyes) {
       // A borda de baixo da pálpebra é o arco de cima do próprio olho, descido: acompanha a curva.
@@ -116,6 +147,7 @@ export function drawRaster(x: C2, who: Who, pose: RigPose, s: number, alpha = 1)
   ge.globalCompositeOperation = "destination-in"; ge.drawImage(im("eyes"), 0, 0);
   ge.globalCompositeOperation = "source-over";
   g.drawImage(e, 0, 0);
+  }
   // Sobrancelha do Huginn (a direita, o "entendi"): sobe e gira um tico.
   if (m.brow) {
     const [bx, by] = m.brow;
@@ -129,7 +161,6 @@ export function drawRaster(x: C2, who: Who, pose: RigPose, s: number, alpha = 1)
     const [sx, sy] = m.shoulder;
     const wa = -Math.max(-0.1, Math.min(RASTER_LIMITS.wing, pose.wingR * 0.25));
     g.save(); g.translate(0, rise * 0.5); g.translate(sx, sy); g.rotate(wa); g.translate(-sx, -sy); g.drawImage(im("wing"), 0, 0); g.restore();
-    g.save(); g.translate(0, rise * 0.5); g.drawImage(im("chest"), 0, 0); g.restore();
   }
 
   // Reduz em meias etapas até perto do tamanho final (nítido em ícones pequenos).
