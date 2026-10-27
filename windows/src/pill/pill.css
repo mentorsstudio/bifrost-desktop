@@ -25,9 +25,9 @@ html, body {
   contain: layout paint;
   transition: width .38s var(--m-bouncy), height .38s var(--m-bouncy), background .22s, box-shadow .22s;
 }
-.capsule::after { /* ponte arco-íris fininha, só aberta */
+.capsule::after { /* faixa de aurora fininha (fase 13: sem arco-íris), só aberta */
   content: ""; position: absolute; left: 38%; right: 12%; bottom: 2px; height: 1.5px; border-radius: 2px;
-  background: linear-gradient(90deg, #ff6b6b, #f2b84b, #f6e36a, #5ef2c9, #6aa8ff, #b47cff);
+  background: linear-gradient(90deg, rgba(47, 211, 166, 0) 0%, #2fd3a6 16%, #5ef2c9 36%, #6f8dff 62%, #9a6bff 84%, rgba(154, 107, 255, 0) 100%);
   opacity: 0; transition: opacity .25s;
 }
 .capsule.open {

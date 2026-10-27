@@ -594,3 +594,28 @@ Credenciais no cofre do sistema (`secrets.rs`): `mcp-token:<nome>` (Hermes VPS e
   - O movimento usa os tokens de `theme/motion.css`: pulo e pop com `--m-bouncy` e olhos com `--m-snappy`. No sucesso, as asas batem junto com o pulo. No ocioso, as asas respiram. O Muninn respira fora de fase.
   - `prefers-reduced-motion` continua desligando as animações.
   - Prancha de conferência: `dev/ravens.html` (`?only=svg|states|outfits&sz=`).
+
+### 10.13 Fase 13 (27/10/2026)
+
+- **Locomoção dos corvos** (`bifrost/locomotion.ts`, `raven.ts`). Cada marcha é uma pose pura no tempo, `pose(gait, t, ritmo)`, que o motor aplica como transformações do desenho, e as pranchas e testes leem a mesma função quadro a quadro.
+  - **Bater de asas**: descida rápida em 42 % do ciclo, com curva fiorde, e subida relaxada, com curva maré. Uma pena de trás vem atrasada e forma o leque, com sobreposição das penas. A sustentação levanta o corpo, e o topete e o rosto atrasam como movimento secundário. Aparece em aprovação e em concluído (`flapBurst`) e faz parte do voo.
+  - **Andar aos pulinhos**: agacha, sai do chão esticando, pousa amassando e se assenta. O pé da frente alterna a cada pulo, a cabeça balança e ele vira para o lado em que anda; na volta, o corpo afina, como quem gira.
+  - **Decolar**: agacha com as asas armadas e pula batendo forte.
+  - **Voar**: bate as asas ou plana com elas abertas, com o corpo inclinado no rumo e os pés recolhidos.
+  - **Pousar**: freia com as asas para cima e o corpo para trás, e o toque vem com amasso e mola.
+  - **Ritmo próprio**: o Muninn é mais lento e abre um pouco mais as asas (`RHYTHM`).
+  - **Limites**: as asas só giram para fora, até `WING_MAX`, longe do elmo e da coroa. A lanterna passou a pender do pé direito, e o manto se recolhe com as asas abertas. A gola ficou mais estreita.
+  - **Movimento reduzido**: com `prefers-reduced-motion`, as marchas não são aplicadas.
+  - **Testes**: `tests/locomotion.test.mjs` cobre 240 quadros por marcha.
+- **Huginn na área de trabalho** (`desktop.rs`, `desktop/main.ts`):
+  - **Voos de ida e volta à ilha**: primeiro a decolagem (240 ms parado), depois um arco de 760 ms (16 % da distância, no máximo 90 px). O evento `desktop-flight-path` passa rumo e tempos à página, e na ida ele pousa no fim.
+  - **Passeio**: o comando `desktop_mochi_walk(dx, ms)` o faz andar na linha em que está, até a borda da área útil. Ali ele vira e, da próxima vez, volta. A página sorteia um passeio a cada 11–24 s se ele estiver parado e acordado. Arrastar interrompe o passeio, porque usa o mesmo token do voo.
+  - **Ajuste**: em Ajustes → Geral, "Huginn passeia pela tela" (`desktopWander`, ligado por padrão).
+  - **Quadros por segundo**: 60 enquanto ele se move e 30 parado.
+- **Arco-íris substituído**: as faixas `--prism`/`--bf-bridge`, a borda da ilha, a cápsula da pílula, a ponte da saudação (canvas), o ponto do chip e o título dos Ajustes eram arco-íris (vermelho → laranja → amarelo → verde → azul → violeta). Agora são uma faixa de aurora (verde-água → verde → violeta, com as pontas sumindo na noite) e marcas rúnicas de ouro a cada 44 px. A animação é só de opacity/scaleX com `--m-ease`.
+- **Interface própria**:
+  - O hub perdeu a barra lateral do Coucou: os reinos Voz e Ilha ficam numa ponte de runas no topo, e só a página escolhida mostra o nome.
+  - Os Ajustes viraram um "livro-razão" em duas colunas, com o controle à esquerda e a explicação à direita.
+  - As abas da ilha viraram um seletor central, e as ações ganharam um grupo com divisória de ouro.
+  - O estilo fica em `bifrost/realm.css`, e as capturas lado a lado em `bifrost-screens/v13-ui-*`.
+- **Diagnóstico**: o relatório aplica na memória a mesma junção de MCP que o app faz ao abrir. O teste de fumaça mostra os nomes juntados, a origem dos importados e falha se DaVinci, Blender ou Notion aparecerem em dobro.

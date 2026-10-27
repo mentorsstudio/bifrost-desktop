@@ -1175,6 +1175,7 @@ pub fn run() {
             desktop::desktop_mochi_fly_out,
             desktop::desktop_mochi_fly_home,
             desktop::desktop_mochi_set_asleep,
+            desktop::desktop_mochi_walk,
             sounds::custom_sounds,
             sounds::custom_sound,
             sounds::reveal_sounds_folder,

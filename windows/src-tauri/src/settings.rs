@@ -101,6 +101,8 @@ pub struct Settings {
     pub phone_relay_url: String,
     /// The date and time in the middle of the compact island. Off by default.
     pub show_clock: bool,
+    /// Fase 13: Huginn passeia sozinho pela borda da tela de vez em quando. On by default.
+    pub desktop_wander: bool,
     /// Paulo build — MCP servers the chat may talk to (mcp/config.rs), by name.
     /// Owned by the Rust side: only the mcp_* commands change them.
     pub mcp_servers: BTreeMap<String, crate::mcp::McpServer>,
@@ -180,6 +182,7 @@ impl Default for Settings {
             phone_relay: false,
             phone_relay_url: String::new(),
             show_clock: false,
+            desktop_wander: true,
             mcp_servers: crate::mcp::config::default_servers(),
             mcp_chat: crate::mcp::McpChat::default(),
             mcp_server_enabled: true,
@@ -513,6 +516,7 @@ mod tests {
   "phoneRelay": true,
   "phoneRelayUrl": "wss://relay.example.workers.dev",
   "showClock": true,
+  "desktopWander": true,
   "mcpServers": { "hermes": { "command": "hermes.exe", "args": ["mcp-serve", "--tools"] }, "vps": { "url": "https://mcp.example.com/mcp" } },
   "mcpChat": { "server": "vps", "mode": "tool", "tool": "chat", "argument": "message", "extraArgs": { "a": 1 }, "statusTool": "s", "idArgument": "id", "timeoutSecs": 60, "includeHistory": false },
   "mcpServerEnabled": false,
@@ -1037,6 +1041,7 @@ mod tests {
                 "phoneRelay",
                 "phoneRelayUrl",
                 "showClock",
+                "desktopWander",
                 "mcpServers",
                 "mcpChat",
                 "mcpServerEnabled",

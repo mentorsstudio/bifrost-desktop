@@ -10,7 +10,11 @@ import type { Outfit, OutfitSelection } from "../huginn/wardrobe";
 type Ctx = CanvasRenderingContext2D;
 
 /** Onde está a cabeça (e o peito) do corvo, no espaço em que ele é desenhado. */
-export interface RavenHead { x: number; y: number; r: number; chestY: number; bodyR: number }
+export interface RavenHead {
+  x: number; y: number; r: number; chestY: number; bodyR: number;
+  /** Pé direito (a lanterna pende dele) e quanto as asas estão abertas (0–1). */
+  footX?: number; footY?: number; spread?: number;
+}
 export interface OutfitState { presence: number; morph: number }
 
 const GOLD = ["#F6D27A", "#B8862F"] as const;
@@ -59,7 +63,8 @@ function amulet(c: Ctx, h: RavenHead) {
 // como um tecido que cai dos ombros (y ≈ 54) até a cauda; nada na frente do peito.
 function cloakBehind(c: Ctx, h: RavenHead) {
   const x = h.x, top = h.y + h.r * 0.8, low = h.chestY + h.bodyR * 0.82;
-  const w = h.bodyR * 1.2;
+  // Asas abertas: o manto se recolhe atrás do corpo para não encostar nelas.
+  const w = h.bodyR * (1.2 - 0.3 * (h.spread ?? 0));
   c.save();
   c.beginPath();
   c.moveTo(x - h.r * 0.55, top);
@@ -77,11 +82,11 @@ function cloakFront(c: Ctx, h: RavenHead) {
   const x = h.x, y = h.y + h.r * 0.86;
   c.save();
   c.beginPath();
-  c.moveTo(x - h.r * 0.78, y - 1.5);
-  c.quadraticCurveTo(x, y + h.r * 0.34, x + h.r * 0.78, y - 1.5);
-  c.quadraticCurveTo(x + h.r * 0.8, y + h.r * 0.3, x + h.r * 0.62, y + h.r * 0.36);
+  c.moveTo(x - h.r * 0.72, y - 1.5);
+  c.quadraticCurveTo(x, y + h.r * 0.34, x + h.r * 0.72, y - 1.5);
+  c.quadraticCurveTo(x + h.r * 0.74, y + h.r * 0.3, x + h.r * 0.62, y + h.r * 0.36);
   c.quadraticCurveTo(x, y + h.r * 0.72, x - h.r * 0.62, y + h.r * 0.36);
-  c.quadraticCurveTo(x - h.r * 0.8, y + h.r * 0.3, x - h.r * 0.78, y - 1.5);
+  c.quadraticCurveTo(x - h.r * 0.74, y + h.r * 0.3, x - h.r * 0.72, y - 1.5);
   c.closePath();
   c.fillStyle = lin(c, 0, y - 2, 0, y + h.r * 0.6, "#e6d6b8", "#9c8664");
   c.fill(); outline(c, h.r * 0.04);
@@ -142,15 +147,17 @@ function crown(c: Ctx, h: RavenHead) {
 function lantern(c: Ctx, h: RavenHead) {
   const t = performance.now() / 1000;
   const sway = Math.sin(t * 1.6) * 0.12;
-  // Pendurada além da ponta da asa direita (x ≈ 104), para não sumir atrás dela.
-  const px = h.x + h.bodyR * 1.75, py = h.chestY - h.bodyR * 0.05;
+  // Fase 13: pende do pé direito (abaixo do corpo), longe das asas em qualquer
+  // batida, no voo e no andar; acompanha o pé.
+  const px = (h.footX ?? h.x + 6.5) + 3, py = (h.footY ?? 103.4) + 1.5;
   c.save();
   c.translate(px, py);
   c.rotate(sway);
   c.strokeStyle = IRON[0]; c.lineWidth = h.r * 0.05;
-  c.beginPath(); c.moveTo(0, -h.r * 0.5); c.lineTo(0, 0); c.stroke();
-  c.beginPath(); c.roundRect(-h.r * 0.26, 0, h.r * 0.52, h.r * 0.66, h.r * 0.1);
-  const g = c.createRadialGradient(0, h.r * 0.33, 0, 0, h.r * 0.33, h.r * 0.5);
+  c.beginPath(); c.moveTo(0, 0); c.lineTo(0, h.r * 0.22); c.stroke();
+  c.translate(0, h.r * 0.22);
+  c.beginPath(); c.roundRect(-h.r * 0.2, 0, h.r * 0.4, h.r * 0.5, h.r * 0.12);
+  const g = c.createRadialGradient(0, h.r * 0.25, 0, 0, h.r * 0.25, h.r * 0.4);
   g.addColorStop(0, "#ffe59a"); g.addColorStop(1, "#ff7a4a");
   c.fillStyle = g; c.shadowColor = "rgba(255,180,90,.9)"; c.shadowBlur = h.r * 0.8; c.fill();
   c.shadowBlur = 0; c.strokeStyle = IRON[1]; c.lineWidth = h.r * 0.07; c.stroke();

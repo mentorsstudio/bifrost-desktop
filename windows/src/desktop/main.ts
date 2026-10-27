@@ -31,6 +31,12 @@ const DRAW_W = PANEL_SIZE * 0.8;
 const SIDE = (PANEL_SIZE - DRAW_W) / 2;
 /** Frame pacing: TimelineView(minimumInterval: 1/30) awake; asleep, barely. */
 const AWAKE_FRAME_MS = 1000 / 30;
+/** Fase 13: andando, voando ou batendo asas, 60 quadros por segundo; parado, volta a 30. */
+const MOVING_FRAME_MS = 1000 / 61;
+/** Passeio: velocidade (px lógicos/s) e intervalo entre passeios (s). */
+const WALK_SPEED = 58;
+const WANDER_MIN_S = 11;
+const WANDER_MAX_S = 24;
 const ASLEEP_FRAME_MS = 250;
 
 class DesktopMochi {
@@ -90,6 +96,19 @@ class DesktopMochi {
     });
     await onEvent<Point>(DESKTOP_EVENTS.cursor, (p) => this.notePointer(p));
     await onEvent<boolean>(DESKTOP_EVENTS.visible, (on) => this.setVisible(on));
+    await onEvent<{ kind: string; dx: number; dy: number; ms: number; takeoff_ms: number }>(DESKTOP_EVENTS.flightPath, (f) => {
+      // Decola agachando, voa inclinado no rumo do caminho e, se o destino é a
+      // área de trabalho, freia e pousa. Para a ilha ele entra direto (a ilha o recebe).
+      this.walking = false;
+      const dir = Math.sign(f.dx) || 1;
+      const tilt = Math.max(-0.3, Math.min(0.3, dir * 0.2 + Math.atan2(f.dy, Math.abs(f.dx) + 1) * 0.08 * dir));
+      this.engine.takeOff(dir, tilt);
+      this.schedule();
+      if (f.kind === "out") {
+        const landAt = f.takeoff_ms + f.ms - 220;
+        window.setTimeout(() => { this.engine.land(); this.engine.faceTarget = 0; this.schedule(); }, Math.max(0, landAt));
+      }
+    });
     await onEvent<string>(DESKTOP_EVENTS.flight, (kind) => {
       // He fades in on the way out of the island (alphaValue 0 → 1 on macOS).
       if (kind !== "out") return;
@@ -117,6 +136,7 @@ class DesktopMochi {
 
   private setVisible(on: boolean) {
     this.visible = on;
+    this.planWander();
     if (on) {
       // The two pages may have started in either order: ask again if needed.
       if (!this.informed) void emitToWindow(ISLAND, DESKTOP_EVENTS.ready);
@@ -172,7 +192,7 @@ class DesktopMochi {
 
   private schedule() {
     if (this.timer != null || !this.visible) return;
-    const wait = this.asleep ? ASLEEP_FRAME_MS : AWAKE_FRAME_MS;
+    const wait = this.asleep ? ASLEEP_FRAME_MS : this.engine.moving ? MOVING_FRAME_MS : AWAKE_FRAME_MS;
     const due = Math.max(0, this.lastDraw + wait - performance.now());
     this.timer = window.setTimeout(() => {
       // Awake, frames line up with the display; asleep, a timer is enough.
@@ -307,7 +327,48 @@ class DesktopMochi {
     this.pokeTimer = null;
   }
 
+  // ── Passeio (fase 13) ─────────────────────────────────────────────────────
+  private walking = false;
+  private wanderTimer: number | null = null;
+  private wanderDir: -1 | 1 = Math.random() < 0.5 ? -1 : 1;
+
+  private planWander() {
+    if (this.wanderTimer != null) window.clearTimeout(this.wanderTimer);
+    this.wanderTimer = null;
+    if (!this.visible) return;
+    const wait = (WANDER_MIN_S + Math.random() * (WANDER_MAX_S - WANDER_MIN_S)) * 1000;
+    this.wanderTimer = window.setTimeout(() => void this.stroll(), wait);
+  }
+
+  /** Anda um pouco aos pulinhos e para; na borda da tela, vira e volta da próxima vez. */
+  private async stroll() {
+    this.wanderTimer = null;
+    const calm = this.snap.state === "idle" || this.snap.state === "finished";
+    const ok = this.visible && !this.asleep && !this.dragging && !this.press && this.snap.wander !== false
+      && !this.snap.paused && calm && this.engine.gait === "none" && this.mode !== "off";
+    if (ok) {
+      const dist = 40 + Math.random() * 110;
+      const hop = 0.44;
+      const ms = Math.max(hop * 2, Math.round((dist / WALK_SPEED) / hop) * hop) * 1000;
+      const dir = this.wanderDir;
+      this.walking = true;
+      this.engine.walk(dir);
+      this.schedule();
+      const done = await Bridge.desktopWalk(dir * dist, ms).catch(() => 0);
+      if (this.walking) {
+        this.walking = false;
+        this.engine.stop();
+        this.engine.faceTarget = 0;
+        this.schedule();
+      }
+      if (Math.abs(done ?? 0) < dist * 0.5) this.wanderDir = dir > 0 ? -1 : 1;
+      else if (Math.random() < 0.35) this.wanderDir = dir > 0 ? -1 : 1;
+    }
+    this.planWander();
+  }
+
   private beginDrag() {
+    if (this.walking) { this.walking = false; this.engine.stop(); }
     this.dragging = true;
     this.cancelPoke();
     this.dragOrigin = null;

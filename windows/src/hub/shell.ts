@@ -291,18 +291,25 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
   const logo = h("span", { class: "bf-brand-raven" });
   side.append(h("div", { class: "hub-brand" }, logo, h("span", { text: "Bifrost" })));
   liveRaven(logo);
+  // Fase 13: navegação própria do Bifrost — em vez da barra lateral, dois "reinos"
+  // (Voz e Ilha) numa ponte horizontal no topo; cada página é uma runa-ícone, e o
+  // nome aparece só na escolhida (e no title). Mesmas páginas, mesma ordem.
   const group = (title: string, pages: PageDef[]) => {
-    side.append(h("div", { class: "hub-group", text: title }));
+    const realm = h("div", { class: "hub-realm" });
+    realm.append(h("div", { class: "hub-group", text: title }));
+    const rail = h("div", { class: "hub-rail" });
     for (const p of pages) {
-      const b = h("button", { class: "hub-item", onclick: () => void show(p.id) });
+      const b = h("button", { class: "hub-item", title: p.title(), "aria-label": p.title(), onclick: () => void show(p.id) });
       b.append(icon(p.icon), h("span", { text: p.title() }));
       items.set(p.id, b);
-      side.append(b);
+      rail.append(b);
     }
+    realm.append(rail);
+    side.append(realm);
   };
   group("Voz", FLOW_PAGES);
   group("Ilha", NOTCH_PAGES);
-  side.append(h("div", { class: "spacer" }), statusLine, h("div", { class: "hub-version", text: `Bifrost ${opts.version}` }));
+  side.append(h("div", { class: "spacer" }), h("div", { class: "hub-meta" }, statusLine, h("div", { class: "hub-version", text: `Bifrost ${opts.version}` })));
 
   clear(root);
   root.append(side, h("main", { class: "hub-panel" }, scroll));

@@ -229,12 +229,14 @@ export class Greeting {
       a.addColorStop(0, `rgba(${col},${0.22 + breathe * 0.1})`); a.addColorStop(1, `rgba(${col},0)`);
       x.fillStyle = a; x.fillRect(left, top, w, h);
     }
-    // Ponte arco-íris na base, que atravessa durante a descida.
+    // Ponte de aurora na base (fase 13: sem arco-íris), com marcas rúnicas de ouro.
     const bw = w * easeOut(clamp(p.fx * 1.4, 0, 1));
     const bg = x.createLinearGradient(left, 0, left + w, 0);
-    ["#ff6b6b", "#f2b84b", "#f6e36a", "#5ef2c9", "#6aa8ff", "#b47cff"].forEach((c, i) => bg.addColorStop(i / 5, c));
+    [["rgba(47,211,166,0)", 0], ["#2fd3a6", 0.16], ["#5ef2c9", 0.36], ["#6f8dff", 0.62], ["#9a6bff", 0.84], ["rgba(154,107,255,0)", 1]].forEach(([c, o]) => bg.addColorStop(o as number, c as string));
     x.fillStyle = bg; x.globalAlpha = p.card * 0.7;
     x.fillRect(left + (w - bw) / 2, top + h - 3, bw, 3);
+    x.fillStyle = "rgba(246,210,122,0.7)";
+    for (let rx = left + (w - bw) / 2 + 22; rx < left + (w + bw) / 2 - 10; rx += 44) x.fillRect(rx, top + h - 3, 1, 3);
     x.globalAlpha = p.card;
     if (this.sparks.length < 14 && Math.random() < dt * 9) {
       const sx = left + 20 + Math.random() * (w - 40);

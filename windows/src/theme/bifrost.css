@@ -48,7 +48,11 @@
   --aurora-violet: #9d7bff;
   --aurora-rose: #ff6fae;
   --aurora-gold: #ffc65c;
-  --prism: linear-gradient(90deg, #4fe3c1 0%, #5aa9ff 28%, #9d7bff 55%, #ff6fae 80%, #ffc65c 100%);
+  /* Fase 13: nada de arco-íris. A "ponte" do Bifrost é uma faixa de aurora boreal
+     (verde-água → verde → violeta, pontas que somem na noite) com marcas rúnicas de ouro. */
+  --prism: linear-gradient(100deg, #2fd3a6 0%, #5ef2c9 45%, #7d9cff 100%);
+  --bf-aurora-band: linear-gradient(90deg, rgba(47, 211, 166, 0) 0%, #2fd3a6 16%, #5ef2c9 36%, #6f8dff 62%, #9a6bff 84%, rgba(154, 107, 255, 0) 100%);
+  --bf-rune-ticks: repeating-linear-gradient(90deg, transparent 0 21px, rgba(246, 210, 122, 0.7) 21px 22px, transparent 22px 44px);
 
   /* Estados */
   --red: #ff5c7a;
@@ -77,16 +81,16 @@ html, body { font-family: var(--font); letter-spacing: 0.005em; }
   left: 12px; right: 12px; bottom: 0;
   height: 2px;
   border-radius: 2px;
-  background: var(--prism);
-  background-size: 200% 100%;
+  background: var(--bf-rune-ticks), var(--bf-aurora-band);
   opacity: 0.85;
-  filter: drop-shadow(0 0 6px rgba(157, 123, 255, 0.55));
-  animation: bifrost-aurora 9s var(--m-ease) infinite;
+  filter: drop-shadow(0 0 5px rgba(94, 242, 201, 0.45));
+  transform-origin: 50% 100%;
+  animation: bifrost-aurora 7s var(--m-ease) infinite;
   pointer-events: none;
 }
 @keyframes bifrost-aurora {
-  0%, 100% { opacity: 0.65; }
-  50% { opacity: 1; }
+  0%, 100% { opacity: 0.6; transform: scaleX(0.94); }
+  50% { opacity: 1; transform: scaleX(1); }
 }
 @media (prefers-reduced-motion: reduce) {
   #island::after { animation: none; }
@@ -121,7 +125,7 @@ body.settings-window {
 body.settings-window h1 {
   font: 700 20px var(--font);
   letter-spacing: -0.01em;
-  background: var(--prism);
+  background: linear-gradient(100deg, #eef2ff 0%, #bff7e8 55%, #c9b8ff 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

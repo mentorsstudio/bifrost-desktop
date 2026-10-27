@@ -454,6 +454,8 @@ export const Bridge = {
   desktopFlyHome: (forget: boolean) => call<boolean>("desktop_mochi_fly_home", { forget }),
   /** Asleep, the cursor poll stops. */
   desktopSetAsleep: (asleep: boolean) => call<void>("desktop_mochi_set_asleep", { asleep }),
+  /** Fase 13: anda `dx` px lógicos em `ms`; devolve quanto andou (menos na borda). */
+  desktopWalk: (dx: number, ms: number) => call<number>("desktop_mochi_walk", { dx, ms }),
 
   // ── Spotify (src-tauri/src/spotify.rs) ────────────────────────────────────
   /** Reads the player again (the card came on screen) and reports it. */

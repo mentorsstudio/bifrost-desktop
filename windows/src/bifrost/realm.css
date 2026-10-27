@@ -1,0 +1,67 @@
+/* Bifrost — fase 13: composição própria (não a do Coucou). Carregado por último.
+   Hub: sem barra lateral. Os dois reinos (Voz · Ilha) ficam numa "ponte" no topo,
+   cada página é uma runa-ícone e só a escolhida mostra o nome; o conteúdo vem
+   embaixo numa coluna central larga, com as seções em duas colunas.
+   Ilha: as abas viram um seletor central único (um "disco" de runas) e as ações
+   ficam num grupo à direita com divisória de ouro. */
+
+/* ── Hub ─────────────────────────────────────────────────────────────── */
+#hub { flex-direction: column !important; }
+.hub-side {
+  width: auto !important; flex: 0 0 auto !important; flex-direction: row !important; align-items: stretch;
+  gap: 18px !important; padding: 10px 22px 0 !important; overflow: visible !important;
+  border-right: 0 !important; position: relative; z-index: 2;
+  background: linear-gradient(180deg, rgba(10, 16, 36, .96), rgba(10, 16, 36, .82)) !important;
+}
+.hub-side::after { /* a ponte: aurora com marcas rúnicas sob a navegação */
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+  background: var(--bf-bridge); opacity: .7; animation: bf-bridge-flow 8s var(--m-ease) infinite;
+}
+.hub-brand { padding: 0 6px 10px 0 !important; align-self: center; font-size: 15px !important; }
+.hub-realm { display: flex; flex-direction: column; gap: 4px; padding-bottom: 8px; }
+.hub-realm + .hub-realm { padding-left: 18px; border-left: 1px solid rgba(226, 181, 90, .18); }
+.hub-group { padding: 0 2px !important; font-size: 9.5px !important; }
+.hub-rail { display: flex; gap: 2px; }
+.hub-item {
+  width: auto !important; height: 34px !important; padding: 0 9px !important; gap: 7px !important;
+  border-radius: 17px !important; justify-content: center;
+  transition: background var(--m-fast) var(--m-ease), transform var(--m-fast) var(--m-snappy) !important;
+}
+.hub-item span { max-width: 0; overflow: hidden; white-space: nowrap; opacity: 0;
+  transition: opacity var(--m-base) var(--m-ease); }
+.hub-item:hover { transform: translateY(-1px) !important; background: rgba(94, 242, 201, .08) !important; }
+.hub-item.on, .hub-item.active, .hub-item[aria-current="page"] {
+  padding: 0 14px 0 11px !important; background: linear-gradient(180deg, rgba(94, 242, 201, .16), rgba(111, 141, 255, .1)) !important;
+  box-shadow: inset 0 0 0 1px rgba(94, 242, 201, .35), 0 6px 14px -8px rgba(94, 242, 201, .6) !important; color: #eafff8 !important;
+}
+.hub-item.on span, .hub-item.active span, .hub-item[aria-current="page"] span { max-width: 140px; opacity: 1; }
+.hub-side .spacer { flex: 1 1 auto; }
+.hub-meta { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 2px; padding-bottom: 8px; font-size: 11px; }
+.hub-meta .hub-version { padding: 0 !important; }
+.hub-panel { margin: 14px auto 0 !important; width: min(1040px, calc(100% - 36px)); border-radius: 18px 18px 0 0 !important; }
+
+@media (prefers-reduced-motion: reduce) { .hub-side::after { animation: none; } }
+
+/* ── Ilha: seletor central e grupo de ações ────────────────────────────── */
+#header { position: relative; }
+#header .tabs {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 2px !important; gap: 2px !important;
+  border-radius: 13px; background: rgba(5, 8, 18, .7); box-shadow: inset 0 0 0 1px rgba(226, 181, 90, .28);
+}
+#header .tab { border-radius: 11px !important; width: 34px !important; transition: background var(--m-fast) var(--m-ease), color var(--m-fast) var(--m-ease); }
+#header .tab.on { background: linear-gradient(180deg, rgba(94, 242, 201, .22), rgba(111, 141, 255, .14)) !important; color: #eafff8 !important; box-shadow: none !important; }
+#header .header-actions { gap: 10px !important; padding-left: 12px; border-left: 1px solid rgba(226, 181, 90, .22); height: 18px; align-items: center; }
+
+/* ── Ajustes: livro-razão com comentário ─────────────────────────────────
+   Em vez de "rótulo à esquerda, controle, dica embaixo" (o formulário do Coucou),
+   cada seção é uma grade de duas colunas: o controle à esquerda e, na mesma linha,
+   a explicação à direita, numa margem marcada a ouro. Sem dica, o controle ocupa a linha. */
+body.settings-window section:has(> .row) {
+  display: grid !important; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); column-gap: 22px; row-gap: 8px; align-items: center;
+}
+body.settings-window section:has(> .row) > * { grid-column: 1 / -1; }
+body.settings-window section:has(> .row) > .row { grid-column: 1; margin: 0 !important; padding: 8px 10px; border-radius: 10px; background: rgba(5, 8, 18, .35); }
+body.settings-window section:has(> .row) > .row + .hint { grid-column: 2; margin: 0 !important; padding: 2px 0 2px 12px; border-left: 2px solid rgba(226, 181, 90, .35); line-height: 1.4; }
+body.settings-window section:has(> .row) > .row:not(:has(+ .hint)) { grid-column: 1 / -1; }
+body.settings-window section > h2 { display: flex; align-items: center; gap: 8px; }
+body.settings-window section > h2::before { content: "ᛟ"; font-family: var(--bf-rune-font); color: var(--bf-gold-2, #f6d27a); font-size: 12px; }

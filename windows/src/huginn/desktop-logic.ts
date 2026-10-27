@@ -21,6 +21,8 @@ export interface DesktopSnapshot {
   paused: boolean;
   /** Music plays: he dances (the compact island's rules, core/spotify.ts). */
   dancing: boolean;
+  /** Fase 13: passeios sozinho ligados (Ajustes → Geral). */
+  wander?: boolean;
 }
 
 /** Events between the two windows. Rust adds `desktop-mochi-dropped`. */
@@ -39,6 +41,8 @@ export const DESKTOP_EVENTS = {
   cursor: "desktop-cursor",
   visible: "desktop-visible",
   flight: "desktop-flight",
+  /** Rust → desktop window: rumo, duração e decolagem do voo (fase 13). */
+  flightPath: "desktop-flight-path",
 } as const;
 
 // ── Constants (DesktopMochiLogic) ────────────────────────────────────────────

@@ -977,7 +977,7 @@ input[type="range"]::-webkit-slider-thumb {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ff6b5b, #f7b32b, #2dd4a7, #38bdf8, #a78bfa);
+  background: radial-gradient(circle at 35% 30%, #bff7e8, #5ef2c9 45%, #6f8dff 100%); /* fase 13: aurora, não arco-íris */
 }
 
 .chat-log {

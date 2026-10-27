@@ -9,7 +9,8 @@ import { RAVEN } from "./raven-shape";
 // corvo nórdico: asas que batem, peito com nó entalhado, bico de ouro, olhos de
 // aurora, e emblemas em forma de runa.
 
-import { Curves, type Curve } from "./motion";
+import { Curves, reducedMotion, type Curve } from "./motion";
+import { REST, RHYTHM, WING_MAX, blend, gaitLength, pose as gaitPose, type Gait, type Pose } from "./locomotion";
 import { SLEEP_RUNE } from "./runes";
 import { Sound } from "../core/sound";
 import type { BotEmoteName, BotStateName } from "../core/layout";
@@ -169,6 +170,59 @@ export class RavenEngine {
 
   onDizzy: (() => void) | null = null;
 
+  // ── Locomoção (fase 13) ─────────────────────────────────────────────────────
+  gait: Gait = "none";
+  private gaitAt = clock();
+  private gaitUntil = Infinity;
+  private fromPose: Pose = REST;
+  private blendAt = 0;
+  /** Inclinação ao longo do caminho no voo (rad), e para onde ele olha (−1 esq., 1 dir.). */
+  travelTilt = 0;
+  face = 0;
+  faceTarget = 0;
+  /** Para testes e pranchas: congela o relógio da marcha em `t` segundos. */
+  gaitClock: number | null = null;
+
+  /** Troca de marcha, misturando a pose anterior por 0,16 s. Com movimento reduzido, nada muda no desenho. */
+  setGait(g: Gait, opts: { tilt?: number; face?: number; seconds?: number } = {}) {
+    if (opts.tilt !== undefined) this.travelTilt = opts.tilt;
+    if (opts.face !== undefined) this.faceTarget = opts.face;
+    if (reducedMotion()) { this.gait = "none"; return; }
+    this.fromPose = this.currentPose();
+    this.blendAt = clock();
+    this.gait = g;
+    this.gaitAt = clock();
+    this.gaitUntil = opts.seconds !== undefined ? clock() + opts.seconds : Infinity;
+  }
+  /** Agitação/alerta: bate as asas por `seconds`. */
+  flapBurst(seconds = 1.2) { if (this.gait === "none" || this.gait === "flap") this.setGait("flap", { seconds }); }
+  walk(dir: -1 | 1) { this.setGait("walk", { face: dir }); }
+  takeOff(dir: number, tilt: number) { this.setGait("takeoff", { face: Math.sign(dir) || 0, tilt }); }
+  land() { this.setGait("land"); }
+  stop() { if (this.gait !== "none") this.setGait("none", { face: 0 }); }
+  get moving(): boolean { return this.gait !== "none" || Math.abs(this.face - this.faceTarget) > 0.01; }
+
+  private get rhythm() { return RHYTHM[this.identity]; }
+  /** A pose de agora (marcha + mistura com a anterior). */
+  currentPose(): Pose {
+    const now = this.gaitClock ?? clock();
+    const p = gaitPose(this.gait, now - (this.gaitClock == null ? this.gaitAt : 0), this.rhythm, this.travelTilt);
+    const b = this.gaitClock == null ? (clock() - this.blendAt) / 0.16 : 1;
+    return b < 1 ? blend(this.fromPose, p, Curves.fjord(Math.max(0, b))) : p;
+  }
+  private stepGait(dt: number) {
+    const n = clock();
+    const len = gaitLength(this.gait, this.rhythm);
+    if (len !== null && this.gaitClock == null && n - this.gaitAt >= len) {
+      if (this.gait === "takeoff") { this.fromPose = this.currentPose(); this.blendAt = n; this.gait = "fly"; this.gaitAt = n; }
+      else { this.gait = "none"; this.fromPose = REST; }
+    }
+    if (n > this.gaitUntil) { this.gaitUntil = Infinity; this.setGait("none"); }
+    // Virar: mola crítica; no meio da volta ele "afina" (sx), como quem gira.
+    const w = 14;
+    this.face += (this.faceTarget - this.face) * (1 - Math.exp(-w * dt));
+  }
+
   // ── Coreografia ────────────────────────────────────────────────────────────
 
   /** Toca uma sequência de alvos numa propriedade (substitui a anterior). */
@@ -190,6 +244,7 @@ export class RavenEngine {
       case "finished":
         this.spin(950, 1);
         this.wingBeat = 1;
+        if (!this.isMini) this.flapBurst(1.1);
         setTimeout(() => this.emit("spark", 5), 500);
         break;
       case "error":
@@ -197,6 +252,7 @@ export class RavenEngine {
         break;
       case "approval":
         this.wingBeat = 0.7;
+        if (!this.isMini) this.flapBurst(0.9);
         this.anim("oy", [[-0.2, 150, out], [0, 300, pop]]);
         break;
       case "dizzy":
@@ -533,6 +589,7 @@ export class RavenEngine {
       this.physDy += this.vy * dt;
     }
     this.last = { yaw: this.yaw, oy: this.oy, roll: this.roll };
+    this.stepGait(dt);
     this.lastTime = n;
   }
 
@@ -623,9 +680,11 @@ export class RavenEngine {
     const t = clock();
     const muninn = this.identity === "muninn";
     const flap = Math.sin(t * 26) * this.wingBeat * 0.42;
+    const P = this.isMini ? REST : this.currentPose();
+    const turn = 1 - 0.1 * (1 - Math.min(1, Math.abs(this.face) * 1.4)) * Math.min(1, Math.abs(this.faceTarget) + Math.abs(this.face));
     const wave = this.hands * (0.7 + Math.sin(t * 14) * 0.3);
-    const gx = Math.sin(this.yaw) * 3;
-    const gy = Math.sin(this.pitch) * 2.4;
+    const gx = Math.sin(this.yaw) * 3 * (1 - Math.abs(this.face) * 0.5) + this.face * 3.2;
+    const gy = Math.sin(this.pitch) * 2.4 + P.bob;
     const base = muninn ? MUNINN : HUGINN;
     const lit = this.bodyColor ? mix(this.bodyColor, base.lit, 0.45) : base.lit;
     const dark = this.bodyColor ? mix(this.bodyColor, base.dark, 0.7) : base.dark;
@@ -640,25 +699,51 @@ export class RavenEngine {
     x.globalAlpha *= a;
     x.scale(k, k);
     x.translate(-60, -64);
+    // Pose da marcha: o corpo inteiro (adornos inclusive) pula, amassa e inclina em torno dos pés.
+    if (P !== REST || turn !== 1) {
+      x.translate(60, 104); x.rotate(P.tilt); x.scale(P.sx * turn, P.sy); x.translate(-60, -104 + P.dy);
+    }
     x.lineJoin = "round";
     // Sem contorno preto: só um aro de luz finíssimo, para o corvo não "colar" no fundo.
     x.lineWidth = 0.9;
     x.strokeStyle = "rgba(190,205,255,0.16)";
     const H = RAVEN.head;
-    const head: RavenHead = { x: 60 + gx * 0.4, y: H.cy + gy * 0.4 + this.physDy * 2, r: H.r, chestY: 82, bodyR: 28 };
+    const footLift = (s: number) => (s < 0 ? P.footL : P.footR) + P.tuck * 3.2;
+    const head: RavenHead = { x: 60 + gx * 0.4, y: H.cy + gy * 0.4 + this.physDy * 2, r: H.r, chestY: 82, bodyR: 28, footX: 60 + RAVEN.feet.dx, footY: RAVEN.feet.y - footLift(1), spread: Math.min(1, P.wing / 1.5) };
     const dressed = !this.isMini && this.outfit !== "none";
     const st = { presence: this.outfitPresence, morph: 0 };
     if (dressed) drawOutfitBehind(x, this.outfit, head, st);
     if (!this.isMini) {
       x.fillStyle = GOLD_B;
-      for (const s of [-1, 1]) { x.beginPath(); x.ellipse(60 + s * RAVEN.feet.dx, RAVEN.feet.y, 4.2, 2.2, 0, 0, Math.PI * 2); x.fill(); }
+      for (const s of [-1, 1]) { x.beginPath(); x.ellipse(60 + s * RAVEN.feet.dx * (1 - 0.25 * P.tuck), RAVEN.feet.y - footLift(s), 4.2 * (1 - 0.35 * P.tuck), 2.2, 0, 0, Math.PI * 2); x.fill(); }
     }
     // Topete do Huginn (atrás do corpo, nasce do alto da cabeça); balança com mola.
     if (!this.isMini && !muninn && !(dressed && (this.outfit === "helm" || this.outfit === "starCrown"))) {
-      const sw = this.physDx * 0.3 + Math.sin(t * 1.7) * 0.05 + (this.state === "sleeping" ? -0.14 : 0);
+      const sw = this.physDx * 0.3 + Math.sin(t * 1.7) * 0.05 + (this.state === "sleeping" ? -0.14 : 0) + P.crest + this.face * 0.12;
       x.save(); x.translate(60, 22); x.rotate(sw); x.translate(-60, -22);
       x.fillStyle = css(lit); x.fill(new Path2D(RAVEN.crest));
       x.restore();
+    }
+    // Leque de penas atrás de cada asa aberta: aparece só com a asa fora do corpo.
+    const wingAngle = (side: -1 | 1, extra = 0) => Math.min(WING_MAX + 0.2, Math.max(0, P.wing + extra + Math.abs(flap) + (side > 0 ? wave : 0) + 0.04 * Math.sin(t * 1.75)));
+    const wingAt = (side: -1 | 1, a: number, len: number, fill: string | CanvasGradient, quill: boolean) => {
+      const sx = 60 + side * RAVEN.shoulder.dx, sy = RAVEN.shoulder.y;
+      x.save();
+      x.translate(sx, sy);
+      x.rotate(side < 0 ? a : -a);
+      x.scale(1, len);
+      x.translate(-sx, -sy);
+      const p = new Path2D(side < 0 ? RAVEN.wingL : RAVEN.wingR);
+      x.fillStyle = fill; x.fill(p); x.stroke(p);
+      if (quill) {
+        x.strokeStyle = muninn ? "rgba(207,214,234,0.5)" : "rgba(94,242,201,0.5)";
+        x.lineWidth = 1.3; x.lineCap = "round";
+        x.beginPath(); x.moveTo(60 + side * 26.6, 70); x.bezierCurveTo(60 + side * 29.4, 76, 60 + side * 29.6, 83, 60 + side * 28, 88.6); x.stroke();
+      }
+      x.restore();
+    };
+    if (!this.isMini && P.wing > 0.12) {
+      for (const side of [-1, 1] as const) wingAt(side, wingAngle(side, P.feather), P.wingLen * 0.94, css(mix(dark, lit, 0.25)), false);
     }
     const body = new Path2D(RAVEN.body);
     x.fillStyle = feather(20, 103); x.fill(body); x.stroke(body);
@@ -679,22 +764,7 @@ export class RavenEngine {
       x.fillText(muninn ? "ᛗ" : "ᚨ", 60, 84);
       x.restore();
     }
-    const wing = (side: -1 | 1) => {
-      const sx = 60 + side * RAVEN.shoulder.dx, sy = RAVEN.shoulder.y;
-      x.save();
-      x.translate(sx, sy);
-      // Para fora: a esquerda gira no sentido horário, a direita no anti-horário.
-      x.rotate(side * (-Math.abs(flap)) - (side > 0 ? wave : 0) + side * -0.04 * Math.sin(t * 1.75));
-      x.translate(-sx, -sy);
-      const p = new Path2D(side < 0 ? RAVEN.wingL : RAVEN.wingR);
-      x.fillStyle = feather(60, 95);
-      x.fill(p); x.stroke(p);
-      x.strokeStyle = muninn ? "rgba(207,214,234,0.5)" : "rgba(94,242,201,0.5)";
-      x.lineWidth = 1.3; x.lineCap = "round";
-      x.beginPath(); x.moveTo(60 + side * 26.6, 70); x.bezierCurveTo(60 + side * 29.4, 76, 60 + side * 29.6, 83, 60 + side * 28, 88.6); x.stroke();
-      x.restore();
-    };
-    if (!this.isMini) { wing(-1); wing(1); }
+    if (!this.isMini) for (const side of [-1, 1] as const) wingAt(side, wingAngle(side), P.wingLen, feather(60, 95), true);
     // Rosto: lua de Muninn, bochechas, olhos e bico — sempre dentro do corpo.
     x.save();
     x.translate(gx, gy);

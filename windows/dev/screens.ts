@@ -5,6 +5,7 @@ import "../src/theme/bifrost.css";
 import "../src/bifrost/nordic.css";
 import "../src/bifrost/skin.css";
 import "../src/bifrost/saga.css";
+import "../src/bifrost/realm.css";
 import "../src/traymenu/traymenu.css";
 import { renderTray } from "../src/traymenu/main";
 import { showMenu } from "../src/bifrost/contextmenu";

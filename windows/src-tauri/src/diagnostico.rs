@@ -16,9 +16,18 @@ pub fn requested(args: &[String]) -> Option<PathBuf> {
 }
 
 pub fn run(out: PathBuf) -> i32 {
-    let s = crate::settings::load();
+    let mut s = crate::settings::load();
     let agents = tauri::async_runtime::block_on(crate::agents_scan::scan());
-    let scan = crate::mcp::catalog::scan(&crate::mcp::catalog::Env::current()).0;
+    let env = crate::mcp::catalog::Env::current();
+    let (scan, imported) = crate::mcp::catalog::scan(&env);
+    let catalog = crate::mcp::catalog::entries(&env, &crate::mcp::catalog::detect(&env));
+    // Fase 13: a mesma junção que o app faz ao abrir (só na memória, nada é salvo
+    // nem vai ao cofre), para o relatório mostrar os nomes que a página Integrações mostra.
+    {
+        let mut renamed = Vec::new();
+        let _ = crate::mcp::catalog::merge(&mut s.mcp_servers, &mut s.mcp_known, &mut s.mcp_sources, &mut renamed, &catalog, &imported);
+    }
+    let fontes: serde_json::Map<String, serde_json::Value> = s.mcp_sources.iter().map(|(k, v)| (k.clone(), json!(v))).collect();
     let programs: Vec<_> = scan.programs.iter().filter(|p| p.found).map(|p| p.name.clone()).collect();
     let report = json!({
         "versao": env!("CARGO_PKG_VERSION"),
@@ -26,6 +35,7 @@ pub fn run(out: PathBuf) -> i32 {
         "pipe": pipe_name(),
         "mcpServidor": { "ligado": s.mcp_server_enabled, "porta": s.mcp_server_port },
         "mcpServidores": s.mcp_servers.keys().collect::<Vec<_>>(),
+        "mcpOrigens": fontes,
         "agentes": agents,
         "programas": programs,
     });

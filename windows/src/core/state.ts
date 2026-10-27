@@ -105,6 +105,8 @@ export interface Settings {
   openOnHover: boolean;
   /** Date and time in the middle of the compact island. */
   showClock: boolean;
+  /** Fase 13: Huginn passeia sozinho pela tela. */
+  desktopWander: boolean;
   absenceInterval: number;
   /** Declared pills next to the main one (at most 4), in the order they were added. */
   activeIntegrations: string[];
@@ -172,6 +174,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoCloseInterval: 15,
   openOnHover: false,
   showClock: false,
+  desktopWander: true,
   absenceInterval: 180,
   activeIntegrations: [
     "integration_resend", "integration_n8n", "integration_vercel", "integration_github",

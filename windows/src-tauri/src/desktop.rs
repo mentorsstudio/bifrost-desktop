@@ -33,8 +33,13 @@ pub const LABEL: &str = "mochi";
 pub const SIZE: f64 = 120.0;
 /// Kept between him and the edges of the work area (DesktopMochiLogic.clampMargin).
 const MARGIN: f64 = 24.0;
-/// To and from the island (DesktopMochi.swift: 0.45 s, ease in-out).
-const FLIGHT_MS: u64 = 450;
+/// To and from the island. Fase 13: a real flight — crouch and take-off on the page
+/// first (TAKEOFF_MS, he stays put), then an arc of FLIGHT_MS, then the landing.
+const FLIGHT_MS: u64 = 760;
+const TAKEOFF_MS: u64 = 240;
+/// Height of the flight arc, as a fraction of the distance (capped, logical px).
+const ARC: f64 = 0.16;
+const ARC_MAX: f64 = 90.0;
 /// Settling into his spot after a drop (0.25 s, with a little overshoot).
 const SNAP_MS: u64 = 250;
 const TICK_MS: u64 = 16;
@@ -526,6 +531,11 @@ fn refresh(app: &AppHandle, d: &Desktop) {
 /// Moves him from where he is to `to`, then lands him. False when another
 /// flight took over before the end.
 async fn fly(app: &AppHandle, d: &Desktop, to: (f64, f64), ms: u64, ease: fn(f64) -> f64) -> bool {
+    fly_arc(app, d, to, ms, ease, 0.0).await
+}
+
+/// Same as `fly`, lifted by `arc` (physical px) at the middle of the path.
+async fn fly_arc(app: &AppHandle, d: &Desktop, to: (f64, f64), ms: u64, ease: fn(f64) -> f64, arc: f64) -> bool {
     let token = d.flight.fetch_add(1, Ordering::SeqCst) + 1;
     let from = d.inner.lock().unwrap().pos;
     let (tx, rx) = tokio::sync::oneshot::channel();
@@ -539,12 +549,33 @@ async fn fly(app: &AppHandle, d: &Desktop, to: (f64, f64), ms: u64, ease: fn(f64
                 return;
             }
             let t = k as f64 / steps as f64;
-            place(&app2, &d, logic::lerp(from, to, ease(t)));
+            let p = logic::lerp(from, to, ease(t));
+            place(&app2, &d, (p.0, p.1 - arc * (std::f64::consts::PI * t).sin()));
             std::thread::sleep(Duration::from_millis(TICK_MS));
         }
         let _ = tx.send(d.flight.load(Ordering::SeqCst) == token);
     });
     rx.await.unwrap_or(false)
+}
+
+#[derive(Clone, Serialize)]
+struct FlightPath {
+    kind: &'static str,
+    dx: f64,
+    dy: f64,
+    ms: u64,
+    takeoff_ms: u64,
+}
+
+/// Tells the page where he is about to fly (it tilts him along the path), then
+/// waits for the take-off crouch. Returns the arc height for `fly_arc`.
+async fn announce_flight(app: &AppHandle, d: &Desktop, kind: &'static str, to: (f64, f64)) -> f64 {
+    let from = d.inner.lock().unwrap().pos;
+    let (dx, dy) = (to.0 - from.0, to.1 - from.1);
+    let _ = app.emit_to(LABEL, "desktop-flight-path", FlightPath { kind, dx, dy, ms: FLIGHT_MS, takeoff_ms: TAKEOFF_MS });
+    tokio::time::sleep(Duration::from_millis(TAKEOFF_MS)).await;
+    let scale = window(app).and_then(|w| w.scale_factor().ok()).unwrap_or(1.0);
+    (dx.hypot(dy) * ARC).min(ARC_MAX * scale)
 }
 
 /// Saves what changed about him in the preferences.
@@ -831,7 +862,8 @@ pub async fn desktop_mochi_fly_out(app: AppHandle, anywhere: Option<bool>) -> bo
     }
     show(&app, &d, start);
     let _ = app.emit_to(LABEL, "desktop-flight", "out");
-    if !fly(&app, &d, target, FLIGHT_MS, logic::ease_in_out).await {
+    let arc = announce_flight(&app, &d, "out", target).await;
+    if !fly_arc(&app, &d, target, FLIGHT_MS, logic::ease_in_out, arc).await {
         return false;
     }
     d.inner.lock().unwrap().landed = true;
@@ -863,7 +895,8 @@ pub async fn desktop_mochi_fly_home(app: AppHandle, forget: bool) -> bool {
     let done = match island_anchor(&app, &d) {
         Some((cx, top, scale)) => {
             let to = logic::island_spot(cx, top, SIZE, scale);
-            fly(&app, &d, to, FLIGHT_MS, logic::ease_in_out).await
+            let arc = announce_flight(&app, &d, "home", to).await;
+            fly_arc(&app, &d, to, FLIGHT_MS, logic::ease_in_out, arc).await
         }
         None => true,
     };
@@ -874,6 +907,36 @@ pub async fn desktop_mochi_fly_home(app: AppHandle, forget: bool) -> bool {
         remember(&app, |p| p.on_desktop = false);
     }
     done
+}
+
+/// Fase 13: a stroll. Walks him `dx` (logical px, + right) along his current line
+/// in `ms`, stopping at the edge of the work area. Returns the distance actually
+/// walked (logical px) — less than asked at an edge, where the page turns him around.
+/// A drag or a flight takes over at once (the flight token).
+#[tauri::command]
+pub async fn desktop_mochi_walk(app: AppHandle, dx: f64, ms: u64) -> f64 {
+    let d = app.state::<Arc<Desktop>>().inner().clone();
+    let (pos, ok) = {
+        let i = d.inner.lock().unwrap();
+        (i.pos, i.shown && i.landed && i.carry.is_none() && !i.asleep)
+    };
+    if !ok || d.mode == DesktopMode::Off {
+        return 0.0;
+    }
+    let scale = window(&app).and_then(|w| w.scale_factor().ok()).unwrap_or(1.0);
+    let k = if d.mode == DesktopMode::Layer { 1.0 } else { scale };
+    let wanted = (pos.0 + dx * k, pos.1);
+    let to = logic::settle(wanted, &displays(&app, &d), SIZE, MARGIN);
+    let to = (to.0, pos.1);
+    if (to.0 - pos.0).abs() < 1.0 {
+        return 0.0;
+    }
+    let ms = ms.clamp(200, 8000);
+    if !fly(&app, &d, to, ms, |t| t).await {
+        return 0.0;
+    }
+    remember_spot(&app, &d, to, true);
+    (to.0 - pos.0) / k
 }
 
 /// The page dozed off (or woke up). Asleep, nothing polls.

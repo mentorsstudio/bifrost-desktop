@@ -133,7 +133,15 @@ if ($diag) {
   $aux = $ag | Where-Object { $_.name -match "code-mode-host|computer-use|sandbox-service" }
   if ($aux) { Falha "Processos auxiliares do Codex listados como sessão: $($aux.name -join ', ')" } else { Ok "Nenhum auxiliar do Codex listado como sessão" }
   Write-Host "  Programas encontrados: $((@($diag.programas)) -join ', ')"
-  Write-Host "  Servidores MCP configurados: $((@($diag.mcpServidores)) -join ', ')"
+  $nomes = @($diag.mcpServidores)
+  Write-Host "  Servidores MCP (já juntados, como na página Integrações): $($nomes -join ', ')"
+  if ($diag.mcpOrigens) {
+    $orig = $diag.mcpOrigens.PSObject.Properties | ForEach-Object { "$($_.Name) ← $($_.Value)" }
+    if ($orig) { Write-Host "  Importados: $($orig -join '; ')" }
+  }
+  $pares = @(@("DaVinci-Resolve","davinci"), @("blender-mcp","blender"), @("makenotion-notion-mcp-server","notion"))
+  $dups = $pares | Where-Object { ($nomes -contains $_[0]) -and ($nomes -contains $_[1]) } | ForEach-Object { "$($_[0])/$($_[1])" }
+  if ($dups) { Falha "Servidores MCP duplicados: $($dups -join ', ')" } else { Ok "Nenhum servidor MCP duplicado (DaVinci, Blender, Notion juntados)" }
 }
 
 Secao "Resultado"
