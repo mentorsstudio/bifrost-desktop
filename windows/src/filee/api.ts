@@ -44,6 +44,7 @@ export const Convert = {
   takePending: () => call<string[]>("convert_take_pending"),
   menuAction: (action: string, paths: string[], prompt?: string) => call<number | null>("filee_menu_action", { action, paths, prompt: prompt ?? null }),
   menuClose: () => call<void>("filee_menu_close"),
+  menuRadius: (radius: number) => call<void>("filee_menu_radius", { radius }),
 };
 
 export async function on<T>(name: string, fn: (p: T) => void): Promise<() => void> {
