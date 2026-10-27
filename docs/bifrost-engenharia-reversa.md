@@ -690,3 +690,48 @@ Fonte: Freya Branding v1 (`/workspace/freya-branding/kit`). Bifrost não usa o l
 - Tela cheia só quando há D3D exclusivo/apresentação ou a janela da frente cobre o monitor inteiro (`covers_monitor`); maximizadas param abaixo da faixa.
 - `fsm.floorPetit`: com a reserva ligada a compacta é o piso, nunca recolhe. Orelhas côncavas (`#island::before/::after`) fundem a ilha na barra como o recorte do MacBook.
 - Testes: `covers_monitor`, `parse_rgb`, piso da FSM.
+
+### 10.19 — Fase 19: polimento visual, QA visual automático, compositor e seletor do chat, roadmap
+
+**Feedback do Paulo (v18, WebView2):** sem motion ao abrir/fechar o conteúdo das abas; "quadrado atrás do redondo" nos botões; rolagem caindo numa área vazia; colisões no cartão da ilha; e, depois, o chat: compositor fraco e o seletor de modelos quebrado.
+
+**Correções:**
+- **Forma dupla nas abas:** o indicador deslizante (`slidingInk`) e a própria aba ativa pintavam cada um o seu fundo/anel (`realm.css` `.hub-item.on`, `#header .tab.on` com `!important`). Além disso, o indicador só era medido quando o contêiner mudava de tamanho, não quando a aba abria o rótulo numa transição. Agora:
+  - num grupo com indicador, a aba ativa não pinta fundo/anel/sombra;
+  - o indicador observa o tamanho de cada aba e o `transitionend`;
+  - o anel de foco fica dentro da pílula (`outline-offset: -2px`), no mesmo raio;
+  - `:focus:not(:focus-visible)` não desenha anel.
+- **Cauda vazia na rolagem:** as páginas pré-montadas (`.m-layer`, absolutas e invisíveis) entravam no `scrollHeight` da `.hub-scroll`. A de Integrações somava ~3400 px ao Celular Android/Atalhos. Agora `.m-layer { height: 0; overflow: hidden }`, e o painel termina no conteúdo (`flex: 0 1 auto`).
+- **Motion do conteúdo:** `riseIn()` (shell.ts) põe `--i` e `.m-rise` nos blocos visíveis da página (filhos da página, seções do `#settings-root`, cartões, grades): entrada em cascata com fade + subida de 10 px (`--m-base`/`--m-smooth`, 32 ms por degrau, até 12). A saída é o fade/slide da página que sai. Com movimento reduzido nada anima.
+- **Cartão da ilha:**
+  - o cartão de sessão tem a coluna do corvo reservada (116 px à direita);
+  - os botões quebram linha/encolhem com reticências e têm tooltip;
+  - o texto da pasta/atividade trunca com `title`;
+  - o "↗" solto no meio (o `.jump` posto em `right: 112px`) saiu do overview, porque cada linha de agente já tem o seu botão.
+- **Ponte do hub** (abas no topo): quebra linha em vez de cortar. Abaixo de 1060 px somem o nome da marca e a versão, e o status trunca.
+- **Dicionário:** a linha de substituição era uma grade de 3 colunas com 4 filhos (o botão caía na linha de baixo e a seta ganhava 1fr). Agora tem 4 colunas.
+- **Polimento:**
+  - botões das configurações num só padrão (primário = um tom do tema, secundário = superfície com fio);
+  - caixas de seleção desenhadas no tema (não o amarelo nativo);
+  - o ponto "não está em uso" ficou neutro (era vermelho);
+  - "0 pílulas ligadas" virou "Nenhuma aba ligada / 1 aba ligada / N abas ligadas";
+  - subpáginas usam cabeçalho leve (só Ditado e Geral mantêm a faixa com os escudos);
+  - avisos vazios não ocupam a coluna da direita.
+- **Chat:**
+  - **Compositor** (`chat.ts`): um contêiner arredondado com `+`, campo que cresce de 1 a 5 linhas (`growHeight`), chip do modelo, mic e enviar que vira parar. Enter envia, Shift+Enter quebra linha; o brilho de foco é só opacidade; o placeholder é "Pergunte qualquer coisa…".
+  - **Parar:** a ilha deixa de esperar e descarta a resposta tardia.
+  - **Mic:** foca o campo e lembra o atalho do ditado (o Flow escreve no campo focado).
+  - **`+`:** registro genérico `views/attach.ts` (`registerAttachAction`) para o ramo `filee-integration` estender. Ações padrão: "Arquivo…" (abre a zona de soltar) e "Colar da área de transferência".
+  - **Seletor** (`views/model-picker.ts`): um popover com busca e seções IA do PC / Agentes MCP / Remoto. Cada linha tem ícone, nome, ponto de status, modelo e check. Há setas/Enter/Esc, rolagem só vertical, e ele abre e fecha com os tokens.
+  - **Bug antigo corrigido:** escolher um modelo de outro provedor só trocava o modelo. `chooseModel()` troca provedor e modelo juntos.
+  - Com o seletor aberto, a ilha vai à altura máxima do chat (`State.chatPicking`).
+  - O corvo do chat ganhou uma coluna própria de 84 px com fio de ouro.
+- **QA visual automático** (`tests/visual/qa.mjs` + `checks.js`, `npm run test:visual`, ou `BIFROST_VISUAL=1 npm test`):
+  - **O que renderiza:** as 16 páginas do hub (no topo e no fim da rolagem), 13 cenas da ilha (inclusive o cartão de sessão, o seletor aberto e a zona de soltar), a bandeja e a pílula.
+  - **Matriz:** 100/125/150 %, estreita e larga, nos 7 temas (`--full`). O modo rápido usa todos os temas a 100 % e o Bifröst em todas as escalas/larguras, mais uma passada com movimento ligado.
+  - **O que acusa:** sobreposição de interativos entre si e com o corvo, texto cortado sem reticências, fora da janela, rolagem com mais de 40 px vazios e forma dupla (raio diferente entre elemento, pseudo ou pai decorado; indicador que não casa com a aba ativa ou aba ativa com fundo próprio).
+  - **Contagens:** antes, 698 ocorrências (60 únicas: 431 forma dupla, 108 corte, 90 fora da janela, 69 cauda); depois, 0.
+- **Mais agentes e MCP:**
+  - 15 programas novos detectados (Aider, Goose, Qwen Code, Crush, OpenCode, Amp, Copilot CLI, Cline, Roo, Continue, Windsurf, Kiro, Zed, Warp, JetBrains);
+  - importação de `mcpServers` de Windsurf, Gemini CLI, Kiro, LM Studio, Cline e Roo.
+- **Android:** o desktop gera `bifrost-desktop://pair`, mas o app do repositório (`android/`, Coucou for Android) só aceitava `coucou://pair`. Agora aceita os dois (Pairing.kt, manifest, PairingTest). Análise completa e plano do APK em `/workspace/bifrost-roadmap.md`.
