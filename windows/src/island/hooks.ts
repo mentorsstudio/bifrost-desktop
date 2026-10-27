@@ -264,7 +264,9 @@ function handleHook(island: Island, payload: HookPayload) {
 
   const name = payload.hook_event_name ?? "";
   const cwd = payload.cwd ?? "";
-  const raw = lastPathComponent(cwd);
+  // Um evento sem cwd não apaga o nome do projeto que a sessão já tem.
+  const knownCwd = cwd || State.tasks.find((x) => x.sessionId && x.sessionId === payload.session_id)?.sessionCwd || "";
+  const raw = lastPathComponent(knownCwd);
   const projectName = aliasProjectName(raw || t("Session"));
 
   // Route to the right pill. Valid coucou_agent → dynamic "agent_<name>" pill.
