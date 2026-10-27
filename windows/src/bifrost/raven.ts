@@ -49,8 +49,12 @@ const clock = () => performance.now() / 1000;
 // Paleta do fiorde.
 const FEATHER_LIT = hex("#2A3F73");
 const FEATHER_DARK = hex("#0A1024");
+const HUGINN = { lit: hex("#2E4A86"), dark: hex("#0B1430") };
+const MUNINN = { lit: hex("#54466A"), dark: hex("#1A1422") };
 const EYE = "rgb(214,255,244)";
 const EYE_HALO = "rgba(94,242,201,0.9)";
+const MUNINN_EYE = "rgb(255,226,160)";
+const MUNINN_HALO = "rgba(242,184,75,0.85)";
 const GOLD_A = "#F6D27A";
 const GOLD_B = "#B8862F";
 
@@ -112,6 +116,8 @@ interface Phrase { steps: readonly Step[]; at: number; from: number; t0: number;
 
 export class RavenEngine {
   isMini = false;
+  /** Qual dos dois corvos o motor desenha (o app usa o Huginn; o Muninn aparece nas pranchas). */
+  identity: "huginn" | "muninn" = "huginn";
   bodyColor: RGB | null = null;
   private hint: RGB | null = null;
 
@@ -608,17 +614,21 @@ export class RavenEngine {
     this.drawSparks(x, R, cx, cy);
   }
 
-  /** Huginn de corpo inteiro, nas coordenadas do SVG (viewBox 120): asa de trás ·
-   *  cauda · corpo · runa · asa da frente · cabeça. Os adornos usam a cabeça. */
+  /** O corvo inteiro, nas coordenadas do SVG (viewBox 120) — o mesmo grão macio de
+   *  mascots.ts (fase 11): cauda · pés · topete · corpo · peito · runa · asas · rosto.
+   *  O rosto (olhos, bico) se mexe dentro do corpo; as asas giram no ombro, para fora,
+   *  sempre abaixo do bico. Os adornos usam o círculo do alto (RAVEN.head). */
   private figure(x: CanvasRenderingContext2D, R: number, a: number) {
     const k = (R * 2.1) / 100;
     const t = clock();
-    const flap = Math.sin(t * 26) * this.wingBeat * 0.5;
+    const muninn = this.identity === "muninn";
+    const flap = Math.sin(t * 26) * this.wingBeat * 0.42;
     const wave = this.hands * (0.7 + Math.sin(t * 14) * 0.3);
-    const gx = Math.sin(this.yaw) * 4;
-    const gy = Math.sin(this.pitch) * 3;
-    const lit = this.bodyColor ? mix(this.bodyColor, FEATHER_LIT, 0.45) : FEATHER_LIT;
-    const dark = this.bodyColor ? mix(this.bodyColor, FEATHER_DARK, 0.7) : FEATHER_DARK;
+    const gx = Math.sin(this.yaw) * 3;
+    const gy = Math.sin(this.pitch) * 2.4;
+    const base = muninn ? MUNINN : HUGINN;
+    const lit = this.bodyColor ? mix(this.bodyColor, base.lit, 0.45) : base.lit;
+    const dark = this.bodyColor ? mix(this.bodyColor, base.dark, 0.7) : base.dark;
     const tint = this.tint * 0.55;
     const feather = (c0: number, c1: number) => {
       const g = x.createLinearGradient(0, c0, 0, c1);
@@ -629,85 +639,106 @@ export class RavenEngine {
     x.save();
     x.globalAlpha *= a;
     x.scale(k, k);
-    x.translate(-60, -62);
+    x.translate(-60, -64);
     x.lineJoin = "round";
     // Sem contorno preto: só um aro de luz finíssimo, para o corvo não "colar" no fundo.
     x.lineWidth = 0.9;
     x.strokeStyle = "rgba(190,205,255,0.16)";
     const H = RAVEN.head;
-    const head: RavenHead = { x: 60 + gx * 0.5, y: 40 + gy * 0.5 + this.physDy * 4, r: H.r, chestY: 82, bodyR: 23 };
+    const head: RavenHead = { x: 60 + gx * 0.4, y: H.cy + gy * 0.4 + this.physDy * 2, r: H.r, chestY: 82, bodyR: 28 };
     const dressed = !this.isMini && this.outfit !== "none";
     const st = { presence: this.outfitPresence, morph: 0 };
     if (dressed) drawOutfitBehind(x, this.outfit, head, st);
-    const wing = (side: -1 | 1) => {
-      x.save();
-      x.translate(side < 0 ? 45 : 75, 64);
-      x.rotate(side * (-flap) - (side > 0 ? wave : 0));
-      x.translate(side < 0 ? -45 : -75, -64);
-      const p = new Path2D(side < 0 ? RAVEN.wingL : RAVEN.wingR);
-      x.fillStyle = feather(58, 84);
-      x.fill(p); x.stroke(p);
+    if (!this.isMini) {
+      x.fillStyle = GOLD_B;
+      for (const s of [-1, 1]) { x.beginPath(); x.ellipse(60 + s * RAVEN.feet.dx, RAVEN.feet.y, 4.2, 2.2, 0, 0, Math.PI * 2); x.fill(); }
+    }
+    // Topete do Huginn (atrás do corpo, nasce do alto da cabeça); balança com mola.
+    if (!this.isMini && !muninn && !(dressed && (this.outfit === "helm" || this.outfit === "starCrown"))) {
+      const sw = this.physDx * 0.3 + Math.sin(t * 1.7) * 0.05 + (this.state === "sleeping" ? -0.14 : 0);
+      x.save(); x.translate(60, 22); x.rotate(sw); x.translate(-60, -22);
+      x.fillStyle = css(lit); x.fill(new Path2D(RAVEN.crest));
       x.restore();
-    };
-    // As duas asas atrás do corpo, espelhadas: simetria e nenhuma sobreposição no peito.
-    if (!this.isMini) { wing(-1); wing(1); }
-    const tail = new Path2D(RAVEN.tail);
-    x.fillStyle = css(dark); x.fill(tail); x.stroke(tail);
+    }
     const body = new Path2D(RAVEN.body);
-    x.fillStyle = feather(50, 98); x.fill(body); x.stroke(body);
-    // Peito: brilho macio, como um material.
-    const sheen = x.createRadialGradient(56, 70, 1, 60, 78, 22);
-    sheen.addColorStop(0, "rgba(255,255,255,0.13)"); sheen.addColorStop(1, "rgba(255,255,255,0)");
-    x.fillStyle = sheen; x.fill(body);
+    x.fillStyle = feather(20, 103); x.fill(body); x.stroke(body);
+    // Peito: aurora (Huginn) ou prata (Muninn), e o brilho macio do alto da cabeça.
+    const belly = new Path2D(RAVEN.belly);
+    const bg = x.createRadialGradient(60, 72, 1, 60, 82, 18);
+    bg.addColorStop(0, muninn ? "rgba(207,214,234,0.32)" : "rgba(94,242,201,0.22)");
+    bg.addColorStop(1, muninn ? "rgba(207,214,234,0.06)" : "rgba(106,168,255,0.06)");
+    x.fillStyle = bg; x.fill(belly);
+    const gloss = x.createRadialGradient(52, 33, 0.5, 54, 36, 15);
+    gloss.addColorStop(0, "rgba(255,255,255,0.2)"); gloss.addColorStop(1, "rgba(255,255,255,0)");
+    x.fillStyle = gloss; x.fill(body);
     if (!this.isMini && !(dressed && this.outfit === "runeBand")) {
       x.save();
       x.fillStyle = GOLD_A; x.globalAlpha *= 0.9;
-      x.font = '700 12px "Bifrost Runic","Segoe UI Historic","Segoe UI Symbol",serif';
+      x.font = '700 11px "Bifrost Runic","Segoe UI Historic","Segoe UI Symbol",serif';
       x.textAlign = "center"; x.textBaseline = "middle";
-      x.fillText("ᚨ", 60, 82);
+      x.fillText(muninn ? "ᛗ" : "ᚨ", 60, 84);
       x.restore();
     }
-    // Cabeça: crista, círculo, olhos, bico — sempre por cima do corpo e das asas.
+    const wing = (side: -1 | 1) => {
+      const sx = 60 + side * RAVEN.shoulder.dx, sy = RAVEN.shoulder.y;
+      x.save();
+      x.translate(sx, sy);
+      // Para fora: a esquerda gira no sentido horário, a direita no anti-horário.
+      x.rotate(side * (-Math.abs(flap)) - (side > 0 ? wave : 0) + side * -0.04 * Math.sin(t * 1.75));
+      x.translate(-sx, -sy);
+      const p = new Path2D(side < 0 ? RAVEN.wingL : RAVEN.wingR);
+      x.fillStyle = feather(60, 95);
+      x.fill(p); x.stroke(p);
+      x.strokeStyle = muninn ? "rgba(207,214,234,0.5)" : "rgba(94,242,201,0.5)";
+      x.lineWidth = 1.3; x.lineCap = "round";
+      x.beginPath(); x.moveTo(60 + side * 26.6, 70); x.bezierCurveTo(60 + side * 29.4, 76, 60 + side * 29.6, 83, 60 + side * 28, 88.6); x.stroke();
+      x.restore();
+    };
+    if (!this.isMini) { wing(-1); wing(1); }
+    // Rosto: lua de Muninn, bochechas, olhos e bico — sempre dentro do corpo.
     x.save();
-    x.translate(head.x - 60, head.y - 40);
-    if (!this.isMini && this.outfit === "none") {
-      const sw = this.physDx * 0.3 + Math.sin(t * 1.7) * 0.05;
-      x.save(); x.translate(60, 24); x.rotate(sw); x.translate(-60, -24);
-      const crest = new Path2D(RAVEN.crest);
-      x.fillStyle = css(lit); x.fill(crest);
-      x.restore();
+    x.translate(gx, gy);
+    if (muninn && !this.isMini && !(dressed && (this.outfit === "helm" || this.outfit === "starCrown"))) {
+      x.fillStyle = "rgba(207,214,234,0.85)"; x.fill(new Path2D(RAVEN.moon));
     }
-    const hp = new Path2D(); hp.arc(H.cx, H.cy, H.r, 0, Math.PI * 2);
-    x.fillStyle = feather(21, 57); x.fill(hp); x.stroke(hp);
-    const gloss = x.createRadialGradient(54, 29, 0.5, 56, 32, 14);
-    gloss.addColorStop(0, "rgba(255,255,255,0.18)"); gloss.addColorStop(1, "rgba(255,255,255,0)");
-    x.fillStyle = gloss; x.fill(hp);
     const flush = Math.max(this.blush, this.tint * 0.4);
     if (flush > 0.02) {
       x.fillStyle = `rgba(180,124,255,${0.4 * flush})`;
-      for (const ex of [49, 71]) { x.beginPath(); x.ellipse(ex, 45, 3.6, 2, 0, 0, Math.PI * 2); x.fill(); }
+      for (const ex of [45.5, 74.5]) { x.beginPath(); x.ellipse(ex, 54.5, 3.6, 2, 0, 0, Math.PI * 2); x.fill(); }
     }
     let shape: EyeShape = this.eyeOverride ?? this.cfg.eye;
     if (this.isDancing && this.dancingLevel > 0.15 && (this.state === "idle" || this.state === "finished")) shape = "happy";
     x.save();
-    x.clip(hp);
-    x.fillStyle = x.strokeStyle = EYE;
-    x.shadowColor = this.tint > 0.2 ? css(this.col, 0.9) : EYE_HALO;
+    x.clip(body);
+    x.fillStyle = x.strokeStyle = muninn ? MUNINN_EYE : EYE;
+    x.shadowColor = this.tint > 0.2 ? css(this.col, 0.9) : muninn ? MUNINN_HALO : EYE_HALO;
     x.shadowBlur = Math.max(2, R * 0.12);
-    const big = this.isMini ? 1.5 : 1;
+    const big = this.isMini ? 1.6 : 1;
     for (const side of [-1, 1]) {
       x.save();
-      x.translate(60 + side * RAVEN.eyes.dx + gx, RAVEN.eyes.y + gy);
-      eyeShape(x, shape, 7 * this.es * big, 8.4 * this.es * big, side, this.open);
+      x.translate(60 + side * RAVEN.eyes.dx, RAVEN.eyes.y);
+      eyeShape(x, shape, 8.2 * this.es * big, 9.6 * this.es * big, side, this.open);
       x.restore();
+    }
+    x.shadowBlur = 0;
+    // Brilho nos olhos abertos (só nas formas "pill"/"wide"), e a pálpebra mansa do Muninn.
+    if (!this.isMini && (shape === "pill" || shape === "wide") && this.open > 0.5) {
+      x.fillStyle = "rgba(255,255,255,0.85)";
+      for (const side of [-1, 1]) { x.beginPath(); x.arc(60 + side * RAVEN.eyes.dx + 1.6, RAVEN.eyes.y - 2.2, 1.3, 0, Math.PI * 2); x.fill(); }
+      if (muninn) {
+        x.fillStyle = css(dark);
+        for (const side of [-1, 1]) {
+          const ex = 60 + side * RAVEN.eyes.dx, ey = RAVEN.eyes.y;
+          x.beginPath(); x.moveTo(ex - 5, ey - 2.4); x.bezierCurveTo(ex - 2.2, ey - 6.4, ex + 2.2, ey - 6.4, ex + 5, ey - 2.4);
+          x.bezierCurveTo(ex + 3, ey - 7.6, ex - 3, ey - 7.6, ex - 5, ey - 2.4); x.fill();
+        }
+      }
     }
     x.restore();
     if (!this.isMini) {
       const beak = new Path2D(RAVEN.beak);
-      x.save(); x.translate(gx * 0.6, gy * 0.6);
-      const g = x.createLinearGradient(56, 43, 64, 53); g.addColorStop(0, GOLD_A); g.addColorStop(1, GOLD_B);
+      const g = x.createLinearGradient(56, 51, 64, 61); g.addColorStop(0, GOLD_A); g.addColorStop(1, GOLD_B);
       x.fillStyle = g; x.fill(beak);
-      x.restore();
     }
     x.restore();
     if (dressed) drawOutfitFront(x, this.outfit, head, st);

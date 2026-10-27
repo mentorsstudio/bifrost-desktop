@@ -48,7 +48,7 @@ export function integrationsSection(present: Record<string, boolean>): HTMLEleme
 
   function updateNote() {
     const used = S.settings.activeIntegrations.length;
-    note.textContent = `Escolha até ${MAX_ACTIVE} pílulas ao lado do Huginn — ${used}/${MAX_ACTIVE} em uso. Serviços (GitHub, Notion, Stripe…) agora vivem em Servidores MCP.`;
+    note.textContent = `Ligue quantas pílulas quiser ao lado do Huginn — ${used} em uso, sem limite. Serviços (GitHub, Notion, Stripe…) agora vivem em Servidores MCP.`;
   }
   S.declaredViews.push(updateNote);
 

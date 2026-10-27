@@ -137,19 +137,28 @@ body.bf-sky, .bf-sky {
 .bf-mascot { width: 120px; height: 120px; display: inline-block; }
 .bf-mascot svg { width: 100%; height: 100%; overflow: visible; }
 .bf-raven-body, .bf-wing, .bf-eyes, .bf-crest, .bf-beak, .bf-head { transform-box: view-box; }
-.bf-raven-body { transform-origin: 60px 100px; }
+.bf-raven-body { transform-origin: 60px 104px; }
 /* As asas giram no ombro, para fora: nunca sobem até a cabeça. */
-.bf-wing-back { transform-origin: 42px 64px; }
-.bf-wing-front { transform-origin: 78px 64px; }
-.bf-head { transform-origin: 60px 54px; }
-.bf-eyes { transform-origin: 60px 37px; }
-.bf-eyes { transition: transform 90ms; }
+.bf-wing-back { transform-origin: 37px 63px; }
+.bf-wing-front { transform-origin: 83px 63px; }
+.bf-head { transform-origin: 60px 58px; }
+.bf-eyes { transform-origin: 60px 46px; }
+.bf-eyes { transition: transform 120ms var(--m-snappy); }
+.bf-crest { transform-box: view-box; transform-origin: 60px 22px; }
+/* Fase 11: o topete do Huginn balança com atraso de mola; o Muninn respira fora de fase. */
+.bf-state-idle .bf-crest { animation: bf-crest 3.6s var(--bf-ease-tide) infinite; }
+@keyframes bf-crest { 50% { transform: rotate(4deg); } }
+.bf-muninn .bf-raven-body { animation-delay: -1.3s; }
+.bf-state-idle .bf-wing { animation: bf-tuck 3.6s var(--bf-ease-tide) infinite; }
+.bf-muninn.bf-state-idle .bf-wing { animation-delay: -1.3s; }
+@keyframes bf-tuck { 50% { transform: rotate(var(--bf-tuck, 0deg)); } }
+.bf-wing-back { --bf-tuck: 3deg; } .bf-wing-front { --bf-tuck: -3deg; }
 .bf-fx > * { opacity: 0; }
 .bf-dot { fill: var(--bf-aurora-1); }
 
 .bf-state-idle .bf-raven-body { animation: bf-breathe 3.6s var(--bf-ease-tide) infinite; }
 .bf-blinking .bf-eyes { transform: scaleY(.08); }
-@keyframes bf-breathe { 50% { transform: translateY(-2px) scale(1.025, .985); } }
+@keyframes bf-breathe { 50% { transform: translateY(-1.5px) scale(1.02, .985); } }
 
 .bf-state-flyIn .bf-raven-body { animation: bf-fly-in var(--bf-glide) var(--bf-ease-raven) both; }
 .bf-state-flyIn .bf-wing-back, .bf-state-flyOut .bf-wing-back { animation: bf-flap-l 180ms var(--m-ease) infinite alternate; }
@@ -175,14 +184,14 @@ body.bf-sky, .bf-sky {
 @keyframes bf-lean { 50% { transform: rotate(5deg) translateX(-2px); } }
 @keyframes bf-wave { from { opacity: .9; transform: scale(.7); } to { opacity: 0; transform: scale(1.3); } }
 
-.bf-state-success .bf-raven-body { animation: bf-hop 520ms var(--bf-ease-raven) 2; }
+.bf-state-success .bf-raven-body { animation: bf-hop 620ms var(--m-bouncy) 2; }
 .bf-state-success .bf-check { opacity: 1; stroke-dasharray: 30; stroke-dashoffset: 30; animation: bf-draw 420ms var(--bf-ease-fjord) 120ms forwards; }
 .bf-state-success .bf-eyes { transform: scaleY(.55); }
-@keyframes bf-hop { 40% { transform: translateY(-14px) scale(.96, 1.05); } 70% { transform: translateY(0) scale(1.06, .94); } }
+@keyframes bf-hop { 0% { transform: scale(1.05, .95); } 40% { transform: translateY(-12px) scale(.97, 1.04); } 72% { transform: translateY(0) scale(1.05, .95); } 100% { transform: none; } }
 @keyframes bf-draw { to { stroke-dashoffset: 0; } }
 
 .bf-state-error .bf-raven-body { animation: bf-shake 420ms var(--bf-ease-fjord) 2; }
-.bf-state-error .bf-err { animation: bf-pop 360ms var(--bf-ease-raven) forwards; }
+.bf-state-error .bf-err { animation: bf-pop 420ms var(--m-bouncy) forwards; }
 .bf-state-error .bf-eye { fill: var(--bf-blood); }
 @keyframes bf-shake { 20%, 60% { transform: translateX(-5px) rotate(-3deg); } 40%, 80% { transform: translateX(5px) rotate(3deg); } }
 @keyframes bf-pop { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: none; } }
@@ -201,3 +210,7 @@ body.bf-sky, .bf-sky {
   .bf-aurora, .bf-bridge { animation: none !important; }
 }
 .bf-raven-rune, .bf-err { font-family: var(--bf-rune-font); }
+/* Fase 11: comemoração — as asas batem quatro vezes enquanto o corvo pula. */
+.bf-state-success .bf-wing-back { animation: bf-flap-l 260ms var(--m-ease) 4 alternate; }
+.bf-state-success .bf-wing-front { animation: bf-flap-r 260ms var(--m-ease) 4 alternate; }
+.bf-state-sleeping .bf-crest { transform: rotate(-8deg); transition: transform var(--m-slow) var(--m-smooth); }

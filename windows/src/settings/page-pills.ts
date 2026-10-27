@@ -65,8 +65,8 @@ export function activePillsSection(connected: Record<string, boolean>): HTMLElem
 
   function draw() {
     const used = S.settings.activeIntegrations.length;
-    slots.textContent = t("{used}/{max} slots in use — the main tool doesn't take one.", { used, max: MAX_ACTIVE });
-    slots.classList.toggle("full", used >= MAX_ACTIVE);
+    slots.textContent = `${used} ${used === 1 ? "pílula ligada" : "pílulas ligadas"}, sem limite — a ferramenta principal fica sempre.`;
+    slots.classList.remove("full");
     main.value = S.settings.mainPill;
     clear(groups);
     for (const cat of PILL_CATEGORIES) {

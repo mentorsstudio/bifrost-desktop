@@ -32,7 +32,7 @@ fn tools() -> Vec<Value> {
     vec![
         json!({
             "name": "pills",
-            "description": "Add, remove, set as main or list the pills shown in the island at the top of the screen. At most 4 pills besides the main one: remove one first if needed.",
+            "description": "Add, remove, set as main or list the pills shown in the island at the top of the screen. There is no limit on how many pills can be shown.",
             "input_schema": {
                 "type": "object",
                 "properties": {

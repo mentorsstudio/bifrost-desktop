@@ -256,7 +256,7 @@ export function whatsappSection(host: WhatsAppSettingsHost): HTMLElement {
 
     const parts: HTMLElement[] = [];
     if (v.prefs.enabled && !host.pillActive()) {
-      parts.push(h("div", { class: "hint", style: hintStyle("#F4505E"), text: t("Turn off another pill to make room for WhatsApp ({max} at most).", { max: host.maxPills }) }));
+      parts.push(h("div", { class: "hint", style: hintStyle("#F4505E"), text: "Ligue a pílula do WhatsApp para ele aparecer na ilha." }));
     }
     // One click: Bifrost downloads GOWA, checks it and starts it. No command line.
     if (v.prefs.gateway === "gowa") parts.push(...installBlock(v));

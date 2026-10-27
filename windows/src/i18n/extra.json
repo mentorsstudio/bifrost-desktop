@@ -3417,19 +3417,6 @@
       "de": "{total} im letzten Jahr",
       "tr": "geçen yıl {total}"
     },
-    "{used}/{max} slots in use — the main tool doesn't take one.": {
-      "zh-Hans": "已用 {used}/{max} 个位置 — 主要工具不占位置。",
-      "hi": "{used}/{max} स्लॉट उपयोग में — मुख्य टूल कोई स्लॉट नहीं लेता।",
-      "es": "{used}/{max} espacios en uso — la herramienta principal no ocupa ninguno.",
-      "ar": "{used}/{max} من الخانات مستخدمة — الأداة الرئيسية لا تشغل خانة.",
-      "fr": "{used}/{max} emplacements utilisés — l'outil principal n'en prend pas.",
-      "bn": "{used}/{max} স্লট ব্যবহৃত — প্রধান টুল কোনো স্লট নেয় না।",
-      "pt-BR": "{used}/{max} espaços em uso — a ferramenta principal não ocupa nenhum.",
-      "ru": "Занято мест: {used}/{max} — основной инструмент место не занимает.",
-      "id": "{used}/{max} slot terpakai — alat utama tidak memakai slot.",
-      "de": "{used}/{max} Plätze belegt — das Hauptwerkzeug belegt keinen.",
-      "tr": "{used}/{max} yuva kullanımda — ana araç yuva kullanmaz."
-    },
     "{what} has an unexpected type — Bifrost has not touched it.": {
       "zh-Hans": "{what} 的类型不符合预期 — Bifrost 没有修改它。",
       "hi": "{what} का प्रकार अपेक्षित नहीं है — Bifrost ने इसे नहीं छुआ।",
@@ -5925,19 +5912,6 @@
       "id": "Balas…  (Shift+Enter: baris baru)",
       "de": "Antworten…  (Umschalt+Eingabe: neue Zeile)",
       "tr": "Yanıtla…  (Shift+Enter: yeni satır)"
-    },
-    "Turn off another pill to make room for WhatsApp ({max} at most).": {
-      "zh-Hans": "请关闭另一个胶囊，为 WhatsApp 腾出位置（最多 {max} 个）。",
-      "hi": "WhatsApp के लिए जगह बनाने हेतु कोई दूसरी पिल बंद करें (अधिकतम {max})।",
-      "es": "Desactiva otra píldora para hacer sitio a WhatsApp ({max} como máximo).",
-      "ar": "أوقف حبة أخرى لإفساح مكان لواتساب ({max} كحد أقصى).",
-      "fr": "Désactive une autre pill pour faire de la place à WhatsApp ({max} au maximum).",
-      "bn": "WhatsApp-এর জন্য জায়গা করতে অন্য একটি পিল বন্ধ করুন (সর্বোচ্চ {max}টি)।",
-      "pt-BR": "Desative outra pílula para abrir espaço para o WhatsApp (no máximo {max}).",
-      "ru": "Отключите другую пилюлю, чтобы освободить место для WhatsApp (не больше {max}).",
-      "id": "Matikan pil lain untuk memberi tempat bagi WhatsApp (maksimal {max}).",
-      "de": "Schalte eine andere Pill aus, um Platz für WhatsApp zu schaffen (höchstens {max}).",
-      "tr": "WhatsApp’a yer açmak için başka bir hapı kapat (en fazla {max})."
     },
     "Adornments": {
       "zh-Hans": "装饰",

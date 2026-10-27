@@ -58,8 +58,6 @@ test("placeholders are filled in every language, unknown ones are left as they a
   assert.equal(t("Uploading {name}"), "Uploading {name}");
   inLanguage("hi", () => assert.equal(t("Uploading {name}", { name: "a.pdf" }), "a.pdf अपलोड हो रहा है"));
   inLanguage("es", () => assert.equal(t("in {h} h {m}", { h: 1, m: 20 }), "en 1 h 20"));
-  assert.equal(t("{used}/{max} slots in use — the main tool doesn't take one.", { used: 2, max: 4 }),
-    "2/4 slots in use — the main tool doesn't take one.");
 });
 
 test("plurals follow each language's rules", () => {

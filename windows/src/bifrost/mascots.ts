@@ -10,51 +10,63 @@ export type MascotState = "idle" | "blink" | "flyIn" | "flyOut" | "thinking" | "
 
 export const MASCOT_STATES: readonly MascotState[] = ["idle", "blink", "flyIn", "flyOut", "thinking", "listening", "success", "error", "sleeping"];
 
-const PALETTE: Record<MascotName, { body: string; wing: string; eye: string; rune: string; label: string }> = {
-  // Huginn: corvo azul-fiorde, olho de aurora, runa Ansuz (ᚨ, palavra/pensamento).
-  huginn: { body: "#13203f", wing: "#1d2f5c", eye: "#5ef2c9", rune: "ᚨ", label: "Huginn" },
-  // Muninn: corvo cinza-ferro, olho âmbar-dourado, runa Mannaz (ᛗ, memória/humano).
-  muninn: { body: "#2a2730", wing: "#3b3644", eye: "#f2b84b", rune: "ᛗ", label: "Muninn" },
+// Fase 11: os dois corvos redesenhados do zero — um grão macio só (cabeça e corpo
+// sem emenda), asas em gota nos lados, cauda em leque de três penas, pés de ouro.
+// O que separa os dois à primeira vista:
+//   Huginn (pensamento): azul-fiorde, topete de três penas, olhos de aurora (verde-água),
+//     peito com reflexo de aurora e runa Ansuz (ᚨ).
+//   Muninn (memória): ameixa-ferro, sem topete — uma lua crescente de prata na testa —,
+//     olhos âmbar com pálpebra mansa, peito prateado e runa Mannaz (ᛗ).
+export const PALETTE: Record<MascotName, { body: string; lit: string; wing: string; belly: [string, string]; eye: string; accent: string; rune: string; label: string }> = {
+  huginn: { body: "#101b3a", lit: "#2b4580", wing: "#1a2c5a", belly: ["#3d6fa8", "#1d3566"], eye: "#5ef2c9", accent: "#5ef2c9", rune: "ᚨ", label: "Huginn" },
+  muninn: { body: "#241d2e", lit: "#4a3d5c", wing: "#352a44", belly: ["#a99cc0", "#5a4d6e"], eye: "#f2b84b", accent: "#cfd6ea", rune: "ᛗ", label: "Muninn" },
 };
 
 export function mascotSvg(name: MascotName): string {
   const p = PALETTE[name];
-  // Camadas, de trás para a frente: sombra · asa de trás · cauda · corpo · peito
-  // · asa da frente · cabeça (crista, olhos, bico). Nada cruza o rosto: a cabeça
-  // é desenhada por último e as asas ficam abaixo da linha do pescoço (y ≥ 58).
-  // Os efeitos ficam num canto livre (x ≥ 90, y ≤ 30), longe da cabeça (x ≤ 78).
+  const huginn = name === "huginn";
+  const ex = RAVEN.eyes.dx, ey = RAVEN.eyes.y;
+  // Uma pena de destaque em cada asa: curva fina da cor da aurora (Huginn) ou prata (Muninn).
+  const quill = (s: -1 | 1) => `M${60 + s * 26.6} 70 C${60 + s * 29.4} 76 ${60 + s * 29.6} 83 ${60 + s * 28} 88.6`;
+  const lid = huginn ? "" : `<path class="bf-lid" d="M${60 - ex - 4.6} ${ey - 2.2} C${60 - ex - 2} ${ey - 5.6} ${60 - ex + 2} ${ey - 5.6} ${60 - ex + 4.6} ${ey - 2.2} Z M${60 + ex - 4.6} ${ey - 2.2} C${60 + ex - 2} ${ey - 5.6} ${60 + ex + 2} ${ey - 5.6} ${60 + ex + 4.6} ${ey - 2.2} Z" fill="${p.body}"/>`;
   return `<svg class="bf-raven" viewBox="0 0 120 120" role="img" aria-label="${p.label}">
   <defs>
-    <radialGradient id="g-${name}" cx="50%" cy="35%" r="65%"><stop offset="0" stop-color="${p.wing}"/><stop offset="1" stop-color="${p.body}"/></radialGradient>
-    <radialGradient id="sheen-${name}"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
-    <linearGradient id="gold-${name}" x1="0" x2="1"><stop offset="0" stop-color="#f6d27a"/><stop offset="1" stop-color="#b8862f"/></linearGradient>
+    <radialGradient id="g-${name}" cx="42%" cy="30%" r="78%"><stop offset="0" stop-color="${p.lit}"/><stop offset="1" stop-color="${p.body}"/></radialGradient>
+    <linearGradient id="w-${name}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.lit}"/><stop offset="1" stop-color="${p.wing}"/></linearGradient>
+    <radialGradient id="b-${name}" cx="50%" cy="30%" r="75%"><stop offset="0" stop-color="${p.belly[0]}" stop-opacity=".55"/><stop offset="1" stop-color="${p.belly[1]}" stop-opacity=".25"/></radialGradient>
+    <radialGradient id="sheen-${name}"><stop offset="0" stop-color="#fff" stop-opacity=".2"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    <linearGradient id="gold-${name}" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#f8dc8c"/><stop offset="1" stop-color="#c08f35"/></linearGradient>
   </defs>
-  <g class="bf-raven-shadow"><ellipse cx="60" cy="110" rx="24" ry="3.5" fill="#000" opacity=".35"/></g>
+  <g class="bf-raven-shadow"><ellipse cx="60" cy="110" rx="26" ry="3.6" fill="#000" opacity=".32"/></g>
   <g class="bf-raven-body">
-    <path class="bf-wing bf-wing-back" d="${RAVEN.wingL}" fill="${p.wing}"/>
-    <path class="bf-wing bf-wing-front" d="${RAVEN.wingR}" fill="${p.wing}"/>
-    <path class="bf-tail" d="${RAVEN.tail}" fill="${p.body}"/>
+    <ellipse cx="${60 - RAVEN.feet.dx}" cy="${RAVEN.feet.y}" rx="4.2" ry="2.2" fill="url(#gold-${name})"/>
+    <ellipse cx="${60 + RAVEN.feet.dx}" cy="${RAVEN.feet.y}" rx="4.2" ry="2.2" fill="url(#gold-${name})"/>
+    ${huginn ? `<path class="bf-crest" d="${RAVEN.crest}" fill="${p.lit}"/>` : ""}
     <path d="${RAVEN.body}" fill="url(#g-${name})"/>
-    <ellipse cx="57" cy="72" rx="15" ry="13" fill="url(#sheen-${name})"/>
-    <text x="60" y="86" text-anchor="middle" font-size="12" fill="url(#gold-${name})" class="bf-raven-rune">${p.rune}</text>
+    <path d="${RAVEN.belly}" fill="url(#b-${name})"/>
+    <ellipse cx="52" cy="34" rx="13" ry="10" fill="url(#sheen-${name})"/>
+    <text x="60" y="88" text-anchor="middle" font-size="11" fill="url(#gold-${name})" class="bf-raven-rune">${p.rune}</text>
+    <g class="bf-wing bf-wing-back"><path d="${RAVEN.wingL}" fill="url(#w-${name})"/><path d="${quill(-1)}" fill="none" stroke="${p.accent}" stroke-opacity=".55" stroke-width="1.3" stroke-linecap="round"/></g>
+    <g class="bf-wing bf-wing-front"><path d="${RAVEN.wingR}" fill="url(#w-${name})"/><path d="${quill(1)}" fill="none" stroke="${p.accent}" stroke-opacity=".55" stroke-width="1.3" stroke-linecap="round"/></g>
     <g class="bf-head">
-      <path class="bf-crest" d="${RAVEN.crest}" fill="${p.wing}"/>
-      <circle cx="60" cy="39" r="18" fill="url(#g-${name})"/>
-      <circle cx="56" cy="32" r="12" fill="url(#sheen-${name})"/>
+      ${huginn ? "" : `<path d="${RAVEN.moon}" fill="${p.accent}" opacity=".85"/>`}
       <g class="bf-eyes">
-        <ellipse class="bf-eye" cx="53" cy="37" rx="3.6" ry="4.2" fill="${p.eye}"/>
-        <ellipse class="bf-eye" cx="67" cy="37" rx="3.6" ry="4.2" fill="${p.eye}"/>
-        <circle cx="54.2" cy="35.6" r="1.2" fill="#fff" opacity=".9"/><circle cx="68.2" cy="35.6" r="1.2" fill="#fff" opacity=".9"/>
+        <ellipse class="bf-eye" cx="${60 - ex}" cy="${ey}" rx="4.4" ry="5" fill="${p.eye}"/>
+        <ellipse class="bf-eye" cx="${60 + ex}" cy="${ey}" rx="4.4" ry="5" fill="${p.eye}"/>
+        <circle cx="${60 - ex + 1.4}" cy="${ey - 1.8}" r="1.4" fill="#fff" opacity=".92"/><circle cx="${60 + ex + 1.4}" cy="${ey - 1.8}" r="1.4" fill="#fff" opacity=".92"/>
+        ${lid}
       </g>
+      <ellipse cx="${60 - 14.5}" cy="54.5" rx="3.4" ry="1.8" fill="${huginn ? "#5ef2c9" : "#f2b84b"}" opacity=".16"/>
+      <ellipse cx="${60 + 14.5}" cy="54.5" rx="3.4" ry="1.8" fill="${huginn ? "#5ef2c9" : "#f2b84b"}" opacity=".16"/>
       <path class="bf-beak" d="${RAVEN.beak}" fill="url(#gold-${name})"/>
     </g>
   </g>
   <g class="bf-fx">
-    <circle class="bf-dot d1" cx="92" cy="28" r="3"/><circle class="bf-dot d2" cx="101" cy="21" r="3"/><circle class="bf-dot d3" cx="110" cy="14" r="3"/>
-    <path class="bf-check" d="M92 20 l6 6 l13 -14" fill="none" stroke="#5ef2c9" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-    <text class="bf-err" x="102" y="28" font-size="22" text-anchor="middle" fill="#ff6b6b">ᚾ</text>
-    <path class="bf-wave" d="M10 34 q-5 8 0 16 M3 29 q-8 13 0 26" fill="none" stroke="#5ef2c9" stroke-width="2.5" stroke-linecap="round"/>
-    <text class="bf-zzz" x="88" y="36" font-size="14" fill="#9aa6c8">ᛉ</text>
+    <circle class="bf-dot d1" cx="94" cy="26" r="3"/><circle class="bf-dot d2" cx="102.5" cy="19" r="3"/><circle class="bf-dot d3" cx="111" cy="12" r="3"/>
+    <path class="bf-check" d="M94 20 l6 6 l13 -14" fill="none" stroke="#5ef2c9" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <text class="bf-err" x="104" y="28" font-size="22" text-anchor="middle" fill="#ff6b6b">ᚾ</text>
+    <path class="bf-wave" d="M18 34 q-5 8 0 16 M11 29 q-8 13 0 26" fill="none" stroke="#5ef2c9" stroke-width="2.5" stroke-linecap="round"/>
+    <text class="bf-zzz" x="94" y="30" font-size="14" fill="#9aa6c8">ᛉ</text>
   </g>
 </svg>`;
 }

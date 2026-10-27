@@ -77,15 +77,15 @@ function cloakFront(c: Ctx, h: RavenHead) {
   const x = h.x, y = h.y + h.r * 0.86;
   c.save();
   c.beginPath();
-  c.moveTo(x - h.r * 0.86, y - 1.5);
-  c.quadraticCurveTo(x, y + h.r * 0.34, x + h.r * 0.86, y - 1.5);
-  c.quadraticCurveTo(x + h.r * 0.9, y + h.r * 0.3, x + h.r * 0.62, y + h.r * 0.36);
+  c.moveTo(x - h.r * 0.78, y - 1.5);
+  c.quadraticCurveTo(x, y + h.r * 0.34, x + h.r * 0.78, y - 1.5);
+  c.quadraticCurveTo(x + h.r * 0.8, y + h.r * 0.3, x + h.r * 0.62, y + h.r * 0.36);
   c.quadraticCurveTo(x, y + h.r * 0.72, x - h.r * 0.62, y + h.r * 0.36);
-  c.quadraticCurveTo(x - h.r * 0.9, y + h.r * 0.3, x - h.r * 0.86, y - 1.5);
+  c.quadraticCurveTo(x - h.r * 0.8, y + h.r * 0.3, x - h.r * 0.78, y - 1.5);
   c.closePath();
   c.fillStyle = lin(c, 0, y - 2, 0, y + h.r * 0.6, "#e6d6b8", "#9c8664");
   c.fill(); outline(c, h.r * 0.04);
-  c.beginPath(); c.arc(x + h.r * 0.66, y + h.r * 0.28, h.r * 0.12, 0, Math.PI * 2);
+  c.beginPath(); c.arc(x + h.r * 0.5, y + h.r * 0.3, h.r * 0.12, 0, Math.PI * 2);
   c.fillStyle = lin(c, x + h.r * 0.55, y, x + h.r * 0.8, y + h.r * 0.4, GOLD[0], GOLD[1]); c.fill();
   c.restore();
 }
@@ -112,7 +112,7 @@ function helm(c: Ctx, h: RavenHead) {
   c.fill(); outline(c, r * 0.07);
   // Faixa de ouro e protetor nasal (para entre os olhos, acima do bico).
   c.fillStyle = GOLD[1];
-  c.fillRect(x - r * 0.98, y - r * 0.46, r * 1.96, r * 0.14);
+  c.beginPath(); c.roundRect(x - r * 0.98, y - r * 0.46, r * 1.96, r * 0.14, r * 0.07); c.fill();
   c.beginPath(); c.roundRect(x - r * 0.07, y - r * 0.36, r * 0.14, r * 0.42, r * 0.05);
   c.fillStyle = IRON[1]; c.fill(); outline(c, r * 0.04);
   c.restore();
@@ -122,18 +122,18 @@ function crown(c: Ctx, h: RavenHead) {
   const { x, y, r } = h;
   const base = y - r * 0.82, top = base - r * 0.6;
   c.save();
+  // Fase 11: coroa de pontas redondas (nada pontudo), simétrica: aro + 5 bolinhas.
   c.beginPath();
-  c.moveTo(x - r * 0.7, base);
-  const pts = 5;
-  for (let i = 0; i <= pts * 2; i++) {
-    const px = x - r * 0.7 + (r * 1.4 * i) / (pts * 2);
-    const py = i % 2 === 0 ? top : base - r * 0.22;
-    c.lineTo(px, py);
-  }
-  c.lineTo(x + r * 0.7, base);
+  c.moveTo(x - r * 0.66, base);
+  c.bezierCurveTo(x - r * 0.72, base - r * 0.3, x - r * 0.6, top + r * 0.2, x - r * 0.5, top + r * 0.28);
+  c.quadraticCurveTo(x - r * 0.25, base - r * 0.05, x, top);
+  c.quadraticCurveTo(x + r * 0.25, base - r * 0.05, x + r * 0.5, top + r * 0.28);
+  c.bezierCurveTo(x + r * 0.6, top + r * 0.2, x + r * 0.72, base - r * 0.3, x + r * 0.66, base);
+  c.quadraticCurveTo(x, base + r * 0.12, x - r * 0.66, base);
   c.closePath();
   c.fillStyle = lin(c, x, top, x, base, GOLD[0], GOLD[1]);
   c.fill(); outline(c, r * 0.06);
+  for (const [dx, dy] of [[-0.5, 0.28], [0, 0], [0.5, 0.28]]) { c.beginPath(); c.arc(x + dx * r, top + dy * r, r * 0.1, 0, Math.PI * 2); c.fillStyle = GOLD[0]; c.fill(); }
   c.fillStyle = "#5ef2c9";
   for (const dx of [-0.42, 0, 0.42]) { c.beginPath(); c.arc(x + dx * r, base - r * 0.12, r * 0.07, 0, Math.PI * 2); c.fill(); }
   c.restore();
@@ -143,7 +143,7 @@ function lantern(c: Ctx, h: RavenHead) {
   const t = performance.now() / 1000;
   const sway = Math.sin(t * 1.6) * 0.12;
   // Pendurada além da ponta da asa direita (x ≈ 104), para não sumir atrás dela.
-  const px = h.x + h.bodyR * 1.95, py = h.chestY - h.bodyR * 0.05;
+  const px = h.x + h.bodyR * 1.75, py = h.chestY - h.bodyR * 0.05;
   c.save();
   c.translate(px, py);
   c.rotate(sway);
