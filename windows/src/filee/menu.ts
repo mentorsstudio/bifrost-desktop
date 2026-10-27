@@ -14,47 +14,28 @@ import "../theme/themes.css";
 import "../theme/themes";
 import "../bifrost/contextmenu";
 import "./menu.css";
+import "./menu-page.css";
 import { Mascot } from "../bifrost/mascots";
 import { reducedMotion } from "../bifrost/motion";
 import { CATEGORY_RUNE, Convert, QUICK_PROMPTS, baseName, on, type ItemReport, type Plan, type RingSlice } from "./api";
-import { DONUT, hitRadius, hitTest, labelBox, midAngle, pointAt, span, subMid, subSpan, wedge, type Hit } from "./ring";
+import { hitRadius, hitTest, type Hit } from "./ring";
+import { Donut } from "./donut";
+import { readRingStyle } from "./ring-style";
 
 interface PlanPayload { plan: Plan | null; error: string | null; icon?: string | null }
 
-const STAGGER = 35;
 const POP_MS = 300;
-const SVG = "http://www.w3.org/2000/svg";
 
 const root = document.getElementById("fm-root")!;
-const stage = el("div", "fm-stage");
-const svg = document.createElementNS(SVG, "svg");
-svg.setAttribute("class", "fm-svg");
-svg.setAttribute("viewBox", `${-DONUT.size / 2} ${-DONUT.size / 2} ${DONUT.size} ${DONUT.size}`);
-const slicesG = document.createElementNS(SVG, "g");
-const subG = document.createElementNS(SVG, "g");
-subG.setAttribute("class", "fm-sub-g");
-svg.append(subG, slicesG);
-const labels = el("div", "fm-labels");
-const subLabels = el("div", "fm-labels fm-sub-labels");
-const hub = el("div", "fm-hub");
-const hubIcon = el("div", "fm-hub-icon");
-const badge = el("span", "fm-badge");
-const hubTitle = el("div", "fm-hub-title");
-const hubHint = el("div", "fm-hub-hint");
-const progress = el("div", "fm-progress");
-hub.append(progress, hubIcon, badge, hubTitle, hubHint);
-const perch = el("div", "fm-perch");
-const ravenBox = el("div", "fm-raven");
+const donut = new Donut(root, reducedMotion);
+const { hub, hubIcon, badge, hubTitle, progress, ravenBox } = donut;
 const raven = new Mascot("huginn", ravenBox);
-perch.append(ravenBox);
-stage.append(svg, labels, subLabels, hub, perch);
-root.append(stage);
+donut.setStyle(readRingStyle());
 
 let plan: Plan | null = null;
 let icon: string | null = null;
 let job: number | null = null;
 let slices: RingSlice[] = [];
-let subOf = -1;
 let hover: Hit = { kind: "center" };
 let closing = false;
 let busy = false;
@@ -78,8 +59,7 @@ function paths(): string[] {
 }
 
 function hint(text: string, danger = false) {
-  hubHint.textContent = text;
-  hubHint.classList.toggle("danger", danger);
+  donut.hint(text, danger);
 }
 
 function idleHint() {
@@ -103,104 +83,21 @@ function drawHub() {
   hubTitle.textContent = plan?.ring?.title ?? (files.length > 1 ? `${files.length} arquivos` : f?.name ?? "");
 }
 
-function sliceNode(s: RingSlice, i: number, count: number, sub: boolean, parentMid = 0, sSpan = 0) {
-  const mid = sub ? subMid(parentMid, i, count, sSpan) : midAngle(i, count);
-  const sp = sub ? sSpan : span(count);
-  const w = sub ? wedge(DONUT.subInner, DONUT.subOuter, mid, sp, DONUT.gap, 8) : wedge(DONUT.inner, DONUT.outer, mid, sp);
-  const g = document.createElementNS(SVG, "g");
-  g.setAttribute("class", `fm-slice${s.enabled ? "" : " off"}${s.children.length ? " group" : ""}`);
-  const pop = pointAt(mid, DONUT.pop);
-  g.style.setProperty("--px", `${pop.x}px`);
-  g.style.setProperty("--py", `${pop.y}px`);
-  g.style.setProperty("--d", reducedMotion() ? "0ms" : `${i * STAGGER}ms`);
-  const path = document.createElementNS(SVG, "path");
-  path.setAttribute("d", w.d);
-  path.setAttribute("stroke-width", String(w.stroke));
-  g.append(path);
-  // Rótulo (HTML, para quebrar linha e cortar com reticências).
-  const r = sub ? (DONUT.subInner + DONUT.subOuter) / 2 : 0;
-  const box = sub
-    ? { ...pointAt(mid, r), width: Math.max(40, 2 * r * Math.sin((sp / 2) * Math.PI / 180) - 6) }
-    : labelBox(i, count);
-  const lab = el("div", `fm-label${s.enabled ? "" : " off"}${sub ? " small" : ""}`);
-  lab.style.left = `${box.x}px`;
-  lab.style.top = `${box.y}px`;
-  lab.style.width = `${box.width}px`;
-  lab.style.setProperty("--d", g.style.getPropertyValue("--d"));
-  lab.style.setProperty("--px", `${pop.x}px`);
-  lab.style.setProperty("--py", `${pop.y}px`);
-  lab.append(el("span", "fm-label-name", softHyphens(s.label)));
-  if (s.caption && !sub) lab.append(el("span", "fm-label-cap", s.caption));
-  return { g, lab };
-}
-
-/** Palavras longas ganham um hífen opcional no meio ("Redimen-sionar"). */
-export function softHyphens(label: string): string {
-  return label.split(" ").map((w) => (w.length > 10 ? `${w.slice(0, Math.ceil(w.length / 2) + 1)}\u00AD${w.slice(Math.ceil(w.length / 2) + 1)}` : w)).join(" ");
-}
-
-/** Diminui a letra até o nome caber (no máximo 2 linhas, sem partir palavra). */
-function fit(lab: HTMLElement) {
-  const name = lab.querySelector<HTMLElement>(".fm-label-name");
-  if (!name) return;
-  let size = parseFloat(getComputedStyle(name).fontSize) || 12;
-  while ((name.scrollWidth > name.clientWidth + 0.5 || name.scrollHeight > name.clientHeight + 0.5) && size > 8.5) {
-    size -= 0.5;
-    name.style.fontSize = `${size}px`;
-  }
-}
-
 function drawSlices() {
-  slicesG.replaceChildren();
-  labels.replaceChildren();
-  slices.forEach((s, i) => {
-    const { g, lab } = sliceNode(s, i, slices.length, false);
-    slicesG.append(g);
-    labels.append(lab);
-  });
-  for (const l of labels.children) fit(l as HTMLElement);
+  donut.draw(slices);
 }
 
 function openSub(index: number) {
-  const s = slices[index];
-  if (!s?.children.length || subOf === index || !s.enabled) return;
-  subOf = index;
-  const n = s.children.length;
-  const ss = subSpan(span(slices.length), n);
-  const pm = midAngle(index, slices.length);
-  subG.replaceChildren();
-  subLabels.replaceChildren();
-  s.children.forEach((c, i) => {
-    const { g, lab } = sliceNode(c, i, n, true, pm, ss);
-    subG.append(g);
-    subLabels.append(lab);
-  });
-  for (const l of subLabels.children) fit(l as HTMLElement);
-  slicesG.children[index]?.classList.add("parent");
-  root.classList.add("sub-open");
-  requestAnimationFrame(() => root.classList.add("sub-shown"));
-  void Convert.menuRadius(hitRadius(true));
+  if (donut.openSub(index)) void Convert.menuRadius(hitRadius(true));
 }
 
 function closeSub() {
-  subOf = -1;
-  subG.replaceChildren();
-  subLabels.replaceChildren();
-  root.classList.remove("sub-open", "sub-shown");
-  for (const c of slicesG.children) c.classList.remove("parent");
+  donut.closeSub();
   void Convert.menuRadius(hitRadius(false));
 }
 
 function mark(h: Hit) {
-  for (const c of [...slicesG.children, ...subG.children, ...labels.children, ...subLabels.children]) c.classList.remove("on");
-  if (h.kind === "slice") {
-    slicesG.children[h.index]?.classList.add("on");
-    labels.children[h.index]?.classList.add("on");
-  } else if (h.kind === "sub") {
-    subG.children[h.index]?.classList.add("on");
-    subLabels.children[h.index]?.classList.add("on");
-  }
-  hub.classList.toggle("hot", h.kind === "center");
+  donut.mark(h);
 }
 
 function setHover(h: Hit) {
@@ -216,11 +113,11 @@ function setHover(h: Hit) {
     if (!s.enabled) hint(s.reason ?? "Não serve para estes arquivos");
     else if (s.children.length) {
       hint("Mova para fora para escolher");
-      if (subOf !== h.index) subTimer = window.setTimeout(() => openSub(h.index), 160);
+      if (donut.subOf !== h.index) subTimer = window.setTimeout(() => openSub(h.index), 160);
     } else hint(`Solte → ${s.label}`);
-    if (!s.children.length && subOf >= 0) subTimer = window.setTimeout(closeSub, 320);
+    if (!s.children.length && donut.subOf >= 0) subTimer = window.setTimeout(closeSub, 320);
   } else if (h.kind === "sub") {
-    const p = slices[subOf];
+    const p = slices[donut.subOf];
     const c = p?.children[h.index];
     if (c) hint(`Solte → ${p.label} · ${c.label}`);
   } else {
@@ -230,7 +127,7 @@ function setHover(h: Hit) {
 
 function hitAt(x: number, y: number): Hit {
   const c = center();
-  return hitTest(x - c.x, y - c.y, slices.length, subOf >= 0 ? { parent: subOf, count: slices[subOf].children.length } : undefined);
+  return hitTest(x - c.x, y - c.y, slices.length, donut.subOf >= 0 ? { parent: donut.subOf, count: slices[donut.subOf].children.length } : undefined);
 }
 
 function activate(h: Hit) {
@@ -252,7 +149,7 @@ function activate(h: Hit) {
     run(s);
     return;
   }
-  const c = slices[subOf]?.children[h.index];
+  const c = slices[donut.subOf]?.children[h.index];
   if (c?.enabled) run(c);
 }
 
@@ -301,13 +198,9 @@ export function retract() {
   closing = true;
   window.clearTimeout(closeTimer);
   window.clearTimeout(subTimer);
-  const n = slices.length;
-  for (const nodes of [slicesG.children, labels.children]) {
-    [...nodes].forEach((g, i) => (g as HTMLElement).style.setProperty("--d", reducedMotion() ? "0ms" : `${(n - 1 - i) * 22}ms`));
-  }
+  const wait = donut.retractDelays(POP_MS);
   root.classList.add("closing");
   root.classList.remove("open", "shown", "sub-shown");
-  const wait = reducedMotion() ? 0 : n * 22 + POP_MS;
   window.setTimeout(() => {
     job = null;
     void Convert.menuClose();
@@ -326,8 +219,8 @@ function reset() {
   window.clearTimeout(closeTimer);
   root.classList.remove("closing", "busy", "open", "done");
   closeSub();
-  slicesG.replaceChildren();
-  labels.replaceChildren();
+  donut.clear();
+  donut.setStyle(readRingStyle());
   hubIcon.replaceChildren(el("span", "fm-file-rune c-other", "ᛟ"));
   hubTitle.textContent = "";
   badge.classList.remove("on");

@@ -3,6 +3,7 @@
 // (drop.ts) e o Huginn desenhado pelo RavenEngine. Reescrita do zero sobre o
 // mesmo contrato público (o que main.ts, hooks.ts, shortcuts.ts e companhia chamam).
 
+import { RavenLife, listenRavenSignals } from "../bifrost/raven-life";
 import { Tracked, Spring } from "../core/anim";
 import { Springs } from "../bifrost/motion";
 import { Bridge, IS_TAURI, onDragDrop } from "../core/bridge";
@@ -126,6 +127,8 @@ export class Island {
     this.listenFsm();
     this.listenInput();
     this.engine.onDizzy = () => this.handleDizzy();
+    this.engine.life = new RavenLife(this.engine, { wake: () => this.ensureRunning() });
+    listenRavenSignals();
     this.greeting.onComplete = () => { this.fsm.greetComplete(); this.onGreetingDone?.(); };
     State.subscribe(() => { this.stale = true; this.ensureRunning(); });
   }
@@ -160,6 +163,8 @@ export class Island {
     // A sequência de envio fica sob o cabeçalho, que continua visível por cima.
     const clip = h("div", { id: "island-clip" }, greeting, this.upload.el, content);
     const bot = h("canvas", { id: "bot-canvas" });
+    bot.addEventListener("mouseenter", () => this.engine.life?.hover());
+    bot.addEventListener("pointerdown", () => this.engine.life?.click());
     const glow = h("div", { id: "bot-glow" });
     const grid = h("div", { id: "mini-grid" });
     const clock = h("div", { id: "island-clock" });

@@ -22,7 +22,7 @@ test("o Huginn do anel usa o personagem (Mascot sem tema fixo lê ravenTheme)", 
 test("Ajustes mostra Conversor em Geral e Personagens em Temas", () => {
   const m = src("settings/main.ts");
   assert.match(m, /general: \(\) => \[generalSection\(\), fileeSection\(\)\]/);
-  assert.match(m, /themes: \(\) => \[themesSection\(\), charactersSection\(\)\]/);
+  assert.match(m, /themes: \(\) => \[themesSection\(\), charactersSection\(\)(, lifeSection\(\))?\]/);
 });
 
 test("a runa d'água não aparece no vão dos cartões das subpáginas", () => {

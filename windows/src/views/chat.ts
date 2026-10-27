@@ -7,6 +7,7 @@
 // Um modelo local escreve aos poucos: o Rust manda `chat-delta` com o texto
 // visível até agora, e a fala cresce no lugar.
 
+import { ravenSignal } from "../bifrost/raven-life";
 import { FileeIsland, quickPrompts } from "../filee/island";
 import { h, svg, clear } from "./dom";
 import { ICONS } from "./icons";
@@ -172,6 +173,7 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
       saga.append(h("div", { class: "chat-row bf-saga-huginn" }, h("span", { class: "bf-saga-rune", text: "ᚺ" }), growing));
     }
     renderMarkdown(growing, text);
+    ravenSignal({ kind: "chunk" });
     saga.scrollTop = saga.scrollHeight;
   });
 
@@ -191,6 +193,7 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
     asked++;
     State.stateOverride = null;
     State.chatHistory.push({ id: seq++, role: "assistant", content: "_Interrompido._" });
+    ravenSignal({ kind: "done" });
     finish();
   }
 
@@ -207,6 +210,7 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
     Sound.play("send");
     State.chatHistory.push({ id: seq++, role: "user", content: q });
     State.stateOverride = "thinking";
+    ravenSignal({ kind: "thinking" });
     State.notify();
     onHeightChange();
     const f = State.droppedFile;
@@ -217,12 +221,16 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
       if (mine !== asked) return;
       State.chatHistory.push({ id: seq++, role: "assistant", content: r.text });
       State.stateOverride = null;
+      ravenSignal({ kind: "done" });
+      ravenSignal({ kind: "success" });
       Sound.play("finish");
     } catch (err) {
       if (mine !== asked) return;
       State.stateOverride = null;
       State.noteMessage = String(err).replace(/^Error:\s*/, "");
       State.view = "note";
+      ravenSignal({ kind: "done" });
+      ravenSignal({ kind: "error" });
       Sound.play("error");
     } finally {
       if (mine === asked) finish();

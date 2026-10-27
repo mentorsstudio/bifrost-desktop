@@ -2,6 +2,8 @@
 // tema (as variáveis do tema valem só dentro do cartão): a ilha, a aurora que
 // corre e os dois corvos animando. Clicar aplica com cruzamento suave.
 
+import { LIFE_LEVELS, readLevel, saveLevel, ravenSignal, type LifeLevel } from "../bifrost/raven-life";
+import { reducedMotion } from "../bifrost/motion";
 import { h } from "../views/dom";
 import { Mascot } from "../bifrost/mascots";
 import { THEMES, chooseTheme, currentTheme, onThemeChange, themeVars, type Theme } from "../theme/themes";
@@ -101,5 +103,28 @@ export function charactersSection(): HTMLElement {
     if (e) e.birds = draw(CHARACTERS[0], e.box);
   });
   sec.append(grid);
+  return sec;
+}
+
+/** Fase 22: "Vida dos corvos" — quanto Huginn e Muninn se mexem sozinhos. */
+export const LIFE_TXT = {
+  title: "Vida dos corvos",
+  intro: "Gestos discretos quando estão à toa (piscar, olhar de lado, ajeitar a asa, um pulinho), cochilo depois de um tempo parado e reações ao chat, ao ditado e aos agentes.",
+  reduced: "O Windows pede menos movimento: os corvos ficam quietos.",
+  names: { off: "Desligado", calmo: "Calmo", normal: "Normal", animado: "Animado" } as Record<LifeLevel, string>,
+};
+
+export function lifeSection(): HTMLElement {
+  const sec = h("section", { class: "th-section life-section" });
+  sec.append(h("h2", { text: LIFE_TXT.title }), h("div", { class: "hint", text: LIFE_TXT.intro }));
+  const seg = h("div", { class: "hub-segmented life-seg", role: "radiogroup", "aria-label": LIFE_TXT.title });
+  const paint = () => { const cur = readLevel(); for (const b of seg.children) { const on = (b as HTMLElement).dataset.level === cur; b.classList.toggle("on", on); b.setAttribute("aria-checked", String(on)); } };
+  for (const l of LIFE_LEVELS) {
+    seg.append(h("button", { class: "seg-cell", role: "radio", "data-level": l, text: LIFE_TXT.names[l],
+      onclick: () => { saveLevel(l); paint(); ravenSignal({ kind: "activity" }); } }));
+  }
+  paint();
+  sec.append(seg);
+  if (reducedMotion()) { sec.append(h("div", { class: "hint", text: LIFE_TXT.reduced })); seg.setAttribute("aria-disabled", "true"); }
   return sec;
 }

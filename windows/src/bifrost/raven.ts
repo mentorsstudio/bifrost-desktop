@@ -16,6 +16,7 @@ import { Sound } from "../core/sound";
 import type { BotEmoteName, BotStateName } from "../core/layout";
 import { drawOutfitBehind, drawOutfitFront, setRavenPainter, type RavenHead } from "./outfits";
 import type { Outfit } from "../huginn/wardrobe";
+import type { RavenLife } from "./raven-life";
 import { currentTheme, onThemeChange, type RavenLook } from "../theme/themes";
 import { ravenTheme } from "../theme/characters";
 
@@ -181,6 +182,10 @@ export class RavenEngine {
   private born = clock() - Math.random() * 5;
   private blinkAt = clock() + 1.5 + Math.random() * 2;
   wingBeat = 0;
+  /** Bico aberto (0…1): fala em sincronia com o streaming (vida dos corvos). */
+  beak = 0;
+  /** Repertório de gestos e estados (bifrost/raven-life.ts), se o dono ligou. */
+  life: RavenLife | null = null;
   waveUntil = 0;
   waveStart = 0;
   private waveTicket = 0;
@@ -502,7 +507,7 @@ export class RavenEngine {
   get busy(): boolean {
     const near = (a: number, b: number) => Math.abs(a - b) <= 0.002;
     return (
-      this.phrases.size > 0 || this.sparks.length > 0 || this.isMini || this.isDancing || this.dancingLevel > 0.001 ||
+      this.phrases.size > 0 || this.sparks.length > 0 || this.beak > 0.01 || (this.life?.activity != null) || this.isMini || this.isDancing || this.dancingLevel > 0.001 ||
       this.cfg.hop || this.cfg.scan || this.cfg.breathe || this.cfg.snore || this.cfg.sweat || this.wingBeat > 0.01 ||
       !near(this.tgYaw, this.yaw) || !near(this.tgPitch, this.pitch) || !near(this.tgTilt, this.tilt) ||
       !near(this.tgSy, this.sy) || !near(this.tgSx, this.sx) || !near(this.tgEs, this.es) ||
@@ -610,6 +615,7 @@ export class RavenEngine {
     }
     this.last = { yaw: this.yaw, oy: this.oy, roll: this.roll };
     this.stepGait(dt);
+    this.life?.tick(dt);
     this.lastTime = n;
   }
 
@@ -841,6 +847,13 @@ export class RavenEngine {
       const beak = new Path2D(RAVEN.beak);
       const g = x.createLinearGradient(56, 51, 64, 61); g.addColorStop(0, L.beak[0]); g.addColorStop(1, L.beak[1]);
       x.fillStyle = g; x.fill(beak);
+      if (this.beak > 0.02) {
+        // A boca abre por dentro do bico (recortada nele): nunca sai do contorno.
+        x.save(); x.clip(beak);
+        x.fillStyle = "rgba(18,10,8,0.82)";
+        x.beginPath(); x.ellipse(60, 56.2, 2.4 + this.beak * 1.2, 0.35 + this.beak * 1.9, 0, 0, Math.PI * 2); x.fill();
+        x.restore();
+      }
       drawMarks(x, L, muninn, dressed ? this.outfit : "none", t);
     }
     x.restore();

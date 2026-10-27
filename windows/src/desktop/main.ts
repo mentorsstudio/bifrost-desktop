@@ -7,6 +7,7 @@
 // like the Mac, and a few frames a second asleep — with no cursor polling at
 // all while he sleeps.
 
+import { RavenLife, listenRavenSignals } from "../bifrost/raven-life";
 import "../theme/runic.css";
 import "../theme/motion.css";
 import "../theme/themes.css";
@@ -82,6 +83,8 @@ class DesktopMochi {
     this.engine.setState("idle", true);
     // Three pokes: dizzy, and the island shows the confused view (as on macOS).
     this.engine.onDizzy = () => void emitToWindow(ISLAND, DESKTOP_EVENTS.dizzy);
+    this.engine.life = new RavenLife(this.engine, { desktop: true, ownSleep: true, wake: () => this.schedule() });
+    listenRavenSignals();
     this.wireInput();
   }
 
@@ -184,7 +187,12 @@ class DesktopMochi {
   }
 
   /** Pointer in window coordinates: his eyes, and waking up. */
+  private over = false;
   private notePointer(p: Point) {
+    // Vida dos corvos: o cursor chegando sobre ele ganha um aceno de cabeça.
+    const over = isOverBody(p);
+    if (over && !this.over) this.engine.life?.hover();
+    this.over = over;
     this.cursor = p;
     this.lastPointer = performance.now();
     if (this.asleep) this.wake();

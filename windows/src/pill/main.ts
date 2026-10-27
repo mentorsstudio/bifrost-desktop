@@ -18,6 +18,7 @@ import { Bridge, onEvent } from "../core/bridge";
 import { FlowBridge, clock, type PillState } from "../core/flow";
 import type { Settings } from "../core/state";
 import { BotEngine, hexToRGB } from "../bifrost/raven";
+import { RavenLife, listenRavenSignals, ravenSignal } from "../bifrost/raven-life";
 import { resolveLanguage, setLanguage, systemLanguages } from "../i18n/i18n";
 import {
   BANDS, IDLE_STATE, bandGoal, bandPx, capsuleSize, contentKey, distance, easeBands, frameMode, hotRects, isShown,
@@ -37,7 +38,7 @@ class Pill {
   readonly levels = new Array<number>(BANDS).fill(0);
   private readonly root = document.getElementById("pill")!;
   private readonly bars = makeBars();
-  private readonly raven = new BotEngine();
+  readonly raven = new BotEngine();
   private readonly ravenCanvas = node("canvas");
   private capsule: HTMLElement | null = null;
   private builtFor = "";
@@ -50,6 +51,7 @@ class Pill {
     this.raven.isMini = true;
     this.raven.bodyColor = hexToRGB("#F5F6F8");
     this.raven.setState("idle", true);
+    this.raven.life = new RavenLife(this.raven, { ownSleep: true, idle: false, wake: () => this.wake() });
     document.addEventListener("pointermove", (e) => {
       const t = e.target as HTMLElement | null;
       const over = Boolean(this.capsule?.contains(t) || t?.closest?.(".bubble"));
@@ -164,8 +166,13 @@ async function main() {
   pill.s = (await FlowBridge.pillState()) ?? pill.s;
   pill.visible = isShown(pill.s);
   pill.render();
-  void onEvent<PillState>("pill-state", (s) => { pill.s = s; if (s.phase === "listening") pill.mic.fill(0); pill.render(); });
-  void onEvent<number[]>("pill-bands", (b) => { for (let i = 0; i < BANDS; i++) pill.mic[i] = b[i] ?? 0; pill.wake(); });
+  listenRavenSignals();
+  let lastPhase = "";
+  void onEvent<PillState>("pill-state", (s) => {
+    const on = s.phase === "listening" || s.phase === "locked";
+    if (s.phase !== lastPhase) { if (on) ravenSignal({ kind: "listening" }); else if (lastPhase === "listening" || lastPhase === "locked") ravenSignal({ kind: "done" }); lastPhase = s.phase; }
+    pill.s = s; if (s.phase === "listening") pill.mic.fill(0); pill.render(); });
+  void onEvent<number[]>("pill-bands", (b) => { for (let i = 0; i < BANDS; i++) pill.mic[i] = b[i] ?? 0; pill.raven.life?.signal({ kind: "level", value: Math.max(0, ...b.slice(0, BANDS)) }); pill.wake(); });
   void onEvent<boolean>("pill-visible", (v) => { pill.visible = v; if (!v) { pill.hovered = false; pill.tip = null; } pill.render(); });
   void onEvent<boolean>("pill-pointer", (inside) => { if (!inside) pill.hover(false); }); // Windows: o cursor é lido pelo Rust
   void onEvent<Say>("voice-say", (s) => void speak(s, (on) => { pill.speaking = on; pill.wake(); }));

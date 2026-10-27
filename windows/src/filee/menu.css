@@ -1,109 +1,219 @@
-/* O anel do gesto: uma rosca de fatias (SVG) em volta do cursor, miolo com o
-   ícone do arquivo e a dica, Huginn pequeno pousado na borda. Formas
-   arredondadas (cantos das fatias), cores do tema, movimento pelos tokens. */
+/* O anel do gesto, no visual do Bifrost. Um anel contínuo em volta do cursor
+   (não fatias soltas): pedra entalhada (Runa), vidro com a borda de aurora
+   (Aurora), tábuas de escudo com aro de metal (Escudo) ou liso (Minimal).
+   Separadores finos de runa; a fatia sob o mouse acende no acento do tema e
+   sai um pouco para fora. Miolo = escudo redondo com o ícone e a contagem.
+   Todas as cores vêm do tema ativo (--th-*). */
 
-html, body.fm-body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; user-select: none; -webkit-user-select: none; cursor: default; }
-#fm-root { position: absolute; inset: 0; font-family: var(--bf-font, "Segoe UI Variable", "Segoe UI", system-ui, sans-serif); color: var(--th-ink, #f5f6f8); }
+#fm-root {
+  position: absolute; inset: 0; font-family: var(--bf-font, "Segoe UI Variable", "Segoe UI", system-ui, sans-serif); color: var(--th-ink, #eef2ff);
+  /* Tokens do tema. */
+  --fm-night: var(--th-night, #0a0f1f);
+  --fm-acc: var(--th-accent, #f6d27a);
+  --fm-acc-rgb: var(--th-accent-rgb, 246, 210, 122);
+  --fm-ink: var(--th-ink, #eef2ff);
+  --fm-dim: var(--th-dim, #9aa6c8);
+  --fm-a1: var(--th-a1, #2fd3a6); --fm-a2: var(--th-a2, #5ef2c9); --fm-a3: var(--th-a3, #6f8dff); --fm-a4: var(--th-a4, #9a6bff);
+  /* Padrão (Runa): pedra. */
+  --fm-stone: color-mix(in srgb, var(--fm-night) 68%, #7d8494);
+  --fm-band: radial-gradient(circle at 34% 28%, rgba(255, 255, 255, .07), transparent 55%),
+             radial-gradient(circle at 70% 78%, rgba(0, 0, 0, .28), transparent 50%),
+             repeating-radial-gradient(circle at 50% 50%, rgba(255, 255, 255, .025) 0 2px, transparent 2px 5px),
+             radial-gradient(circle, color-mix(in srgb, var(--fm-stone) 80%, #000) 40%, var(--fm-stone) 70%, color-mix(in srgb, var(--fm-stone) 70%, #000) 100%);
+  --fm-rim: color-mix(in srgb, var(--fm-stone) 55%, #fff);
+  --fm-sep: color-mix(in srgb, var(--fm-acc) 45%, var(--fm-stone));
+  --fm-on: color-mix(in srgb, var(--fm-stone) 45%, var(--fm-acc));
+  --fm-on-op: .55;
+  --fm-text: var(--fm-ink);
+  --fm-text-on: color-mix(in srgb, var(--fm-ink) 70%, var(--fm-acc));
+  --fm-cap: color-mix(in srgb, var(--fm-dim) 85%, var(--fm-ink));
+  --fm-hub: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--fm-stone) 85%, #fff), color-mix(in srgb, var(--fm-stone) 70%, #000) 78%);
+  --fm-hub-rim: color-mix(in srgb, var(--fm-acc) 55%, var(--fm-stone));
+  --fm-belt: color-mix(in srgb, var(--fm-acc) 70%, transparent);
+  --fm-sub: color-mix(in srgb, var(--fm-stone) 92%, #000);
+}
+#fm-root[data-ring="aurora"] {
+  --fm-glass: color-mix(in srgb, var(--fm-night) 86%, var(--fm-a3));
+  --fm-band: linear-gradient(160deg, rgba(255, 255, 255, .10), rgba(255, 255, 255, 0) 40%),
+             radial-gradient(circle, color-mix(in srgb, var(--fm-glass) 92%, transparent) 50%, color-mix(in srgb, var(--fm-glass) 80%, transparent));
+  --fm-rim: color-mix(in srgb, var(--fm-a2) 60%, #fff);
+  --fm-sep: rgba(255, 255, 255, .16);
+  --fm-on: color-mix(in srgb, var(--fm-a2) 50%, var(--fm-acc));
+  --fm-on-op: .42;
+  --fm-hub: radial-gradient(circle at 50% 28%, color-mix(in srgb, var(--fm-glass) 70%, var(--fm-a2)), var(--fm-glass) 75%);
+  --fm-hub-rim: var(--fm-a2);
+  --fm-sub: var(--fm-glass);
+}
+#fm-root[data-ring="escudo"] {
+  --fm-wood-a: color-mix(in srgb, #5b3a22 72%, var(--fm-night));
+  --fm-wood-b: color-mix(in srgb, #7a5030 66%, var(--fm-night));
+  --fm-band: radial-gradient(circle, rgba(0, 0, 0, .35) 40%, rgba(0, 0, 0, 0) 62%, rgba(0, 0, 0, .3)),
+             repeating-linear-gradient(var(--fm-grain, 20deg), rgba(0, 0, 0, .12) 0 1px, transparent 1px 6px),
+             repeating-conic-gradient(from var(--fm-from, -15deg), var(--fm-wood-a) 0 var(--fm-span, 30deg), var(--fm-wood-b) var(--fm-span, 30deg) calc(2 * var(--fm-span, 30deg)));
+  --fm-rim: var(--fm-acc);
+  --fm-sep: rgba(0, 0, 0, .55);
+  --fm-on: var(--fm-acc);
+  --fm-on-op: .38;
+  --fm-hub: radial-gradient(circle at 42% 34%, color-mix(in srgb, var(--fm-acc) 30%, #3a2a1c), #1d140c 72%);
+  --fm-hub-rim: var(--fm-acc);
+  --fm-sub: var(--fm-wood-a);
+}
+#fm-root[data-ring="minimal"] {
+  --fm-band: color-mix(in srgb, var(--fm-night) 94%, #fff);
+  --fm-rim: rgba(255, 255, 255, .14);
+  --fm-sep: rgba(255, 255, 255, .10);
+  --fm-on: var(--fm-acc);
+  --fm-on-op: .26;
+  --fm-hub: color-mix(in srgb, var(--fm-night) 90%, #fff);
+  --fm-hub-rim: rgba(255, 255, 255, .16);
+  --fm-sub: color-mix(in srgb, var(--fm-night) 92%, #fff);
+}
+
 .fm-stage { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
 .fm-svg { position: absolute; left: -230px; top: -230px; width: 460px; height: 460px; overflow: visible; pointer-events: none; }
 
-/* As fatias. */
-/* Cores opacas (o traço que arredonda os cantos se sobrepõe ao preenchimento:
-   com transparência ficaria manchado); a translucidez vem do grupo. */
-.fm-slice path {
-  fill: #10131c;
-  stroke: #10131c;
-  stroke-linejoin: round;
-  transition: fill var(--m-fast) var(--m-ease), stroke var(--m-fast) var(--m-ease);
+/* O anel contínuo (HTML: os fundos CSS fazem a pedra, o vidro e as tábuas). */
+.fm-band, .fm-aura {
+  position: absolute; left: -162px; top: -162px; width: 324px; height: 324px; border-radius: 50%;
+  -webkit-mask: radial-gradient(circle, transparent 0 65.5px, #000 66px 161.5px, transparent 162px);
+  mask: radial-gradient(circle, transparent 0 65.5px, #000 66px 161.5px, transparent 162px);
+  opacity: 0; transform: scale(.7) rotate(-12deg);
+  transition: opacity var(--m-base) var(--m-ease), transform var(--m-slow, 420ms) var(--m-smooth, ease);
 }
-.fm-slice {
-  opacity: 0; transform: scale(.62); transform-origin: 0 0;
-  transition: transform var(--m-base) var(--m-snappy), opacity var(--m-fast) var(--m-ease);
-  transition-delay: var(--d, 0ms);
+.fm-band { background: var(--fm-band); box-shadow: 0 14px 30px rgba(0, 0, 0, .45); }
+.open .fm-band, .open .fm-aura { opacity: 1; transform: none; }
+.shown .fm-band { opacity: .35; transform: scale(.82); }
+.open .fm-band { opacity: 1; transform: none; }
+.closing .fm-band, .closing .fm-aura { opacity: 0; transform: scale(.82); transition-delay: 120ms; }
+.busy .fm-band, .done .fm-band, .busy .fm-aura, .done .fm-aura { opacity: 0; transform: scale(.8); }
+/* A borda de aurora: só no estilo Aurora (um fio de arco-íris com brilho). */
+.fm-aura { display: none; left: -170px; top: -170px; width: 340px; height: 340px;
+  background: conic-gradient(from 200deg, var(--fm-a1), var(--fm-a2), var(--fm-a3), var(--fm-a4), var(--fm-acc), var(--fm-a1));
+  -webkit-mask: radial-gradient(circle, transparent 0 159px, #000 160.5px 163px, transparent 166px);
+  mask: radial-gradient(circle, transparent 0 159px, #000 160.5px 163px, transparent 166px);
+  filter: drop-shadow(0 0 6px rgba(var(--th-a1-rgb, 47, 211, 166), .7));
 }
-.open .fm-slice, .sub-shown .fm-sub-g .fm-slice { opacity: .94; transform: scale(1); }
-.open .fm-slice.on, .open .fm-slice.parent { transform: translate(var(--px), var(--py)); transition-delay: 0ms; }
-.fm-slice.on path, .fm-slice.parent path {
-  fill: color-mix(in srgb, #10131c 74%, rgb(var(--th-accent-rgb, 94, 242, 201)));
-  stroke: color-mix(in srgb, #10131c 74%, rgb(var(--th-accent-rgb, 94, 242, 201)));
-}
-.open .fm-slice.off { opacity: .55; }
-.fm-slice.off.on path { fill: #1d212c; stroke: #1d212c; }
-/* A aurora: um fio fino por baixo das fatias. */
-.fm-svg { filter: drop-shadow(0 14px 30px rgba(0, 0, 0, .45)); }
+[data-ring="aurora"] .fm-aura { display: block; }
+@keyframes fm-aura-turn { to { filter: drop-shadow(0 0 9px rgba(var(--th-a3-rgb, 154, 107, 255), .75)); } }
+.open[data-ring="aurora"] .fm-aura { animation: fm-aura-turn 2.8s var(--m-ease, ease) infinite alternate; }
 
-/* Rótulos: nome e, embaixo, o formato que sai (como no Filee). */
+/* Aros e cinto de runas. */
+.fm-decor { opacity: 0; transition: opacity var(--m-base) var(--m-ease); }
+.open .fm-decor { opacity: 1; }
+.closing .fm-decor, .busy .fm-decor, .done .fm-decor { opacity: 0; }
+.fm-rim-out, .fm-rim-in { fill: none; stroke: var(--fm-rim); stroke-width: 1.2; opacity: .55; }
+.fm-metal-rim { display: none; fill: none; stroke: url(#fm-metal); stroke-width: 5; }
+.fm-metal-a { stop-color: color-mix(in srgb, var(--fm-acc) 60%, #fff); }
+.fm-metal-b { stop-color: color-mix(in srgb, var(--fm-acc) 70%, #000); }
+.fm-metal-c { stop-color: var(--fm-acc); }
+[data-ring="escudo"] .fm-metal-rim { display: inline; }
+[data-ring="escudo"] .fm-rim-out { display: none; }
+[data-ring="aurora"] .fm-rim-out { opacity: .35; }
+.fm-belt { font-size: 9.5px; fill: var(--fm-belt); letter-spacing: 0; display: none; }
+[data-ring="runa"] .fm-belt { display: inline; }
+
+/* Separadores de runa entre as fatias. */
+.fm-sep { opacity: 0; transition: opacity var(--m-fast) var(--m-ease); transition-delay: var(--d, 0ms); }
+.open .fm-sep { opacity: 1; }
+.closing .fm-sep, .busy .fm-sep, .done .fm-sep { opacity: 0; }
+.fm-sep line { stroke: var(--fm-sep); stroke-width: 1.1; stroke-linecap: round; }
+.fm-notch { fill: var(--fm-sep); display: none; }
+[data-ring="runa"] .fm-notch { display: inline; }
+.fm-rivet { display: none; fill: url(#fm-metal); stroke: rgba(0, 0, 0, .45); stroke-width: .8; }
+[data-ring="escudo"] .fm-rivet { display: inline; }
+[data-ring="escudo"] .fm-sep line { stroke-width: 1.6; }
+
+/* As fatias: a "telha" acesa só aparece sob o mouse. */
+.fm-slice path { fill: var(--fm-on); stroke: var(--fm-on); stroke-linejoin: round; opacity: 0; transition: opacity var(--m-fast) var(--m-ease); }
+.fm-slice { transform-origin: 0 0; transition: transform var(--m-base) var(--m-snappy); }
+.open .fm-slice.on, .open .fm-slice.parent { transform: translate(var(--px), var(--py)); }
+.fm-slice.on path, .fm-slice.parent path { opacity: var(--fm-on-op); filter: url(#fm-glow); }
+.fm-slice.off.on path { opacity: .14; filter: none; fill: var(--fm-dim); stroke: var(--fm-dim); }
+/* Segundo anel (grupo): fatias soltas e cheias. */
+.fm-slice.solo { opacity: 0; transform: scale(.82); transition: transform var(--m-base) var(--m-snappy), opacity var(--m-fast) var(--m-ease); transition-delay: var(--d, 0ms); }
+.sub-shown .fm-slice.solo { opacity: 1; transform: none; }
+.fm-slice.solo path { opacity: 1; fill: var(--fm-sub); stroke: var(--fm-sub); filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .45)); }
+.sub-shown .fm-slice.solo.on { transform: translate(var(--px), var(--py)); }
+.fm-slice.solo.on path { fill: color-mix(in srgb, var(--fm-sub) 55%, var(--fm-acc)); stroke: color-mix(in srgb, var(--fm-sub) 55%, var(--fm-acc)); }
+
+/* Rótulos: nome e, embaixo, o formato que sai. */
 .fm-labels { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
 .fm-label {
   position: absolute; transform: translate(-50%, -50%) scale(.7); box-sizing: border-box;
   display: flex; flex-direction: column; align-items: center; gap: 1px; text-align: center;
-  opacity: 0;
+  opacity: 0; text-shadow: 0 1px 2px rgba(0, 0, 0, .7);
   transition: transform var(--m-base) var(--m-snappy), opacity var(--m-fast) var(--m-ease);
   transition-delay: var(--d, 0ms);
 }
 .open .fm-label, .sub-shown .fm-sub-labels .fm-label { opacity: 1; transform: translate(-50%, -50%); }
 .open .fm-label.on { transform: translate(calc(-50% + var(--px)), calc(-50% + var(--py))); transition-delay: 0ms; }
-.fm-label-name { max-width: 100%; font-size: 12px; font-weight: 700; line-height: 1.15; color: #e9ecf2; overflow-wrap: normal; word-break: keep-all; hyphens: manual; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.fm-label-cap { max-width: 100%; font-size: 10px; font-weight: 600; color: #8f96a3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fm-label-name { max-width: 100%; font-size: 12px; font-weight: 700; line-height: 1.15; color: var(--fm-text); overflow-wrap: normal; word-break: keep-all; hyphens: manual; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.fm-label-cap { max-width: 100%; font-size: 10px; font-weight: 600; color: var(--fm-cap); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fm-label.small .fm-label-name { font-size: 11px; }
-.fm-label.off .fm-label-name { color: #8a909b; }
-.fm-label.on .fm-label-name { color: var(--th-a2, #22d3ee); }
+.fm-label.off { opacity: .5 !important; }
+.fm-label.off .fm-label-name { color: var(--fm-dim); text-decoration: line-through 1px rgba(255, 255, 255, .25); }
+.fm-label.on:not(.off) .fm-label-name { color: #fff; text-shadow: 0 0 8px rgba(var(--fm-acc-rgb), .9), 0 1px 2px rgba(0, 0, 0, .8); }
+.fm-label.on:not(.off) .fm-label-cap { color: var(--fm-text-on); }
 
-/* Segundo anel (grupo). */
-.fm-sub-g .fm-slice path { fill: #141822; stroke: #141822; }
-
-/* O miolo: ícone, contagem, título e a dica. */
+/* O miolo: um escudo redondo (umbo) com o ícone, a contagem e a dica. */
 .fm-hub {
-  position: absolute; left: -62px; top: -62px; width: 124px; height: 124px; border-radius: 50%; box-sizing: border-box; padding: 10px 8px;
+  position: absolute; left: -60px; top: -60px; width: 120px; height: 120px; border-radius: 50%; box-sizing: border-box; padding: 10px 8px;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-  background: radial-gradient(circle at 50% 30%, rgba(var(--th-accent-rgb, 94, 242, 201), .12), rgba(12, 14, 21, .96) 72%);
-  border: 1px solid rgba(var(--th-accent-rgb, 94, 242, 201), .30);
+  background: var(--fm-hub);
+  border: 2px solid var(--fm-hub-rim);
+  box-shadow: inset 0 0 0 4px rgba(0, 0, 0, .28), inset 0 0 0 5px color-mix(in srgb, var(--fm-hub-rim) 40%, transparent), 0 6px 16px rgba(0, 0, 0, .5);
   opacity: 0; transform: scale(.7);
-  transition: opacity var(--m-fast) var(--m-ease), transform var(--m-base) var(--m-snappy), background-color var(--m-fast) var(--m-ease), border-color var(--m-fast) var(--m-ease);
+  transition: opacity var(--m-fast) var(--m-ease), transform var(--m-base) var(--m-snappy), border-color var(--m-fast) var(--m-ease), box-shadow var(--m-fast) var(--m-ease);
 }
+[data-ring="escudo"] .fm-hub { border-width: 5px; border-color: transparent; background: var(--fm-hub) padding-box, linear-gradient(135deg, color-mix(in srgb, var(--fm-acc) 60%, #fff), color-mix(in srgb, var(--fm-acc) 60%, #000), var(--fm-acc)) border-box; }
+[data-ring="minimal"] .fm-hub { border-width: 1px; box-shadow: 0 6px 16px rgba(0, 0, 0, .4); }
+[data-ring="aurora"] .fm-hub { border-color: transparent; background: var(--fm-hub) padding-box, conic-gradient(from 200deg, var(--fm-a1), var(--fm-a2), var(--fm-a3), var(--fm-a4), var(--fm-a1)) border-box; }
 .shown .fm-hub, .open .fm-hub { opacity: 1; transform: scale(1); }
 .closing .fm-hub { opacity: 0; transform: scale(.8); transition-delay: 140ms; }
-.fm-hub.hot { border-color: rgba(255, 107, 107, .55); background-color: rgba(60, 18, 24, .5); }
+.fm-hub.hot { box-shadow: inset 0 0 0 4px rgba(0, 0, 0, .28), inset 0 0 0 6px rgba(var(--th-error-rgb, 240, 116, 111), .55), 0 0 18px rgba(var(--th-error-rgb, 240, 116, 111), .28); }
 .fm-hub-icon { width: 30px; height: 30px; display: grid; place-items: center; }
-.fm-file-img { width: 30px; height: 30px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .4)); }
-.fm-file-rune { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; font-size: 15px; color: #0b0c0e; background: var(--th-a2, #22d3ee); }
-.fm-file-rune.c-image { background: var(--th-a1, #fb923c); }
-.fm-file-rune.c-pdf { background: #ff6b6b; }
-.fm-file-rune.c-video { background: var(--th-a4, #a78bfa); }
-.fm-file-rune.c-audio { background: #f472b6; }
-.fm-file-rune.c-archive { background: var(--th-a3, #f7b32b); }
-.fm-file-rune.c-document, .fm-file-rune.c-text { background: #3b9eff; }
-.fm-hub-title { max-width: 104px; font-size: 13px; font-weight: 750; line-height: 1.2; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fm-hub-hint { max-width: 104px; font-size: 10.5px; line-height: 1.25; color: #a9afba; text-align: center; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.fm-hub-hint.danger { color: #ff8a8a; }
+.fm-file-img { width: 30px; height: 30px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .5)); }
+.fm-file-rune { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; font-size: 15px; color: var(--fm-night); background: var(--fm-a2); }
+.fm-file-rune.c-image { background: var(--fm-a1); }
+.fm-file-rune.c-pdf { background: var(--th-error, #f0746f); }
+.fm-file-rune.c-video { background: var(--fm-a4); }
+.fm-file-rune.c-audio { background: var(--fm-a3); }
+.fm-file-rune.c-archive { background: var(--fm-acc); }
+.fm-file-rune.c-document, .fm-file-rune.c-text { background: var(--fm-a3); }
+.fm-hub-title { max-width: 100px; font-size: 13px; font-weight: 750; line-height: 1.2; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fm-ink); text-shadow: 0 1px 2px rgba(0, 0, 0, .7); }
+.fm-hub-hint { max-width: 98px; font-size: 10px; line-height: 1.25; color: var(--fm-cap); text-align: center; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 1px 2px rgba(0, 0, 0, .7); }
+.fm-hub-hint.danger { color: var(--th-error-text, #ffb0a8); }
+.fm-hint-rune { font-weight: 700; margin-right: 3px; color: var(--th-error, #f0746f); }
 .fm-badge {
-  position: absolute; right: 12px; top: 12px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 10px;
-  display: none; place-items: center; font-size: 11px; font-weight: 750; color: #0b0c0e; background: var(--th-a3, #f7b32b);
-  box-shadow: 0 0 0 2px rgba(12, 14, 21, .96);
+  position: absolute; right: 8px; top: 8px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 10px;
+  display: none; place-items: center; font-size: 11px; font-weight: 750; color: var(--th-on-accent, #1a1205); background: var(--fm-acc);
+  box-shadow: 0 0 0 2px var(--fm-night);
 }
 .fm-badge.on { display: grid; }
 .fm-progress {
-  position: absolute; inset: -5px; border-radius: 50%; opacity: 0; --p: 0;
-  background: conic-gradient(var(--th-a2, #22d3ee) calc(var(--p) * 360deg), rgba(255, 255, 255, .08) 0);
-  -webkit-mask: radial-gradient(circle, transparent 0 63px, #000 64px); mask: radial-gradient(circle, transparent 0 63px, #000 64px);
+  position: absolute; inset: -6px; border-radius: 50%; opacity: 0; --p: 0;
+  background: conic-gradient(var(--fm-acc) calc(var(--p) * 360deg), rgba(255, 255, 255, .08) 0);
+  -webkit-mask: radial-gradient(circle, transparent 0 61px, #000 62px); mask: radial-gradient(circle, transparent 0 61px, #000 62px);
   transition: opacity var(--m-fast) var(--m-ease);
 }
 .busy .fm-progress, .done .fm-progress { opacity: 1; }
-.busy .fm-slice, .busy .fm-label, .done .fm-slice, .done .fm-label { opacity: 0 !important; transform: scale(.62) !important; }
-.busy .fm-label, .done .fm-label { transform: translate(-50%, -50%) scale(.62) !important; }
+.busy .fm-label, .done .fm-label { opacity: 0 !important; transform: translate(-50%, -50%) scale(.62) !important; }
 
-/* O Huginn, pequeno, pousado na borda de cima à direita. */
-.fm-perch { position: absolute; left: 0; top: 0; width: 0; height: 0; transform: translate(122px, -140px); }
+/* O Huginn, pequeno, pousado em cima da borda (à direita do topo). */
+.fm-perch { position: absolute; left: 0; top: 0; width: 0; height: 0; transform: rotate(38deg) translateY(-178px) rotate(-38deg); }
 .fm-raven {
-  position: absolute; left: -17px; top: -17px; width: 34px; height: 34px; pointer-events: none;
-  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .5));
+  position: absolute; left: -18px; top: -26px; width: 36px; height: 36px; pointer-events: none; overflow: visible;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .55));
   opacity: 0; transform: translateY(-6px);
   transition: opacity var(--m-base) var(--m-ease), transform var(--m-base) var(--m-smooth);
 }
-.fm-raven > * { width: 100%; height: 100%; }
+.fm-raven > * { width: 100% !important; height: 100% !important; }
 .shown .fm-raven, .open .fm-raven { opacity: 1; transform: none; }
 .sub-open .fm-raven, .closing .fm-raven { opacity: 0; transform: translateY(-6px); }
 
 @media (prefers-reduced-motion: reduce) {
-  .fm-slice, .fm-slice path, .fm-label, .fm-hub, .fm-raven, .fm-progress { transition: none !important; }
+  .fm-slice, .fm-slice path, .fm-label, .fm-hub, .fm-raven, .fm-progress, .fm-band, .fm-aura, .fm-decor, .fm-sep { transition: none !important; animation: none !important; }
 }
+
+/* Prévia estática (Ajustes): o mesmo anel, já aberto, sem eventos. */
+.fm-preview { position: relative; inset: auto; width: 460px; height: 460px; pointer-events: none; }
