@@ -48,7 +48,9 @@
 .bf-empty .bf-raven-shadow { opacity: .6; }
 .bf-brand-raven .bf-mascot { width: 30px; height: 30px; }
 .bf-brand-raven .bf-fx { display: none; }
-.bf-hub-hidden * { animation-play-state: paused !important; }
+/* Fase 20: janela oculta = animações vão direto ao fim (nada fica preso no
+   quadro inicial com opacidade 0 se o aviso de "visível" se perder). */
+.bf-hub-hidden *, .bf-hub-hidden *::before, .bf-hub-hidden *::after { animation-duration: 0s !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }
 
 /* ── Páginas do hub: layout nórdico comum ──────────────────────────────── */
 .hub-page { gap: 18px !important; }

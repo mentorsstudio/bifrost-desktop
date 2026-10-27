@@ -18,6 +18,22 @@ export function setWindowShown(shown: boolean) {
   document.documentElement.classList.toggle("bf-hub-hidden", !shown);
 }
 
+/**
+ * Fase 20: no Windows real o aviso "hub-visible" podia se perder (a janela já
+ * aparecia sem ele) e o hub ficava em `bf-hub-hidden` com a janela na tela —
+ * animações pausadas no primeiro quadro, conteúdo em opacidade 0. Quem
+ * interage com a janela prova que ela está à vista.
+ */
+export function watchWindowShown(): void {
+  const on = () => { if (document.visibilityState === "visible") setWindowShown(true); };
+  window.addEventListener("focus", on);
+  window.addEventListener("pointermove", on, { passive: true });
+  window.addEventListener("pointerdown", on, { passive: true });
+  window.addEventListener("keydown", on);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") setWindowShown(false); else on(); });
+  if (document.hasFocus()) on();
+}
+
 function rgba(hex: string, alpha: number): string {
   const n = parseInt(hex.replace("#", ""), 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;

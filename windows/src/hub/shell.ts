@@ -9,6 +9,8 @@ import { Durations, parallax, reducedMotion, stagger, tweenNumber } from "../bif
 /** Movimento de entrada da página: listas em cascata e números deslizando. */
 /** Fase 19: os blocos da página entram em cascata (fade + subida), até 12 degraus. */
 export const RISE_SELECTOR = ":scope > :not(.bf-hero):not(.hub-label), #settings-root > *, #settings-root section > *, .hub-card, .card-grid > *, .th-grid > *";
+/** Prazo para um bloco aparecer mesmo que a animação de entrada não rode. */
+export const RISE_FALLBACK_MS = 900;
 export function riseIn(page: HTMLElement): number {
   let i = 0;
   for (const el of page.querySelectorAll<HTMLElement>(RISE_SELECTOR)) el.classList.remove("m-rise");
@@ -21,6 +23,9 @@ export function riseIn(page: HTMLElement): number {
     el.style.setProperty("--i", String(Math.min(i++, 12)));
     el.classList.add("m-rise");
     el.addEventListener("animationend", () => el.classList.remove("m-rise"), { once: true });
+    // Fase 20: a animação é só um enfeite. Se ela não terminar (janela pausada,
+    // WebView2 economizando), o bloco aparece mesmo assim.
+    window.setTimeout(() => el.classList.remove("m-rise"), RISE_FALLBACK_MS);
   }
   return i;
 }
@@ -42,7 +47,7 @@ import { h, clear } from "../views/dom";
 import { t } from "../i18n/i18n";
 import { onEvent } from "../core/bridge";
 import { FlowBridge, type FlowPrefs, type FlowStatus, type ModelsStatus } from "../core/flow";
-import { hero, liveRaven, setWindowShown, windowShown } from "./hero";
+import { hero, liveRaven, setWindowShown, watchWindowShown, windowShown } from "./hero";
 import { icon, keyLabel } from "./ui";
 import { THEME_TXT } from "../theme/strings";
 import { autoReveal, slidingInk } from "../theme/interact";
@@ -137,6 +142,7 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
   await onEvent<boolean>("hub-visible", setWindowShown);
   const shown = await FlowBridge.hubShown();
   if (shown !== null) setWindowShown(shown);
+  watchWindowShown();
   let current: PageId = "dictation";
   let status: FlowStatus = (await FlowBridge.status()) ?? DEFAULT_STATUS;
   const items = new Map<PageId, HTMLElement>();
@@ -184,7 +190,8 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
       color = "#34d399";
       text = t("Ready · hold {0}", { 0: keyLabel(status.keys === "wayland" ? "wayland" : status.prefs.key, status.platform) });
     }
-    statusLine.append(h("i", { class: "dot", style: `background:${color}` }), h("span", { text }));
+    statusLine.title = text;
+    statusLine.append(h("i", { class: "dot", style: `background:${color}` }), h("span", { class: "hub-status-text", text }));
   }
 
   // ── Montagem separada da ativação ──

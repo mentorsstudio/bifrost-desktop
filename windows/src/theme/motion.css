@@ -169,3 +169,7 @@ input, textarea, select {
 @media (prefers-reduced-motion: reduce) { .m-rise { animation: none !important; } }
 #header .m-ink-tabs .tab.on { background: transparent !important; box-shadow: none !important; }
 #header .m-ink-tabs > .m-ink { background: linear-gradient(180deg, rgba(var(--tk-5ef2c9-rgb, 94, 242, 201), .22), rgba(var(--tk-6f8dff-rgb, 111, 141, 255), .14)); }
+
+/* Fase 20: conteúdo nunca depende da animação. Com a janela tida como oculta
+   (animações pausadas), a entrada não roda: o bloco já fica visível. */
+.bf-hub-hidden .m-rise, .m-premount .m-rise, .hub-prefetch .m-rise { animation: none !important; }
