@@ -121,6 +121,7 @@ fn save_settings(app: AppHandle, shared: State<Shared>, settings: Settings) {
         settings.mcp_server_enabled = current.mcp_server_enabled;
         settings.mcp_server_port = current.mcp_server_port;
         settings.mcp_known = current.mcp_known.clone();
+        settings.mcp_sources = current.mcp_sources.clone();
         *current = settings;
         (screen_changed, autostart_changed, shortcuts_changed)
     };
@@ -582,6 +583,8 @@ struct McpServerView {
     name: String,
     config: mcp::McpServer,
     has_token: bool,
+    /// De onde foi importado, se veio de outro app.
+    source: Option<String>,
 }
 
 #[derive(serde::Serialize)]
@@ -603,6 +606,7 @@ fn mcp_status_of(s: &Settings) -> McpStatus {
                 name: name.clone(),
                 config: config.clone(),
                 has_token: secrets::get_mcp_token(name).is_some(),
+                source: s.mcp_sources.get(name).cloned(),
             })
             .collect(),
         chat: s.mcp_chat.clone(),
@@ -952,6 +956,27 @@ fn open_settings_window(app: AppHandle, page: Option<String>) {
     show_hub(&app, Some(page.as_deref().unwrap_or("general")));
 }
 
+/// Junta catálogo e importados (mcp/catalog.rs::merge), guardando os tokens no
+/// cofre e levando o token de um duplicado para o nome que ficou.
+fn merge_mcp(s: &mut Settings, catalog: &[mcp::catalog::Entry], imported: &[mcp::catalog::Imported]) {
+    let mut renamed = Vec::new();
+    for (name, secret) in mcp::catalog::merge(&mut s.mcp_servers, &mut s.mcp_known, &mut s.mcp_sources, &mut renamed, catalog, imported) {
+        let _ = secrets::set_mcp_token(&name, &secret);
+    }
+    for (from, to) in renamed {
+        s.mcp_sources.remove(&from);
+        if secrets::get_mcp_token(&to).is_none() {
+            if let Some(tok) = secrets::get_mcp_token(&from) {
+                let _ = secrets::set_mcp_token(&to, &tok);
+            }
+        }
+        if s.mcp_chat.server == from {
+            s.mcp_chat.server = to.clone();
+        }
+        log::line(format!("mcp: {from} era duplicado de {to}, juntados"));
+    }
+}
+
 /// Bifrost: tudo por MCP. Na abertura, detecta os programas/IAs do PC, junta o
 /// catálogo e os servidores de outros apps, e tira o chat de provedores que
 /// pediam chave de API (as chaves antigas ficam no cofre, sem uso).
@@ -960,9 +985,7 @@ fn bifrost_boot_mcp(s: &mut Settings) {
     let (_, imported) = mcp::catalog::scan(&env);
     let found = mcp::catalog::detect(&env);
     let catalog = mcp::catalog::entries(&env, &found);
-    for (name, secret) in mcp::catalog::merge(&mut s.mcp_servers, &mut s.mcp_known, &catalog, &imported) {
-        let _ = secrets::set_mcp_token(&name, &secret);
-    }
+    merge_mcp(s, &catalog, &imported);
     if cli_chat::needs_migration(&s.chat_provider) {
         s.chat_provider = cli_chat::PROVIDER.into();
     }
@@ -996,9 +1019,7 @@ fn mcp_rescan(shared: State<Shared>) -> Result<McpStatus, String> {
     let (_, imported) = mcp::catalog::scan(&env);
     let catalog = mcp::catalog::entries(&env, &mcp::catalog::detect(&env));
     mcp_update(&shared, |s| {
-        for (name, secret) in mcp::catalog::merge(&mut s.mcp_servers, &mut s.mcp_known, &catalog, &imported) {
-            let _ = secrets::set_mcp_token(&name, &secret);
-        }
+        merge_mcp(s, &catalog, &imported);
         Ok(())
     })
 }

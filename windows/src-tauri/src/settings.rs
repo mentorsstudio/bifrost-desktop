@@ -111,6 +111,8 @@ pub struct Settings {
     pub mcp_server_port: u16,
     /// Entradas do catálogo/importação já oferecidas uma vez (mcp/catalog.rs::merge).
     pub mcp_known: std::collections::BTreeSet<String>,
+    /// De onde veio cada servidor importado ("Claude Desktop", "Cursor"…), por nome.
+    pub mcp_sources: BTreeMap<String, String>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -183,6 +185,7 @@ impl Default for Settings {
             mcp_server_enabled: true,
             mcp_server_port: crate::mcp::server::DEFAULT_PORT,
             mcp_known: Default::default(),
+            mcp_sources: Default::default(),
         }
     }
 }

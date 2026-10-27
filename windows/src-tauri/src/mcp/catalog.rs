@@ -340,14 +340,54 @@ pub struct ImportedView {
 /// Junta o catálogo e os importados aos servidores do usuário. Nunca troca um
 /// servidor que já existe, e não traz de volta o que o usuário removeu
 /// (`known` guarda tudo que já foi oferecido uma vez).
+/// O que identifica um servidor além do nome: a URL (HTTP ou mcp-remote), o
+/// pacote rodado por npx/uvx/bunx/pnpm dlx, ou o comando com os argumentos.
+pub fn identity(s: &McpServer) -> String {
+    if let Some(u) = url_of(s) {
+        return u.to_lowercase();
+    }
+    let McpServer::Stdio { command, args, .. } = s else { return String::new() };
+    let base = command.rsplit(['/', '\\']).next().unwrap_or(command).to_lowercase();
+    let base = base.trim_end_matches(".exe").trim_end_matches(".cmd").trim_end_matches(".bat").to_string();
+    if matches!(base.as_str(), "npx" | "uvx" | "bunx" | "pnpx" | "pnpm" | "uv" | "pipx") {
+        let pkg = args.iter().map(|a| a.as_str()).find(|a| !a.starts_with('-') && !matches!(*a, "dlx" | "run" | "tool" | "x"));
+        if let Some(pkg) = pkg {
+            // "pacote@latest" → "pacote" (o escopo "@org/pacote" fica).
+            let cut = pkg[1..].find('@').map(|i| i + 1).unwrap_or(pkg.len());
+            return format!("pkg:{}", pkg[..cut].to_lowercase());
+        }
+    }
+    format!("cmd:{}|{}", command.to_lowercase().replace('\\', "/"), args.join(" ").to_lowercase())
+}
+
+/// Um importado que é o mesmo servidor de uma entrada do catálogo com outro nome:
+/// mesma identidade, ou o nome do catálogo mais só palavras genéricas
+/// ("blender-mcp", "DaVinci-Resolve", "makenotion-notion-mcp-server") com o
+/// nome do catálogo também no pacote/comando. "n8n-vault" não é o "n8n".
+fn same_as_builtin(builtin: &str, builtin_cfg: &McpServer, name: &str, cfg: &McpServer) -> bool {
+    let id = identity(cfg);
+    if !id.is_empty() && id == identity(builtin_cfg) {
+        return true;
+    }
+    let b = builtin.to_lowercase();
+    let tokens: Vec<String> = name.to_lowercase().split(['-', '_', '.', ' ']).filter(|t| !t.is_empty()).map(str::to_string).collect();
+    const NOISE: &[&str] = &["mcp", "server", "resolve", "makenotion", "official", "ai"];
+    tokens.iter().any(|t| *t == b) && tokens.iter().all(|t| *t == b || NOISE.contains(&t.as_str())) && id.contains(&b)
+}
+
+/// Junta o catálogo e os importados aos servidores. Um importado igual a uma
+/// entrada do catálogo vira uma só: fica o nome do catálogo com a configuração do
+/// usuário (a importada) e a origem anotada em `sources`. `renamed` recebe
+/// (nome antigo, nome que ficou) para quem já tinha entrado duplicado.
 pub fn merge(
     servers: &mut BTreeMap<String, McpServer>,
     known: &mut std::collections::BTreeSet<String>,
+    sources: &mut BTreeMap<String, String>,
+    renamed: &mut Vec<(String, String)>,
     catalog: &[Entry],
     imported: &[Imported],
 ) -> Vec<(String, String)> {
     let mut secrets = Vec::new();
-    let urls: Vec<String> = servers.values().filter_map(url_of).collect();
     for e in catalog {
         if known.insert(e.name.clone()) && !servers.contains_key(&e.name) {
             servers.insert(e.name.clone(), e.config.clone());
@@ -355,18 +395,60 @@ pub fn merge(
     }
     for i in imported {
         let key = format!("importado:{}", i.name);
-        if !known.insert(key) || servers.contains_key(&i.name) {
+        let first = known.insert(key);
+        let twin = catalog.iter().find(|e| {
+            e.name != i.name && servers.contains_key(&e.name) && same_as_builtin(&e.name, &servers[&e.name], &i.name, &i.config)
+        }).map(|e| e.name.clone())
+            .or_else(|| {
+                // Mesma URL/pacote de outro servidor já configurado (não do catálogo).
+                let id = identity(&i.config);
+                servers.iter().find(|(n, c)| **n != i.name && !id.is_empty() && identity(c) == id).map(|(n, _)| n.clone())
+            });
+        if let Some(keep) = twin {
+            let was_there = servers.remove(&i.name).is_some();
+            if first || was_there {
+                let disabled = is_disabled(&servers[&keep]);
+                let mut cfg = i.config.clone();
+                set_disabled(&mut cfg, disabled);
+                servers.insert(keep.clone(), cfg);
+                if let Some(sec) = &i.secret {
+                    secrets.push((keep.clone(), sec.clone()));
+                }
+            }
+            if was_there {
+                renamed.push((i.name.clone(), keep.clone()));
+            }
+            sources.insert(keep, i.source.clone());
             continue;
         }
-        if url_of(&i.config).is_some_and(|u| urls.contains(&u)) {
+        if servers.contains_key(&i.name) {
+            if identity(&servers[&i.name]) == identity(&i.config) {
+                sources.entry(i.name.clone()).or_insert_with(|| i.source.clone());
+            }
             continue;
+        }
+        if !first {
+            continue; // removido pelo usuário depois de importado: não volta.
         }
         servers.insert(i.name.clone(), i.config.clone());
-        if let Some(s) = &i.secret {
-            secrets.push((i.name.clone(), s.clone()));
+        sources.insert(i.name.clone(), i.source.clone());
+        if let Some(sec) = &i.secret {
+            secrets.push((i.name.clone(), sec.clone()));
         }
     }
     secrets
+}
+
+fn is_disabled(s: &McpServer) -> bool {
+    match s {
+        McpServer::Stdio { disabled, .. } | McpServer::Http { disabled, .. } => *disabled,
+    }
+}
+
+fn set_disabled(s: &mut McpServer, v: bool) {
+    match s {
+        McpServer::Stdio { disabled, .. } | McpServer::Http { disabled, .. } => *disabled = v,
+    }
 }
 
 fn url_of(s: &McpServer) -> Option<String> {
@@ -475,14 +557,56 @@ mod tests {
         let cat = entries(&env, &detect(&env));
         let mut servers = BTreeMap::new();
         let mut known = Default::default();
-        merge(&mut servers, &mut known, &cat, &[]);
+        let (mut src, mut ren) = (BTreeMap::new(), Vec::new());
+        merge(&mut servers, &mut known, &mut src, &mut ren, &cat, &[]);
         assert!(servers.contains_key("claude-code"));
         servers.remove("claude-code");
-        merge(&mut servers, &mut known, &cat, &[]);
+        merge(&mut servers, &mut known, &mut src, &mut ren, &cat, &[]);
         assert!(!servers.contains_key("claude-code"), "removido não volta");
         let imp = parse_foreign("Cursor", r#"{"mcpServers":{"meu":{"url":"https://mcp.deepwiki.com/mcp"},"outro":{"command":"a"}}}"#);
-        merge(&mut servers, &mut known, &cat, &imp);
+        merge(&mut servers, &mut known, &mut src, &mut ren, &cat, &imp);
         assert!(!servers.contains_key("meu"), "mesmo endereço do catálogo não duplica");
         assert!(servers.contains_key("outro"));
+        assert_eq!(src.get("outro").map(String::as_str), Some("Cursor"));
+        assert_eq!(src.get("deepwiki").map(String::as_str), Some("Cursor"), "a origem fica no nome do catálogo");
+    }
+
+    #[test]
+    fn imported_twins_of_builtins_are_merged() {
+        let (_d, env) = fake();
+        let cat = entries(&env, &detect(&env));
+        let mut servers = BTreeMap::new();
+        let mut known = Default::default();
+        let (mut src, mut ren) = (BTreeMap::new(), Vec::new());
+        merge(&mut servers, &mut known, &mut src, &mut ren, &cat, &[]);
+        // Como no PC do Paulo: os duplicados já tinham entrado numa versão anterior.
+        let imp = parse_foreign("Claude Desktop", r#"{"mcpServers":{
+            "blender-mcp":{"command":"uvx","args":["blender-mcp"]},
+            "DaVinci-Resolve":{"command":"C:/Tools/davinci-resolve-mcp/run.bat"},
+            "makenotion-notion-mcp-server":{"command":"npx","args":["-y","@notionhq/notion-mcp-server"]},
+            "n8n-vault":{"command":"node","args":["C:/n8n/vault.js"]},
+            "higgsfield":{"url":"https://mcp.higgsfield.ai/mcp"}}}"#);
+        for i in &imp { servers.insert(i.name.clone(), i.config.clone()); }
+        merge(&mut servers, &mut known, &mut src, &mut ren, &cat, &imp);
+        for gone in ["blender-mcp", "DaVinci-Resolve", "makenotion-notion-mcp-server"] {
+            assert!(!servers.contains_key(gone), "{gone} juntado");
+        }
+        assert!(servers.contains_key("n8n-vault") && servers.contains_key("higgsfield"));
+        assert_eq!(identity(&servers["blender"]), "pkg:blender-mcp", "fica a configuração do usuário");
+        assert_eq!(src.get("notion").map(String::as_str), Some("Claude Desktop"));
+        assert_eq!(src.get("higgsfield").map(String::as_str), Some("Claude Desktop"));
+        assert_eq!(ren.len(), 3);
+        // Rodar de novo não muda nada.
+        let before = servers.clone();
+        merge(&mut servers, &mut known, &mut src, &mut ren, &cat, &imp);
+        assert_eq!(before, servers);
+    }
+
+    #[test]
+    fn identity_of_packages_and_urls() {
+        let npx = McpServer::Stdio { command: "C:/nodejs/npx.cmd".into(), args: vec!["-y".into(), "@notionhq/notion-mcp-server@latest".into()], env: Default::default(), disabled: false };
+        assert_eq!(identity(&npx), "pkg:@notionhq/notion-mcp-server");
+        let remote = McpServer::Stdio { command: "npx".into(), args: vec!["-y".into(), "mcp-remote".into(), "https://mcp.notion.com/mcp/".into()], env: Default::default(), disabled: false };
+        assert_eq!(identity(&remote), "https://mcp.notion.com/mcp");
     }
 }
