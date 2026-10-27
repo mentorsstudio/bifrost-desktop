@@ -245,3 +245,9 @@
 .overview .sc-actions { flex-wrap: nowrap !important; gap: 6px; margin-top: 2px; }
 .overview .sc-actions .sc-btn { flex: 0 1 auto; min-width: 0; min-height: 24px; height: 24px; padding: 0 10px; font-size: 11px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Fase 21: botão nunca corta o rótulo — sem reticências; se faltar espaço, quebra
+   para a linha de baixo (o cartão cresce dentro da ilha). */
+.overview .sc-actions { flex-wrap: wrap !important; row-gap: 5px; }
+.overview .sc-actions .sc-btn { flex: 0 0 auto; overflow: visible; text-overflow: clip; }
+.overview .sc-meta { font-size: 10.5px; }

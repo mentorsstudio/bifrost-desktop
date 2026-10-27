@@ -1,6 +1,6 @@
 // QA visual (fase 19): roda DENTRO da página (page.evaluate). Sem dependências.
 // Devolve uma lista de problemas { kind, what, detail }.
-// Tipos: overlap, clip, offscreen, tail, double, collide, blank.
+// Tipos: overlap, clip, offscreen, tail, double, collide, blank, button-cut.
 (() => {
   const out = [];
   const vis = (el) => {
@@ -217,6 +217,18 @@
         break;
       }
     }
+  }
+
+  // 6b (fase 21). Botão nunca corta o rótulo: sem estouro e sem reticências.
+  for (const el of document.querySelectorAll("button, [role=button], .btn")) {
+    if (!vis(el) || el.closest("[aria-hidden=true], .m-leaving, .m-layer")) continue;
+    if (!(el.textContent || "").trim() || el.getBoundingClientRect().height > 48) continue; // cartões-botão: não é rótulo
+    const s = getComputedStyle(el);
+    const over = el.scrollWidth > el.clientWidth + 1 && el.clientWidth > 0;
+    const ell = s.textOverflow === "ellipsis" && el.scrollWidth > el.clientWidth;
+    let inner = false;
+    for (const k of el.querySelectorAll("*")) { const ks = getComputedStyle(k); if (k.scrollWidth > k.clientWidth + 1 && k.clientWidth > 0 && ks.overflowX !== "visible") { inner = true; break; } }
+    if (over || ell || inner) out.push({ kind: "button-cut", what: name(el), detail: `${el.scrollWidth}>${el.clientWidth}` });
   }
 
   // 7 (fase 20). Página aberta sem conteúdo visível abaixo do cabeçalho.

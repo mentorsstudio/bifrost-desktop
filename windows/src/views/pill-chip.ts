@@ -39,6 +39,14 @@ export function buildPill(task: AgentTask, actions: ViewActions): HTMLElement {
     lbl.style.color = l.label;
   };
   paint(false);
+  // Fase 21: o nome nunca aparece cortado. Se não couber, a pílula vira só o
+  // corvinho (o nome completo fica no title).
+  const fit = () => {
+    pill.classList.remove("icon-only");
+    if (lbl.clientWidth > 0 && lbl.scrollWidth > lbl.clientWidth + 1) pill.classList.add("icon-only");
+  };
+  if (typeof ResizeObserver !== "undefined") new ResizeObserver(fit).observe(pill);
+  else requestAnimationFrame(fit);
   pill.addEventListener("mouseenter", () => paint(true));
   pill.addEventListener("mouseleave", () => paint(false));
   if (task.pillBadge) {

@@ -3027,3 +3027,8 @@ html[data-dir="rtl"] #views :is(.bubble, .reply .md-p, .reply .md-h, .reply .md-
 }
 #island::before { right: 100%; background: radial-gradient(circle at 0 100%, transparent 9.5px, #000 10px); }
 #island::after { left: 100%; background: radial-gradient(circle at 100% 100%, transparent 9.5px, #000 10px); }
+
+/* Fase 21: pílula estreita demais para o nome → só o corvinho, centrado. */
+.pill.icon-only { justify-content: center; }
+.pill.icon-only .lbl { display: none; }
+.pill.icon-only .mini { margin-left: 0; }

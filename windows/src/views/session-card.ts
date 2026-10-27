@@ -57,9 +57,12 @@ export function buildSessionCard(memory: SessionMemory, open: { settings: () => 
   const head = h("div", { class: "sc-head" });
   const summary = h("div", { class: "sc-summary" });
   const meta = h("div", { class: "sc-meta" });
-  const folderBtn = h("button", { class: "btn secondary sc-btn", text: tl("Open the folder") });
-  const chatBtn = h("button", { class: "btn secondary sc-btn", text: tl("Talk in Bifrost"), onclick: () => open.chat() });
-  const setBtn = h("button", { class: "btn secondary sc-btn", text: tl("Settings…"), onclick: () => open.settings() });
+  // Fase 21: rótulos curtos que nunca cortam; o nome completo fica no title/aria-label.
+  const mk = (short: string, fullMsg: unknown, onclick?: () => void) =>
+    { const full = String(fullMsg); return h("button", { class: "btn secondary sc-btn", text: short, title: full, "aria-label": full, ...(onclick ? { onclick } : {}) }); };
+  const folderBtn = mk("Pasta", tl("Open the folder"));
+  const chatBtn = mk("Conversar", tl("Talk in Bifrost"), () => open.chat());
+  const setBtn = mk("Ajustes", tl("Settings…"), () => open.settings());
   const el = h("div", { class: "sc-card" }, head, summary, meta, h("div", { class: "sc-actions" }, folderBtn, chatBtn, setBtn));
   let cwd: string | null = null;
   folderBtn.addEventListener("click", () => { if (cwd) void Bridge.openInVSCode(cwd); });
@@ -79,7 +82,6 @@ export function buildSessionCard(memory: SessionMemory, open: { settings: () => 
       const line = contextLine(cwd, null, now, redraw);
       meta.textContent = r ? [line, `${t("last activity")} ${elapsed((now - r.at) / 1000)}`].filter(Boolean).join("  ·  ") : line;
       meta.title = meta.textContent ?? "";
-      for (const b of [folderBtn, chatBtn, setBtn]) b.title = b.textContent ?? "";
       folderBtn.style.display = cwd ? "" : "none";
     },
   };
