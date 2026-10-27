@@ -8,6 +8,7 @@ import { State, type AgentTask } from "../core/state";
 import { washRGBA, type Wash } from "../core/layout";
 import { lastTextStep } from "../core/diff";
 import { t, tl, type Msg } from "../i18n/i18n";
+import { whereOf } from "./agents-model";
 import type { ViewActions, ViewHost } from "./views";
 import {
   ClickGuard, QuestionFlow, approvalLine, errorTitleKey, errorWho, finishedTitle, finishedWhoKey, openLabelKey,
@@ -162,7 +163,8 @@ export function finishedView(a: ViewActions): ViewHost {
     el,
     sync() {
       const task = State.focusTask;
-      setWho(who, task, t(finishedWhoKey(task)));
+      const where = whereOf(task?.sessionCwd);
+      setWho(who, task, where ? t("finished in {where}", { where }) : t(finishedWhoKey(task)));
       title.textContent = finishedTitle(task, task ? lastTextStep(task.steps) ?? null : null, t("Session finished"));
       const span = open.firstElementChild as HTMLElement;
       const label = t(openLabelKey(task));

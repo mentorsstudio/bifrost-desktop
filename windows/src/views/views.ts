@@ -29,6 +29,8 @@ import { WHATSAPP_ID } from "../core/whatsapp";
 import type { Outfit, OutfitSelection } from "../huginn/wardrobe";
 import { language, t, tl, type Msg } from "../i18n/i18n";
 import type { ViewCommand } from "../island/shortcuts";
+import { agentsPanel } from "./agents-panel";
+import { isSession } from "./agents-model";
 import { approvalView, confusedView, errorView, finishedView, noteView, questionView } from "./alerts";
 
 export interface ViewActions {
@@ -183,7 +185,8 @@ function buildOverview(actions: ViewActions): ViewHost {
   );
   const left = card(null, leftBody, jump);
   const pills = h("div", { class: "pills" });
-  const right = card(null, pills);
+  const agents = agentsPanel(actions);
+  const right = card(null, agents.el, pills);
   // Opened from a plan pill in the header: stands in for the left card.
   const plan = new PlanCard();
   let planTimer: number | null = null;
@@ -396,7 +399,10 @@ function buildOverview(actions: ViewActions): ViewHost {
       highlightRow(rows, State.cardSelection, State.cardSelection !== shownSelection);
       shownSelection = State.cardSelection;
 
-      const others = State.otherTasks.slice(0, 4);
+      agents.sync();
+      // Os agentes estão no painel; os chips ficam para os serviços (Stripe, GitHub, Spotify…).
+      const others = State.otherTasks.filter((x) => !isSession(x)).slice(0, 4);
+      right.classList.toggle("has-chips", others.length > 0);
       const pillKey = others.map((t) => `${t.id}:${t.color}:${t.pillBadge ?? ""}`).join("|");
       if (pillKey !== pillIds) {
         pillIds = pillKey;

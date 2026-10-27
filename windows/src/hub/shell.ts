@@ -108,6 +108,8 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
   const items = new Map<PageId, HTMLElement>();
   const statusLine = h("div", { class: "hub-status" });
   const scroll = h("div", { class: "hub-scroll" });
+  const stage = h("div", { class: "hub-stage" });
+  scroll.append(stage);
   let rendering = 0;
 
   const ctx: HubContext = {
@@ -169,16 +171,32 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
       await opts.renderNotch(def.id, container);
     }
     if (token !== rendering) return;
-    const old = scroll.firstElementChild as HTMLElement | null;
-    if (old && !reducedMotion()) {
-      old.classList.add("m-leaving");
-      await new Promise((r) => setTimeout(r, Durations.fast));
-      if (token !== rendering) return;
+    await swapPage(page_, token);
+  }
+
+  /**
+   * Troca sem engasgar: a página nova é montada e medida antes (opaca 0, na
+   * mesma célula de grade da antiga), e só então as duas se cruzam com
+   * transform/opacity. Nenhum layout acontece durante a animação.
+   */
+  async function swapPage(page_: HTMLElement, token: number) {
+    const old = stage.firstElementChild as HTMLElement | null;
+    const motion = old && !reducedMotion();
+    page_.classList.add("m-premount");
+    stage.append(page_);
+    if (motion) {
+      // Dois quadros: o primeiro faz o layout/pintura escondidos, o segundo já é só composição.
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      if (token !== rendering) { page_.remove(); return; }
+      old!.classList.add("m-leaving");
     }
-    clear(scroll);
-    scroll.append(page_);
-    animatePage(page_);
     scroll.scrollTop = 0;
+    page_.classList.remove("m-premount");
+    page_.classList.add("m-entering");
+    animatePage(page_);
+    if (motion) await new Promise((r) => setTimeout(r, Durations.slow));
+    for (const el of [...stage.children]) { if (el === page_) break; el.remove(); }
+    page_.classList.remove("m-entering");
   }
 
   parallax(scroll, () => scroll.querySelector<HTMLElement>(".hub-hero"));

@@ -50,10 +50,18 @@ input, textarea, select {
 @keyframes m-focus { from { outline-offset: 6px; outline-color: transparent; } }
 
 /* Troca de página (hub/ajustes): entra subindo + fade; sai com fade rápido. */
-.hub-page, .settings-page, #settings-root > section {
+.hub-page.m-entering, .settings-page {
   animation: m-page-in var(--m-slow) var(--m-smooth) both;
 }
-.m-leaving { animation: m-page-out var(--m-fast) var(--m-ease-in) both !important; pointer-events: none; }
+/* Pré-montagem: a página nova já ocupa a mesma célula, invisível, sem animar. */
+.hub-stage { display: grid; }
+.hub-stage > .hub-page { grid-area: 1 / 1; min-width: 0; }
+.m-premount { opacity: 0; pointer-events: none; }
+.m-premount * { animation-play-state: paused !important; }
+.m-leaving, .m-entering { will-change: transform, opacity; }
+/* O que está fora da tela não é diagramado nem pintado até chegar perto. */
+.hub-page > :not(.bf-hero):not(.hub-label) { content-visibility: auto; contain-intrinsic-size: auto 260px; }
+.m-leaving { animation: m-page-out var(--m-fast) var(--m-ease-in) both !important; pointer-events: none; z-index: 0; }
 @keyframes m-page-in { from { opacity: 0; transform: translate3d(0, 10px, 0); } }
 @keyframes m-page-out { to { opacity: 0; transform: translate3d(0, -6px, 0); } }
 
@@ -93,3 +101,4 @@ input, textarea, select {
   .hub-hero, .bf-hero, .hub-hero > *, .bf-hero > * { transform: none !important; }
   .bf-skeleton::after { animation: none !important; }
 }
+.hub-stat b { display: inline-block; contain: layout paint; min-width: 2ch; }

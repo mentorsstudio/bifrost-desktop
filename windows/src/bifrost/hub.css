@@ -10,7 +10,7 @@
 .bf-hero-sky { position: absolute; inset: 0; pointer-events: none; }
 .bf-hero-tree { position: absolute; right: 290px; top: -10px; width: 240px; height: 180px; color: rgba(226,181,90,.13);
   animation: bf-tree-breathe 8s var(--bf-ease-tide) infinite alternate; }
-@keyframes bf-tree-breathe { to { color: rgba(94,242,201,.24); transform: translateY(-3px); } }
+@keyframes bf-tree-breathe { to { opacity: .8; transform: translateY(-3px); } }
 .bf-hero-copy { position: relative; z-index: 1; min-width: 0; }
 .bf-hero-kicker { font: 600 10px var(--bf-rune-font); letter-spacing: .25em; color: var(--bf-aurora-1); opacity: .75; margin-bottom: 6px; white-space: nowrap; overflow: hidden; }
 .bf-hero h1 { margin: 0 0 6px; font: 600 22px var(--bf-heading-font) !important; letter-spacing: .1em; text-transform: uppercase; color: var(--bf-gold-2) !important; }
@@ -69,6 +69,3 @@
 .hub-bars > * { background: linear-gradient(180deg, var(--bf-aurora-1), var(--bf-aurora-2)) !important; }
 .hub-segmented { border: 1px solid rgba(226,181,90,.25) !important; }
 .hub-columns { gap: 18px !important; }
-.hub-page > * { animation: bf-skin-page var(--bf-step) var(--bf-ease-fjord) both; }
-.hub-page > *:nth-child(2) { animation-delay: 40ms; } .hub-page > *:nth-child(3) { animation-delay: 80ms; } .hub-page > *:nth-child(n+4) { animation-delay: 120ms; }
-@media (prefers-reduced-motion: reduce) { .hub-page > * { animation: none !important; } }

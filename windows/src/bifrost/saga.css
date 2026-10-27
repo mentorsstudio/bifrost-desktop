@@ -49,3 +49,46 @@
 .view.on > .card { animation: bf-card-in var(--bf-step) var(--bf-ease-raven) both; }
 @keyframes bf-card-in { from { opacity: 0; transform: translateY(-6px) scale(.98); } }
 @media (prefers-reduced-motion: reduce) { .view.on > .card { animation: none !important; } }
+
+/* ── Painel de agentes (cartão da direita da ilha) ────────────────────── */
+.ag-panel { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; padding: 8px 10px 8px 12px; box-sizing: border-box; min-width: 0; }
+.ag-head { font: 600 9.5px var(--bf-heading-font); letter-spacing: .14em; text-transform: uppercase; color: var(--bf-gold-2); opacity: .8; margin-bottom: 4px; }
+.ag-head::before { content: "ᛖ "; font-family: var(--bf-rune-font); color: var(--bf-aurora-1); }
+.ag-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; scrollbar-width: none; }
+.ag-list::-webkit-scrollbar { display: none; }
+.ag-row { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 10px;
+  background: rgba(19, 32, 63, .55); border: 1px solid rgba(147, 161, 198, .14); cursor: pointer;
+  transition: transform var(--m-fast) var(--m-snappy), border-color var(--m-fast) var(--m-ease), background-color var(--m-fast) var(--m-ease); }
+.ag-row:hover { border-color: rgba(226, 181, 90, .4); background: rgba(29, 47, 92, .6); }
+.ag-row:active { transform: scale(var(--m-press)); }
+.ag-row.s-waiting { border-color: rgba(242, 184, 75, .55); }
+.ag-row.s-error { border-color: rgba(255, 107, 107, .5); }
+.ag-icon { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 700 9.5px "Space Grotesk", "Segoe UI", sans-serif; color: #070b16;
+  background: radial-gradient(circle at 35% 30%, #fff8, transparent 60%), var(--ag, #5ef2c9); box-shadow: 0 0 0 2px rgba(7, 11, 22, .6); }
+.ag-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.ag-line { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.ag-line b { font: 600 11.5px "Space Grotesk", "Segoe UI", sans-serif; color: #eef1f8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ag-status { flex: 0 0 auto; font-size: 9.5px; padding: 0 6px; border-radius: 999px; color: var(--st); background: color-mix(in srgb, var(--st) 14%, transparent); white-space: nowrap; }
+.ag-row.s-working .ag-status::before { content: ""; display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--st); margin-right: 4px; vertical-align: 1px; animation: bf-pill-ember 1.2s var(--m-ease) infinite; }
+.ag-did, .ag-meta { font-size: 10.5px; color: #b9c2d8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ag-meta { font-size: 9.5px; color: #8692ad; }
+.ag-actions { display: flex; gap: 2px; opacity: .65; transition: opacity var(--m-fast) var(--m-ease); }
+.ag-row:hover .ag-actions { opacity: 1; }
+.ag-act { width: 20px; height: 20px; border-radius: 6px; display: grid; place-items: center; background: rgba(7, 11, 22, .5); border: 0; color: #dfe5f3; cursor: pointer; }
+.ag-act svg { fill: currentColor; }
+.ag-empty { display: none; flex: 1 1 auto; align-items: center; gap: 10px; min-height: 0; }
+.ag-panel.is-empty .ag-empty { display: flex; }
+.ag-panel.is-empty .ag-list { display: none; }
+.ag-empty-rune { font: 30px var(--bf-rune-font); color: var(--bf-aurora-1); opacity: .5; flex: 0 0 auto; }
+.ag-empty-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 10.5px; color: #aab4cc; }
+.ag-empty-text b { font: 600 11.5px "Space Grotesk", "Segoe UI", sans-serif; color: #eef1f8; }
+.ag-empty .btn { flex: 0 0 auto; }
+.card.has-chips .ag-panel { height: calc(100% - 34px); }
+.card.has-chips .pills { height: 34px; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 0 8px 6px; }
+.card:not(.has-chips) .pills { display: none; }
+.ag-sub { display: flex; gap: 6px; min-width: 0; align-items: baseline; }
+.ag-sub .ag-did { flex: 1 1 auto; min-width: 0; }
+.ag-sub .ag-meta { flex: 0 1 auto; max-width: 55%; }
+.ag-row { padding: 3px 6px; }
+.ag-icon { width: 22px; height: 22px; }
+.ag-row { grid-template-columns: 22px minmax(0, 1fr) auto; }

@@ -14,7 +14,7 @@ test("motion.css define os tokens de mola e duração", () => {
 });
 
 test("todo componente interativo tem regra de movimento com tokens", () => {
-  for (const sel of ["button", ".btn", ".icon-btn", ".hub-item", '[role="switch"]', ".toggle", "input", "textarea", "select", ":focus-visible", '[role="menu"]', '[role="dialog"]', ".hub-page", ".m-stagger", ".bf-skeleton::after"]) {
+  for (const sel of ["button", ".btn", ".icon-btn", ".hub-item", '[role="switch"]', ".toggle", "input", "textarea", "select", ":focus-visible", '[role="menu"]', '[role="dialog"]', ".hub-page.m-entering", ".m-stagger", ".bf-skeleton::after"]) {
     const i = motion.indexOf(sel);
     assert.ok(i >= 0, `faltou ${sel}`);
     const block = motion.slice(i, motion.indexOf("}", i));
@@ -42,3 +42,14 @@ test("toda janela importa motion.css", () => {
 });
 
 test("respeita prefers-reduced-motion", () => assert.match(motion, /prefers-reduced-motion: reduce/));
+
+test("keyframes só animam propriedades de composição (transform/opacity)", () => {
+  const OK = new Set(["transform", "opacity", "offset", "stroke-dashoffset", "outline-color", "outline-offset"]);
+  for (const f of css) {
+    const src = readFileSync(f, "utf8");
+    for (const m of src.matchAll(/@keyframes\s+([\w-]+)\s*\{((?:[^{}]*\{[^{}]*\})*[^{}]*)\}/g)) {
+      const bad = [...m[2].matchAll(/([a-z-]+)\s*:/g)].map((x) => x[1]).filter((p) => !OK.has(p));
+      assert.deepEqual(bad, [], `${f} @keyframes ${m[1]}`);
+    }
+  }
+});

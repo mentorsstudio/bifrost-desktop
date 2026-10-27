@@ -52,7 +52,7 @@ body.bf-sky, .bf-sky {
   height: 3px; border-radius: 3px; background: var(--bf-bridge); background-size: 300% 100%;
   animation: bf-bridge-flow 6s linear infinite; box-shadow: 0 0 14px rgba(246, 210, 122, .35);
 }
-@keyframes bf-bridge-flow { to { background-position: 300% 0; } }
+@keyframes bf-bridge-flow { 50% { opacity: .55; } }
 
 /* ── Títulos rúnicos e seções entalhadas ──────────────────────────────── */
 .bf-section, section.bf-section {
@@ -75,7 +75,7 @@ body.bf-sky, .bf-sky {
   font-family: var(--bf-rune-font); color: var(--bf-aurora-1); font-size: 1.2em;
   text-shadow: 0 0 10px rgba(94, 242, 201, .6); animation: bf-rune-glow 3.2s var(--m-ease) infinite;
 }
-@keyframes bf-rune-glow { 50% { text-shadow: 0 0 18px rgba(94, 242, 201, .95); } }
+@keyframes bf-rune-glow { 50% { opacity: .7; } }
 @keyframes bf-rise { from { opacity: 0; transform: translateY(12px) scale(.985); } to { opacity: 1; transform: none; } }
 
 /* ── Botões: ferro com fio dourado ────────────────────────────────────── */

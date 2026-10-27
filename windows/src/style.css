@@ -665,11 +665,8 @@ body {
 }
 
 @keyframes shimmer {
-  from {
-    background-position: 130% 0;
-  }
-  to {
-    background-position: -130% 0;
+  50% {
+    opacity: 0.6;
   }
 }
 
@@ -1418,8 +1415,8 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 @keyframes dash-breathe {
-  0%, 100% { stroke: rgba(255, 255, 255, 0.11); }
-  50% { stroke: rgba(255, 255, 255, 0.15); }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
 }
 
 .drop-body {

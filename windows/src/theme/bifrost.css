@@ -85,8 +85,8 @@ html, body { font-family: var(--font); letter-spacing: 0.005em; }
   pointer-events: none;
 }
 @keyframes bifrost-aurora {
-  0%, 100% { background-position: 0% 50%; opacity: 0.65; }
-  50% { background-position: 100% 50%; opacity: 1; }
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
   #island::after { animation: none; }

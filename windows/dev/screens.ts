@@ -115,9 +115,21 @@ if (shot === "greeting") {
   island.applySettings();
   State.loadIntegrationTasks();
   await wait(50);
+  if (shot === "home-empty") { island.expand("overview"); }
+  else {
   hook({ hook_event_name: "SessionStart", session_id: "s1", cwd: "C:\\Users\\paulo\\projetos\\bifrost-desktop" });
   hook({ hook_event_name: "UserPromptSubmit", session_id: "s1", prompt: "Revise o servidor MCP" });
   if (shot === "idle") { island.collapse(); }
+  if (shot === "home") {
+    hook({ hook_event_name: "PreToolUse", session_id: "s1", tool_name: "Edit", tool_input: { file_path: "src/mcp/client.rs" } });
+    hook({ hook_event_name: "SessionStart", session_id: "c1", coucou_agent: "codex", cwd: "C:\\Users\\paulo\\projetos\\site-loja" });
+    hook({ hook_event_name: "UserPromptSubmit", session_id: "c1", coucou_agent: "codex", cwd: "C:\\Users\\paulo\\projetos\\site-loja", prompt: "Corrija o checkout" });
+    hook({ hook_event_name: "PermissionRequest", session_id: "c1", coucou_agent: "codex", request_id: "r9", tool_name: "Bash", tool_input: { command: "npm run deploy" } });
+    hook({ hook_event_name: "SessionStart", session_id: "g1", coucou_agent: "gemini", cwd: "C:\\Users\\paulo\\docs\\relatorio" });
+    hook({ hook_event_name: "Stop", session_id: "g1", coucou_agent: "gemini", cwd: "C:\\Users\\paulo\\docs\\relatorio", last_assistant_message: "Relatório revisado e salvo." });
+    await wait(300);
+    island.expand("overview");
+  }
   if (shot === "notification") {
     hook({ hook_event_name: "PreToolUse", session_id: "s1", tool_name: "Edit", tool_input: { file_path: "src/mcp/client.rs" } });
     await wait(200);
@@ -133,5 +145,6 @@ if (shot === "greeting") {
       { id: 2, role: "assistant", content: "O **Bifrost** é uma ilha no topo da tela que acompanha seus agentes de IA, com ditado, notas e chat pelo MCP." },
     ];
     island.expand("prompt");
+  }
   }
 }

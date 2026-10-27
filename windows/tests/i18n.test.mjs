@@ -394,6 +394,9 @@ const CHECKED = ["src/views", "src/settings", "src/island", "src/upload", "src/r
 const NOT_TEXT = new Set([
   "file", // the kind of a chat context: { kind: "file" }
   "finished", // a task state and a pill badge
+  "working", // a bot state
+  "error", // a bot state and a pill badge
+  "idle", // a bot state
   "unknown", // a CI state
   "Resend", // the service's name (the Mac's "Resend" is a button: send again)
   "Stop", // Claude Code's hook event (the Mac's "Stop" is a button)

@@ -72,7 +72,7 @@ html, body {
 
 .message { font: 500 12px "Space Grotesk", "Segoe UI", sans-serif; color: #dfe9ff; white-space: nowrap; }
 .rec { width: 8px; height: 8px; border-radius: 50%; background: #ff7a4a; box-shadow: 0 0 6px rgba(255, 122, 74, .7); flex: 0 0 8px; animation: bf-pill-ember 1.4s var(--m-ease) infinite; }
-@keyframes bf-pill-ember { 50% { box-shadow: 0 0 12px rgba(255, 122, 74, .95); } }
+@keyframes bf-pill-ember { 50% { opacity: .55; } }
 .clock { font: 600 12px "Space Grotesk", "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; color: #f6d27a; }
 .vertical .clock { font-size: 10px; }
 .stop { width: 22px; height: 22px; border-radius: 7px; border: 0; background: rgba(226, 181, 90, .16); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
