@@ -5,8 +5,9 @@
    sai um pouco para fora. Miolo = escudo redondo com o ícone e a contagem.
    Todas as cores vêm do tema ativo (--th-*). */
 
-#fm-root {
-  position: absolute; inset: 0; font-family: var(--bf-font, "Segoe UI Variable", "Segoe UI", system-ui, sans-serif); color: var(--th-ink, #eef2ff);
+#fm-root { position: absolute; inset: 0; }
+.fm-ring {
+  font-family: var(--bf-font, "Segoe UI Variable", "Segoe UI", system-ui, sans-serif); color: var(--th-ink, #eef2ff);
   /* Tokens do tema. */
   --fm-night: var(--th-night, #0a0f1f);
   --fm-acc: var(--th-accent, #f6d27a);
@@ -32,7 +33,7 @@
   --fm-belt: color-mix(in srgb, var(--fm-acc) 70%, transparent);
   --fm-sub: color-mix(in srgb, var(--fm-stone) 92%, #000);
 }
-#fm-root[data-ring="aurora"] {
+.fm-ring[data-ring="aurora"] {
   --fm-glass: color-mix(in srgb, var(--fm-night) 86%, var(--fm-a3));
   --fm-band: linear-gradient(160deg, rgba(255, 255, 255, .10), rgba(255, 255, 255, 0) 40%),
              radial-gradient(circle, color-mix(in srgb, var(--fm-glass) 92%, transparent) 50%, color-mix(in srgb, var(--fm-glass) 80%, transparent));
@@ -44,7 +45,7 @@
   --fm-hub-rim: var(--fm-a2);
   --fm-sub: var(--fm-glass);
 }
-#fm-root[data-ring="escudo"] {
+.fm-ring[data-ring="escudo"] {
   --fm-wood-a: color-mix(in srgb, #5b3a22 72%, var(--fm-night));
   --fm-wood-b: color-mix(in srgb, #7a5030 66%, var(--fm-night));
   --fm-band: radial-gradient(circle, rgba(0, 0, 0, .35) 40%, rgba(0, 0, 0, 0) 62%, rgba(0, 0, 0, .3)),
@@ -58,7 +59,7 @@
   --fm-hub-rim: var(--fm-acc);
   --fm-sub: var(--fm-wood-a);
 }
-#fm-root[data-ring="minimal"] {
+.fm-ring[data-ring="minimal"] {
   --fm-band: color-mix(in srgb, var(--fm-night) 94%, #fff);
   --fm-rim: rgba(255, 255, 255, .14);
   --fm-sep: rgba(255, 255, 255, .10);
@@ -78,7 +79,7 @@
   -webkit-mask: radial-gradient(circle, transparent 0 65.5px, #000 66px 161.5px, transparent 162px);
   mask: radial-gradient(circle, transparent 0 65.5px, #000 66px 161.5px, transparent 162px);
   opacity: 0; transform: scale(.7) rotate(-12deg);
-  transition: opacity var(--m-base) var(--m-ease), transform var(--m-slow, 420ms) var(--m-smooth, ease);
+  transition: opacity var(--m-base) var(--m-ease), transform var(--m-slow) var(--m-smooth);
 }
 .fm-band { background: var(--fm-band); box-shadow: 0 14px 30px rgba(0, 0, 0, .45); }
 .open .fm-band, .open .fm-aura { opacity: 1; transform: none; }
@@ -94,8 +95,8 @@
   filter: drop-shadow(0 0 6px rgba(var(--th-a1-rgb, 47, 211, 166), .7));
 }
 [data-ring="aurora"] .fm-aura { display: block; }
-@keyframes fm-aura-turn { to { filter: drop-shadow(0 0 9px rgba(var(--th-a3-rgb, 154, 107, 255), .75)); } }
-.open[data-ring="aurora"] .fm-aura { animation: fm-aura-turn 2.8s var(--m-ease, ease) infinite alternate; }
+@keyframes fm-aura-turn { from { opacity: .78; } to { opacity: 1; } }
+.open[data-ring="aurora"] .fm-aura { animation: fm-aura-turn 2.8s var(--m-ease) infinite alternate; }
 
 /* Aros e cinto de runas. */
 .fm-decor { opacity: 0; transition: opacity var(--m-base) var(--m-ease); }
@@ -216,4 +217,17 @@
 }
 
 /* Prévia estática (Ajustes): o mesmo anel, já aberto, sem eventos. */
-.fm-preview { position: relative; inset: auto; width: 460px; height: 460px; pointer-events: none; }
+.fm-preview { width: 460px; height: 460px; pointer-events: none; }
+.fm-preview { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.fm-style-frame { position: relative; overflow: hidden; margin: 0 auto; }
+.fm-style-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin: 6px 0 4px; }
+.fm-style-card {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 8px 12px; border-radius: 14px; cursor: pointer; text-align: center;
+  background: rgba(255, 255, 255, .03); border: 1px solid rgba(255, 255, 255, .08); color: var(--th-ink, #eef2ff); font: inherit;
+  transition: border-color var(--m-fast) var(--m-ease), background-color var(--m-fast) var(--m-ease);
+}
+.fm-style-card:hover { border-color: rgba(var(--th-accent-rgb, 246, 210, 122), .4); }
+.fm-style-card.on { border-color: var(--th-accent, #f6d27a); background: rgba(var(--th-accent-rgb, 246, 210, 122), .08); }
+.fm-style-card:focus-visible { outline: 2px solid var(--th-accent, #f6d27a); outline-offset: 2px; }
+.fm-style-card strong { font-size: 13px; }
+.fm-style-card span { font-size: 11px; color: var(--th-dim, #9aa6c8); line-height: 1.3; }

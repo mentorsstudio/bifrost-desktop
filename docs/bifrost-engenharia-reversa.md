@@ -782,6 +782,17 @@ Estudo completo em `filee-re.md`.
 - TS: `src/filee/*` (`ring.ts` = geometria e acerto por fatia, testado em
   `tests/filee-ring.test.mjs`; `menu.ts`/`menu.css` = o anel), `src/hub/pages/converter.ts`, `src/settings/page-filee.ts`, `fileemenu.html`.
 
+### Visual do anel (próprio do Bifrost) e estilos
+
+A função segue a do Filee (fatias por tipo, soltar no miolo cancela); o visual é nosso, bem diferente da rosca cinza de fatias soltas do Filee: um anel contínuo com separadores finos de runa, a fatia sob o mouse acesa no acento do tema (brilho suave e um empurrão de 7 px para fora), o miolo como um escudo redondo (umbo) com o ícone, a contagem e "ᚾ Solte aqui para cancelar" na cor de erro do tema, e o Huginn pequeno pousado na borda (segue o personagem escolhido). Ajustes › Gesto do Huginn e Conversor › **Estilo do anel**, com prévia ao vivo de cada um (guardado em `localStorage` `bifrost.ringStyle`):
+
+- **Runa** (padrão): pedra entalhada, entalhes em losango nos separadores e um cinto de futhark por fora.
+- **Aurora**: vidro escuro com a borda acesa nas quatro cores da aurora do tema.
+- **Escudo**: tábuas de madeira (uma por fatia), aro, rebites e umbo de metal no acento do tema.
+- **Minimal**: liso, linhas finas e só o realce do tema.
+
+Os 7 temas recolorem base, acento, brilho e texto (`--th-*`). Código: `src/filee/donut.ts` (desenho), `ring-style.ts`, `preview.ts`, `menu.css`. QA (Playwright, 100/125/150 %, 4 estilos × 9 tipos + realce + grupo da IA) confere rótulos cortados, sobrepostos, fora da janela e texto encostando nos separadores. Grade: `bifrost-screens/anel-estilos-temas.png`.
+
 ### Fatias por tipo (Filee × Bifrost)
 
 | Perfil (extensões) | Filee — frente, na ordem (12h, sentido horário) | Bifrost — anel |

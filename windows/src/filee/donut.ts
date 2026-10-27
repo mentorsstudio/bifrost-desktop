@@ -42,6 +42,16 @@ export function fit(lab: HTMLElement) {
     size -= 0.5;
     name.style.fontSize = `${size}px`;
   }
+  const cap = lab.querySelector<HTMLElement>(".fm-label-cap");
+  if (!cap) return;
+  // Mede o texto inteiro (largura de layout, sem o arredondamento do scrollWidth).
+  const room = lab.clientWidth;
+  const need = () => { cap.style.maxWidth = "none"; const w = cap.getBoundingClientRect().width / (lab.getBoundingClientRect().width / Math.max(1, lab.offsetWidth) || 1); cap.style.maxWidth = ""; return w; };
+  let cs = parseFloat(getComputedStyle(cap).fontSize) || 10;
+  while (need() > room - 0.5 && cs > 8) {
+    cs -= 0.5;
+    cap.style.fontSize = `${cs}px`;
+  }
 }
 
 export class Donut {

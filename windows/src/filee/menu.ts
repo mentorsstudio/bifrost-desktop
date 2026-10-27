@@ -27,8 +27,9 @@ interface PlanPayload { plan: Plan | null; error: string | null; icon?: string |
 const POP_MS = 300;
 
 const root = document.getElementById("fm-root")!;
+root.classList.add("fm-ring");
 const donut = new Donut(root, reducedMotion);
-const { hub, hubIcon, badge, hubTitle, progress, ravenBox } = donut;
+const { hubIcon, badge, hubTitle, progress, ravenBox } = donut;
 const raven = new Mascot("huginn", ravenBox);
 donut.setStyle(readRingStyle());
 

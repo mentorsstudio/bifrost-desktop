@@ -6,6 +6,7 @@ import { h } from "../views/dom";
 import { choice } from "../views/kit";
 import { toggle } from "./store";
 import { Convert, type FileePrefs } from "../filee/api";
+import { ringStylePicker } from "../filee/preview";
 
 export function fileeSection(): HTMLElement {
   const box = h("section", {}, h("h2", {}, h("span", { text: "Gesto do Huginn e Conversor" })));
@@ -29,6 +30,9 @@ export function fileeSection(): HTMLElement {
       h("div", { class: "hint", text: "No Explorador ou na área de trabalho, um anel de fatias abre em volta do cursor com as conversões do tipo do arquivo (como no Filee), mais comprimir, redimensionar, enviar para a IA e abrir no Conversor. Solte no meio para cancelar. Sem o Ctrl, o clique direito continua normal." }),
       h("div", { class: "row" }, h("label", { text: "Gatilho" }), trig),
       filee,
+      h("div", { class: "row" }, h("label", { text: "Estilo do anel" })),
+      ringStylePicker(),
+      h("div", { class: "hint", text: "O anel segue o tema nórdico e o personagem escolhidos. A função é a mesma em todos os estilos." }),
       h("div", { class: "row" }, h("label", { text: "“Bifrost ›” no menu do Explorador" }), toggle(prefs.contextMenu, (v) => { prefs.contextMenu = v; void save(); })),
       h("div", { class: "hint", text: "Entrada clássica do menu do botão direito (no Windows 11, em “Mostrar mais opções”). Só para o seu usuário, sem administrador. Desligada por padrão." }),
     );
