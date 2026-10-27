@@ -1,6 +1,6 @@
 // Ajustes da ilha — parte de settings/main.ts, separada por página.
 
-import { formBtn } from "../views/kit";
+import { formBtn, keycapBtn } from "../views/kit";
 import { Bridge, type ShortcutsReport } from "../core/bridge";
 import {
   ISLAND_SHORTCUTS, SHORTCUTS, SHORTCUT_TEXT, activeKeys, displayKeys, duplicates, effective,
@@ -137,10 +137,7 @@ export function shortcutsSection(initial: ShortcutsReport | null): HTMLElement {
     for (const d of SHORTCUTS) {
       if (!d.ported) continue;
       const binding = effective(d, S.settings.shortcuts);
-      const keycap = h("button", {
-        class: "keycap",
-        text: binding.keys ? displayKeys(binding.keys) : SHORTCUTS_UI.none,
-      }) as HTMLButtonElement;
+      const keycap = keycapBtn(binding.keys ? displayKeys(binding.keys) : SHORTCUTS_UI.none);
       keycap.disabled = !binding.enabled;
       keycap.addEventListener("click", () => record(d.id, binding, keycap));
       const sw = toggle(binding.enabled, (on) => store(d.id, { keys: binding.keys, enabled: on }));

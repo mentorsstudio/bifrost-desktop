@@ -64,7 +64,7 @@ export function formRow(...children: (Node | null)[]): HTMLElement {
 }
 
 /** Ação discreta em texto, na cor da pílula (cartões das integrações). */
-export function linkBtn(label: string, color: string, onClick: () => void): HTMLButtonElement {
+export function linkBtn(label: string | Msg, color: string, onClick: () => void): HTMLButtonElement {
   return h("button", { class: "link-btn", style: `color:${color}`, text: label, onclick: onClick }) as HTMLButtonElement;
 }
 
@@ -90,5 +90,33 @@ export function choice(options: readonly (readonly [string, string, string?])[] 
   for (const [v, label, lang] of options) el.append(h("option", lang ? { value: v, text: label, lang } : { value: v, text: label }));
   if (value != null) el.value = value;
   if (onChange) el.addEventListener("change", () => onChange(el.value));
+  return el;
+}
+
+/** Interruptor de formulário (role=switch); desabilitado quando não cabe mais um. */
+export function switchEl(on: boolean, opts: { title?: string; disabled?: boolean; label?: string } = {}): HTMLButtonElement {
+  const el = h("button", { class: on ? "switch on" : "switch" }) as HTMLButtonElement;
+  el.setAttribute("role", "switch");
+  el.setAttribute("aria-checked", String(on));
+  if (opts.title) el.title = opts.title;
+  if (opts.label) el.setAttribute("aria-label", opts.label);
+  if (opts.disabled) el.disabled = true;
+  // Quem liga/desliga mexe na classe "on": o aria-checked acompanha.
+  if (typeof MutationObserver !== "undefined") {
+    new MutationObserver(() => el.setAttribute("aria-checked", String(el.classList.contains("on")))).observe(el, { attributes: true, attributeFilter: ["class"] });
+  }
+  return el;
+}
+
+/** Tecla de atalho clicável (grava um novo atalho). */
+export function keycapBtn(text: string): HTMLButtonElement {
+  return h("button", { class: "keycap", text }) as HTMLButtonElement;
+}
+
+/** Amostra de cor de uma paleta. */
+export function swatchBtn(hex: string, on: boolean): HTMLButtonElement {
+  const el = h("button", { class: on ? "swatch on" : "swatch", style: `background:${hex}`, title: hex }) as HTMLButtonElement;
+  el.setAttribute("aria-pressed", String(on));
+  el.setAttribute("aria-label", hex);
   return el;
 }

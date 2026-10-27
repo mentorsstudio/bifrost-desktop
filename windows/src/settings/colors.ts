@@ -2,6 +2,7 @@
 // Mac's dot in Settings → Active pills does the same. The dot looks exactly as
 // it always did; what is new is that it can be clicked.
 
+import { swatchBtn, formBtn } from "../views/kit";
 import { PILL_PALETTE, pillColor, withPillColor } from "../core/pill-colors";
 import { h } from "../views/dom";
 import { t } from "../i18n/i18n";
@@ -59,19 +60,14 @@ export function colorDot(
 
     const now = current();
     for (const hex of PILL_PALETTE) {
-      const swatch = h("button", {
-        class: hex === now ? "swatch on" : "swatch",
-        style: `background:${hex}`,
-        title: hex,
-        "aria-label": hex,
-        "aria-pressed": hex === now,
-      });
+      const swatch = swatchBtn(hex, hex === now);
       swatch.addEventListener("click", () => choose(hex));
       palette.append(swatch);
     }
     // Back to the catalog's colour: only offered once it has been changed.
     if (now !== pillColor(def.id, def.color, null)) {
-      const reset = h("button", { class: "reset", text: t("Default") });
+      const reset = formBtn(t("Default"));
+      reset.classList.add("reset");
       reset.addEventListener("click", () => choose(null));
       palette.append(reset);
     }

@@ -1,6 +1,6 @@
 // Ajustes da ilha — parte de settings/main.ts, separada por página.
 
-import { formBtn, textField } from "../views/kit";
+import { formBtn, textField, switchEl } from "../views/kit";
 import { Bridge } from "../core/bridge";
 import { MAX_DECLARED, availablePills } from "../core/pills";
 import { h } from "../views/dom";
@@ -55,7 +55,7 @@ export function integrationsSection(present: Record<string, boolean>): HTMLEleme
   const offered = new Set(availablePills().map((p) => p.id));
   for (const def of INTEGRATIONS.filter((d) => offered.has(d.id))) {
     const active = S.settings.activeIntegrations.includes(def.id);
-    const sw = h("button", { class: active ? "switch on" : "switch" });
+    const sw = switchEl(active, { label: def.name });
     sw.addEventListener("click", () => {
       const on = S.settings.activeIntegrations.includes(def.id);
       if (on) {

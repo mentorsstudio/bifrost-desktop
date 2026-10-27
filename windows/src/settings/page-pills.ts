@@ -1,6 +1,6 @@
 // Ajustes da ilha — parte de settings/main.ts, separada por página.
 
-import { choice } from "../views/kit";
+import { choice, switchEl } from "../views/kit";
 import { PILL_CATEGORIES, availablePills, chooseMainPill, isComingSoon, mainPillChoices, toggleDeclared, type PillDefinition } from "../core/pills";
 import { h, clear } from "../views/dom";
 import { colorDot } from "./colors";
@@ -52,8 +52,7 @@ export function activePillsSection(connected: Record<string, boolean>): HTMLElem
     }
     const why = hint(def);
     el.append(h("span", { class: "state", text: why ?? "" }));
-    const sw = h("button", { class: on ? "switch on" : "switch" }) as HTMLButtonElement;
-    sw.disabled = full;
+    const sw = switchEl(on, { disabled: full, label: def.name });
     sw.addEventListener("click", () => {
       const next = toggleDeclared(S.settings, def.id);
       if (!next) return;

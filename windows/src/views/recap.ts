@@ -6,7 +6,7 @@
 // Nothing animates in this view: the image is drawn once, when share mode
 // opens or the privacy toggle changes.
 
-import { btn } from "./kit";
+import { btn, switchEl, linkBtn } from "./kit";
 import { h, clear } from "./dom";
 import { Bridge } from "../core/bridge";
 import { washRGBA } from "../core/layout";
@@ -139,7 +139,7 @@ export function buildRecap(actions: ViewActions): ViewHost {
   function showShare(s: WeeklySummary) {
     const thumb = h("canvas", { class: "recap-thumb" });
     const status = h("div", { class: "recap-status" });
-    const sw = h("button", { class: Recap.prefs.hideProjects ? "switch on" : "switch" });
+    const sw = switchEl(Recap.prefs.hideProjects);
 
     const draw = () => {
       shareCanvas = renderShareImage(s, Recap.prefs.hideProjects);
@@ -174,11 +174,9 @@ export function buildRecap(actions: ViewActions): ViewHost {
       try {
         const path = await Bridge.recapSavePng(toPngDataUrl(shareCanvas), dayKey(s.weekStart));
         const name = path.split(/[\\/]/).pop() ?? path;
-        say(T.savedAs(name), h("button", {
-          class: "link-btn recap-link",
-          text: tl("Show in folder"),
-          onclick: () => void Bridge.recapRevealSaved(),
-        }));
+        const reveal = linkBtn(tl("Show in folder"), "inherit", () => void Bridge.recapRevealSaved());
+        reveal.classList.add("recap-link");
+        say(T.savedAs(name), reveal);
       } catch (err) {
         say(String(err).replace(/^Error:\s*/, ""));
       } finally {

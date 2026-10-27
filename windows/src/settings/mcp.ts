@@ -2,7 +2,7 @@
 // to without keys, how the chat reaches one of them, and Bifrost's own MCP
 // server that lets Grok Bot, Hermes… drive Huginn.
 
-import { formBtn, choice, textField } from "../views/kit";
+import { formBtn, choice, textField, switchEl } from "../views/kit";
 import {
   Bridge, type McpChat, type McpServerConfig, type McpServerView, type McpStatus,
 } from "../core/bridge";
@@ -385,7 +385,7 @@ export function mcpSections(settings: Settings, save: () => Promise<void>): HTML
     for (const e of scan.catalog) {
       const mine = servers.get(e.name);
       const on = !!mine && !mine.config.disabled;
-      const sw = h("button", { class: on ? "switch on" : "switch", title: on ? "Desligar" : "Ligar" }) as HTMLButtonElement;
+      const sw = switchEl(on, { title: on ? "Desligar" : "Ligar" });
       sw.addEventListener("click", async () => {
         const base = mine?.config ?? e.config;
         status = await Bridge.mcpSaveServer(e.name, { ...base, disabled: on ? true : undefined } as McpServerConfig, mine ? e.name : null);

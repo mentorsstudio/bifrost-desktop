@@ -16,9 +16,7 @@ export let updatesListener: ((status: UpdateStatus) => void) | null = null;
 export function updateRows(toggle: Toggle, version: string): HTMLElement[] {
   let status: UpdateStatus = { ...NO_UPDATE, current: version };
   const sw = toggle(false, (on) => void Bridge.updateSetConsent(on));
-  const install = h("button", {
-    onclick: () => void (status.canInstall ? Bridge.updateShow() : Bridge.updateOpenPage()),
-  }) as HTMLButtonElement;
+  const install = formBtn("", "primary", () => void (status.canInstall ? Bridge.updateShow() : Bridge.updateOpenPage()));
   const check = formBtn(t("Check now"), "plain", async () => {
       check.disabled = true;
       feedback.textContent = "";
