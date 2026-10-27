@@ -1,6 +1,6 @@
 // Os adornos do Huginn — a lógica pura. Escolhidos na vista "Adornos" (clique
 // direito no Huginn, ou no menu da bandeja) e guardados nas preferências como
-// `mochiOutfit` (nome da chave mantido por compatibilidade). O desenho fica em ./outfits.ts.
+// `mochiOutfit` (nome da chave mantido por compatibilidade). O desenho fica em ../bifrost/outfits.ts.
 
 import { N_, labels, t } from "../i18n/i18n";
 

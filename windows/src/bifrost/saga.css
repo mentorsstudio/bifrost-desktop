@@ -1,0 +1,30 @@
+/* Bifrost — layout da Saga (a conversa na ilha). Escrito do zero. */
+.bf-saga-card { background: linear-gradient(180deg, rgba(20,32,63,.95), rgba(7,11,22,.98)) !important; border: 1px solid rgba(226,181,90,.3) !important; }
+.bf-saga-body { gap: 8px !important; padding: 10px 14px 12px 92px !important; }
+.bf-saga-head { justify-content: space-between !important; align-items: center; padding: 0 !important;
+  border-bottom: 1px solid rgba(226,181,90,.18); padding-bottom: 6px !important; }
+.bf-saga-title { font: 600 11px var(--bf-heading-font); letter-spacing: .32em; text-transform: uppercase; color: var(--bf-gold-2); }
+.bf-saga-title::before { content: "ᛋ "; font-family: var(--bf-rune-font); color: var(--bf-aurora-1); letter-spacing: 0; }
+.bf-saga-who { background: rgba(7,11,22,.7) !important; border: 1px solid rgba(226,181,90,.3) !important; color: var(--bf-frost) !important; }
+.bf-saga { gap: 10px !important; padding: 4px 2px !important; }
+.bf-saga-you .bubble {
+  background: linear-gradient(180deg, rgba(58,38,24,.55), rgba(43,50,69,.55)) !important;
+  border: 1px solid rgba(226,181,90,.35); border-radius: 12px 12px 3px 12px !important; color: var(--bf-frost) !important;
+  animation: bf-saga-in var(--bf-step) var(--bf-ease-raven) both; transform-origin: 100% 100%;
+}
+.bf-saga-huginn { gap: 8px; align-items: flex-start; animation: bf-saga-in var(--bf-step) var(--bf-ease-raven) both; transform-origin: 0 0; }
+.bf-saga-huginn .reply { color: #c8d3ee !important; border-left: 2px solid rgba(94,242,201,.35); padding-left: 9px; }
+.bf-saga-rune { flex: 0 0 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; margin-top: 1px;
+  font: 700 11px var(--bf-rune-font); color: var(--bf-night); background: linear-gradient(180deg, var(--bf-gold-2), var(--bf-gold)); }
+.bf-saga .typing i { background: var(--bf-aurora-1) !important; }
+@keyframes bf-saga-in { from { opacity: 0; transform: translateY(6px) scale(.96); } }
+.bf-saga-prow { gap: 8px; align-items: center; }
+.bf-saga-prow .chat-input { border-radius: 10px !important; }
+.bf-saga-send { width: 30px !important; height: 30px !important; border-radius: 9px !important; border: 1px solid rgba(246,210,122,.6) !important;
+  background: linear-gradient(180deg, #3a2618, #1d140c) !important; display: grid; place-items: center;
+  transition: transform var(--bf-quick) var(--bf-ease-raven), box-shadow var(--bf-quick); }
+.bf-saga-send:hover { transform: translateY(-2px) rotate(-4deg); box-shadow: 0 0 14px rgba(246,210,122,.35); }
+.bf-saga-send-rune { font: 700 15px var(--bf-rune-font); color: var(--bf-gold-2); }
+.bf-saga-picker { border-top: 1px solid rgba(226,181,90,.18); }
+@media (prefers-reduced-motion: reduce) { .bf-saga-you .bubble, .bf-saga-huginn { animation: none !important; } .bf-saga-send { transition: none; } }
+.bf-saga-prow .chat-input:focus { outline: none; }

@@ -1,26 +1,25 @@
-// Chat view — DOM port of PromptView / ChatBubble / TypingDotsView /
-// ModelPickerView from IslandViewContent.swift.
+// Bifrost — a conversa na ilha ("Saga"). Escrita do zero para o Bifrost.
 //
-// Answers are rendered as Markdown (markdown.ts). A local model streams its
-// answer: Rust sends `chat-delta` events with the text visible so far. The
-// model name above the text field opens the picker: provider chips, then the
-// models of the chosen provider, asked for only once it is picked.
+// Layout: um cabeçalho com o nome de quem responde (a IA escolhida, com a cor
+// e a runa dela) que abre o seletor; a saga, em que cada fala é uma linha
+// entalhada — as suas à direita com borda de ouro, as do Huginn à esquerda com
+// a runa ᚺ; e a proa: o campo de texto e o botão-runa de enviar.
+// Um modelo local escreve aos poucos: o Rust manda `chat-delta` com o texto
+// visível até agora, e a fala cresce no lugar.
 
 import { h, svg, clear } from "./dom";
 import { ICONS } from "./icons";
 import { renderMarkdown } from "./markdown";
 import { Bridge, onEvent, type ChatContext, type ModelInfo } from "../core/bridge";
-import {
-  activeModel, pickModel, providerDef, visibleProviders, withModel, type ProviderDef,
-} from "../core/providers";
+import { activeModel, pickModel, providerDef, visibleProviders, withModel, type ProviderDef } from "../core/providers";
 import { Sound } from "../core/sound";
 import { State, type ChatMessage } from "../core/state";
 import type { ViewHost } from "./views";
 import { N_, t, tl } from "../i18n/i18n";
 
-const STRINGS = {
-  placeholderFirst: N_("Ask me anything…"),
-  placeholderNext: N_("Continue…"),
+const TEXT = {
+  first: N_("Ask me anything…"),
+  next: N_("Continue…"),
   send: N_("Send"),
   switchModel: N_("Switch provider or model"),
   noModel: N_("Choose a model"),
@@ -29,262 +28,182 @@ const STRINGS = {
   openSettings: N_("Open Settings"),
 };
 
-let nextId = 1;
+let seq = 1;
+const persist = () => void Bridge.saveSettings(State.settings);
 
-function bubble(message: ChatMessage): HTMLElement {
-  if (message.role === "user") {
-    return h(
-      "div",
-      { class: "chat-row user" },
-      h("div", { class: "bubble", text: message.content }),
-    );
+/** Uma fala da saga. */
+function line(m: ChatMessage): HTMLElement {
+  if (m.role === "user") {
+    return h("div", { class: "chat-row user bf-saga-you" }, h("div", { class: "bubble", text: m.content }));
   }
   const reply = h("div", { class: "reply" });
-  renderMarkdown(reply, message.content);
-  return h("div", { class: "chat-row" }, reply);
+  renderMarkdown(reply, m.content);
+  return h("div", { class: "chat-row bf-saga-huginn" }, h("span", { class: "bf-saga-rune", text: "ᚺ" }), reply);
 }
 
-function typingDots(): HTMLElement {
-  return h(
-    "div",
-    { class: "chat-row" },
-    h("div", { class: "typing" }, h("i"), h("i"), h("i")),
-  );
+/** Huginn pensando: três pontos de aurora. */
+function thinking(): HTMLElement {
+  return h("div", { class: "chat-row bf-saga-huginn" }, h("span", { class: "bf-saga-rune", text: "ᚺ" }), h("div", { class: "typing" }, h("i"), h("i"), h("i")));
 }
 
-/** The coloured chip showing what the question is about (a dropped file). */
-function contextChip(label: string): HTMLElement {
-  const chip = h("div", { class: "chip" }, h("i", { class: "chip-dot" }), h("span", { text: label }));
-  requestAnimationFrame(() => chip.classList.add("settled"));
-  return chip;
+/** O arquivo solto na ilha, sobre o qual é a pergunta. */
+function fileTag(label: string): HTMLElement {
+  const tag = h("div", { class: "chip bf-saga-file" }, h("i", { class: "chip-dot" }), h("span", { text: label }));
+  requestAnimationFrame(() => tag.classList.add("settled"));
+  return tag;
 }
 
-function saveSettings() {
-  void Bridge.saveSettings(State.settings);
-}
+// ── Seletor: as IAs, depois os modelos da escolhida ─────────────────────────
 
-// ── Model picker ──────────────────────────────────────────────────────────────
+interface Selector { el: HTMLElement; open(): void; close(): void; readonly isOpen: boolean }
 
-interface Picker {
-  el: HTMLElement;
-  open(): void;
-  close(): void;
-  readonly isOpen: boolean;
-}
+function selector(changed: () => void): Selector {
+  const tabs = h("div", { class: "picker-chips" });
+  const models = h("div", { class: "picker-list" });
+  const el = h("div", { class: "picker bf-saga-picker" }, tabs, h("div", { class: "picker-rule" }), models);
+  const known = new Map<string, ModelInfo[]>();
+  let shown = false;
+  let ticket = 0;
 
-/** Provider chips, then the chosen provider's models — ModelPickerView. */
-function buildPicker(onChange: () => void): Picker {
-  const chips = h("div", { class: "picker-chips" });
-  const list = h("div", { class: "picker-list" });
-  const el = h("div", { class: "picker" }, chips, h("div", { class: "picker-rule" }), list);
+  const say = (text: string, settings = false) => {
+    clear(models);
+    const row = h("div", { class: "picker-status", text });
+    if (settings) row.append(h("button", { class: "picker-link", text: tl(TEXT.openSettings), onclick: () => void Bridge.openSettingsWindow() }));
+    models.append(row);
+  };
 
-  /** Models already asked for, by provider; a model server is asked again each time. */
-  const cache = new Map<string, ModelInfo[]>();
-  let isOpen = false;
-  let request = 0;
-
-  function drawChips() {
-    clear(chips);
+  const drawTabs = () => {
+    clear(tabs);
     for (const p of visibleProviders(State.settings)) {
-      const on = p.id === State.settings.chatProvider;
-      const chip = h(
-        "button",
-        { class: on ? "picker-chip on" : "picker-chip", style: `--accent:${p.accent}` },
-        h("i", { class: "picker-dot" }),
-        h("span", { text: t(p.name) }),
-      );
-      chip.addEventListener("click", () => {
+      const b = h("button", { class: p.id === State.settings.chatProvider ? "picker-chip on" : "picker-chip", style: `--accent:${p.accent}` },
+        h("i", { class: "picker-dot" }), h("span", { text: t(p.name) }));
+      b.addEventListener("click", () => {
         if (p.id === State.settings.chatProvider) return;
         State.settings = { ...State.settings, chatProvider: p.id };
-        saveSettings();
+        persist();
         Sound.play("pop");
-        drawChips();
-        void loadModels();
-        onChange();
+        drawTabs();
+        void fetchModels();
+        changed();
       });
-      chips.append(chip);
+      tabs.append(b);
     }
-  }
+  };
 
-  function status(text: string, withSettings = false) {
-    clear(list);
-    const line = h("div", { class: "picker-status", text });
-    if (withSettings) {
-      line.append(
-        h("button", {
-          class: "picker-link",
-          text: tl(STRINGS.openSettings),
-          onclick: () => void Bridge.openSettingsWindow(),
-        }),
-      );
-    }
-    list.append(line);
-  }
-
-  function drawModels(p: ProviderDef, models: ModelInfo[]) {
-    clear(list);
-    const current = activeModel(State.settings);
-    for (const m of models) {
-      const on = m.id === current;
-      const row = h(
-        "button",
-        { class: on ? "picker-model on" : "picker-model", style: `--accent:${p.accent}`, title: m.id },
-        h("span", { class: "picker-model-name", text: m.label }),
-        on ? svg(ICONS.check, 11, { stroke: 2.2 }) : null,
-      );
-      row.addEventListener("click", () => {
+  const drawModels = (p: ProviderDef, list: ModelInfo[]) => {
+    clear(models);
+    const now = activeModel(State.settings);
+    for (const m of list) {
+      const on = m.id === now;
+      const b = h("button", { class: on ? "picker-model on" : "picker-model", style: `--accent:${p.accent}`, title: m.id },
+        h("span", { class: "picker-model-name", text: m.label }), on ? svg(ICONS.check, 11, { stroke: 2.2 }) : null);
+      b.addEventListener("click", () => {
         State.settings = withModel(State.settings, p.id, m.id);
-        saveSettings();
+        persist();
         Sound.play("blip");
         close();
       });
-      list.append(row);
+      models.append(b);
     }
-    list.querySelector(".picker-model.on")?.scrollIntoView({ block: "nearest" });
-  }
+    models.querySelector(".picker-model.on")?.scrollIntoView({ block: "nearest" });
+  };
 
-  async function loadModels() {
+  const fetchModels = async () => {
     const p = providerDef(State.settings.chatProvider);
-    const ticket = ++request;
-    const cached = p.urlField ? undefined : cache.get(p.id);
-    if (cached) {
-      drawModels(p, cached);
-      return;
-    }
-    // Nothing is asked of a provider that has no key yet.
+    const mine = ++ticket;
+    const cached = p.urlField ? undefined : known.get(p.id);
+    if (cached) return drawModels(p, cached);
     if (p.key && !(await Bridge.secretPresent(p.key))) {
-      if (ticket === request) status(t(STRINGS.noKey), true);
+      if (mine === ticket) say(t(TEXT.noKey), true);
       return;
     }
-    if (ticket !== request) return;
-    status(t(STRINGS.loading));
+    if (mine !== ticket) return;
+    say(t(TEXT.loading));
     try {
-      const models = await Bridge.chatModels(p.id);
-      if (ticket !== request) return;
-      if (!p.urlField) cache.set(p.id, models);
-      const keep = pickModel(p, models.map((m) => m.id), activeModel(State.settings));
+      const list = await Bridge.chatModels(p.id);
+      if (mine !== ticket) return;
+      if (!p.urlField) known.set(p.id, list);
+      const keep = pickModel(p, list.map((m) => m.id), activeModel(State.settings));
       if (keep && keep !== activeModel(State.settings)) {
         State.settings = withModel(State.settings, p.id, keep);
-        saveSettings();
-        onChange();
+        persist();
+        changed();
       }
-      drawModels(p, models);
+      drawModels(p, list);
     } catch (err) {
-      if (ticket === request) status(String(err).replace(/^Error:\s*/, ""), Boolean(p.key));
+      if (mine === ticket) say(String(err).replace(/^Error:\s*/, ""), Boolean(p.key));
     }
-  }
-
-  function open() {
-    isOpen = true;
-    el.classList.add("on");
-    drawChips();
-    onChange();
-    void loadModels();
-  }
-
-  function close() {
-    isOpen = false;
-    request++;
-    el.classList.remove("on");
-    onChange();
-  }
-
-  return {
-    el,
-    open,
-    close,
-    get isOpen() {
-      return isOpen;
-    },
   };
+
+  function open() { shown = true; el.classList.add("on"); drawTabs(); changed(); void fetchModels(); }
+  function close() { shown = false; ticket++; el.classList.remove("on"); changed(); }
+  return { el, open, close, get isOpen() { return shown; } };
 }
 
-// ── View ──────────────────────────────────────────────────────────────────────
+// ── A vista ─────────────────────────────────────────────────────────────────
 
 export function buildPrompt(onHeightChange: () => void): ViewHost {
-  const chipRow = h("div", { class: "chip-row" });
-  const log = h("div", { class: "chat-log" });
-  const input = h("input", {
-    type: "text",
-    class: "chat-input",
-    placeholder: t(STRINGS.placeholderFirst),
-    spellcheck: "false",
-  }) as HTMLInputElement;
-  const send = h("button", { class: "send-btn", title: tl(STRINGS.send) }, svg(ICONS.arrowUp, 11));
-  const bar = h("div", { class: "chat-bar" }, input, send);
+  const files = h("div", { class: "chip-row" });
+  const saga = h("div", { class: "chat-log bf-saga" });
+  const field = h("input", { type: "text", class: "chat-input", placeholder: t(TEXT.first), spellcheck: "false" }) as HTMLInputElement;
+  const sendBtn = h("button", { class: "send-btn bf-saga-send", title: tl(TEXT.send) }, h("span", { class: "bf-saga-send-rune", text: "ᛏ" }));
+  const prow = h("div", { class: "chat-bar bf-saga-prow" }, field, sendBtn);
 
-  const modelDot = h("i", { class: "model-dot" });
-  const modelName = h("span", { class: "model-name" });
-  const modelBtn = h(
-    "button",
-    { class: "model-btn", title: tl(STRINGS.switchModel) },
-    modelDot,
-    modelName,
-    svg(ICONS.chevronUpDown, 9, { stroke: 2 }),
-  );
-  const modelRow = h("div", { class: "model-row" }, modelBtn);
+  const dot = h("i", { class: "model-dot" });
+  const name = h("span", { class: "model-name" });
+  const who = h("button", { class: "model-btn bf-saga-who", title: tl(TEXT.switchModel) }, dot, name, svg(ICONS.chevronUpDown, 9, { stroke: 2 }));
+  const head = h("div", { class: "model-row bf-saga-head" }, h("span", { class: "bf-saga-title", text: "Saga" }), who);
 
-  const body = h("div", { class: "chat-body" });
-  const picker = buildPicker(() => {
-    body.classList.toggle("picking", picker.isOpen);
-    drawModelButton();
-  });
-  body.append(chipRow, log, picker.el, modelRow, bar);
+  const body = h("div", { class: "chat-body bf-saga-body" });
+  const pick = selector(() => { body.classList.toggle("picking", pick.isOpen); drawWho(); });
+  body.append(head, files, saga, pick.el, prow);
+  const el = h("div", { class: "view" }, h("div", { class: "card chat-card bf-saga-card" }, body));
 
-  const el = h("div", { class: "view" }, h("div", { class: "card wash chat-card" }, body));
-  (el.querySelector(".card") as HTMLElement).style.setProperty("--wash", "rgba(99,102,241,0.5)");
+  let busy = false;
+  let drawn = -1;
+  let growing: HTMLElement | null = null;
 
-  let sending = false;
-  let renderedCount = -1;
-  // A local model answers token by token: where its text so far is shown.
-  let live: HTMLElement | null = null;
-
-  function drawModelButton() {
+  function drawWho() {
     const p = providerDef(State.settings.chatProvider);
-    modelDot.style.background = p.accent;
-    modelName.textContent = activeModel(State.settings) || t(STRINGS.noModel);
-    modelBtn.classList.toggle("open", picker.isOpen);
-    modelBtn.disabled = sending;
+    dot.style.background = p.accent;
+    name.textContent = activeModel(State.settings) || t(TEXT.noModel);
+    who.classList.toggle("open", pick.isOpen);
+    who.disabled = busy;
   }
 
-  modelBtn.addEventListener("click", () => {
-    if (sending) return;
-    if (picker.isOpen) picker.close();
-    else picker.open();
+  who.addEventListener("click", () => {
+    if (busy) return;
+    if (pick.isOpen) pick.close(); else pick.open();
   });
 
   void onEvent<string>("chat-delta", (text) => {
-    if (!sending || !text) return; // nothing visible yet: the dots stay
-    if (!live) {
-      live = h("div", { class: "reply" });
-      log.querySelector(".typing")?.parentElement?.remove();
-      log.append(h("div", { class: "chat-row" }, live));
+    if (!busy || !text) return;
+    if (!growing) {
+      growing = h("div", { class: "reply" });
+      saga.querySelector(".typing")?.parentElement?.remove();
+      saga.append(h("div", { class: "chat-row bf-saga-huginn" }, h("span", { class: "bf-saga-rune", text: "ᚺ" }), growing));
     }
-    renderMarkdown(live, text);
-    log.scrollTop = log.scrollHeight;
+    renderMarkdown(growing, text);
+    saga.scrollTop = saga.scrollHeight;
   });
 
-  async function submit() {
-    const query = input.value.trim();
-    if (!query || sending) return;
-    if (picker.isOpen) picker.close();
-    input.value = "";
-    sending = true;
-    drawModelButton();
+  async function ask() {
+    const q = field.value.trim();
+    if (!q || busy) return;
+    if (pick.isOpen) pick.close();
+    field.value = "";
+    busy = true;
+    drawWho();
     Sound.play("send");
-
-    State.chatHistory.push({ id: nextId++, role: "user", content: query });
+    State.chatHistory.push({ id: seq++, role: "user", content: q });
     State.stateOverride = "thinking";
     State.notify();
     onHeightChange();
-
-    const file = State.droppedFile;
-    const context: ChatContext | null =
-      State.chatHistory.length === 1 && file ? { kind: "file", name: file.name, path: file.path } : null;
-
+    const f = State.droppedFile;
+    const ctx: ChatContext | null = State.chatHistory.length === 1 && f ? { kind: "file", name: f.name, path: f.path } : null;
     try {
-      const reply = await Bridge.chatSend(query, context);
-      State.chatHistory.push({ id: nextId++, role: "assistant", content: reply.text });
+      const r = await Bridge.chatSend(q, ctx);
+      State.chatHistory.push({ id: seq++, role: "assistant", content: r.text });
       State.stateOverride = null;
       Sound.play("finish");
     } catch (err) {
@@ -293,60 +212,47 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
       State.view = "note";
       Sound.play("error");
     } finally {
-      sending = false;
-      live = null;
-      renderedCount = -1; // the finished answer replaces the streamed one
-      drawModelButton();
+      busy = false;
+      growing = null;
+      drawn = -1;
+      drawWho();
       State.notify();
       onHeightChange();
-      input.focus();
+      field.focus();
     }
   }
 
-  send.addEventListener("click", () => void submit());
-  input.addEventListener("keydown", (e) => {
-    const key = (e as KeyboardEvent).key;
-    if (key === "Enter") {
-      e.preventDefault();
-      void submit();
-    } else if (key === "Escape" && picker.isOpen) {
-      e.preventDefault();
-      picker.close();
-    }
-    e.stopPropagation(); // Escape closes the island, not the chat
+  sendBtn.addEventListener("click", () => void ask());
+  field.addEventListener("keydown", (e) => {
+    const k = (e as KeyboardEvent).key;
+    if (k === "Enter") { e.preventDefault(); void ask(); }
+    else if (k === "Escape" && pick.isOpen) { e.preventDefault(); pick.close(); }
+    e.stopPropagation();
   });
 
   return {
     el,
     sync() {
-      const file = State.droppedFile;
-      const wantChip = file?.name ?? "";
-      if (chipRow.dataset.label !== wantChip) {
-        chipRow.dataset.label = wantChip;
-        clear(chipRow);
-        if (wantChip) chipRow.append(contextChip(wantChip));
+      const label = State.droppedFile?.name ?? "";
+      if (files.dataset.label !== label) {
+        files.dataset.label = label;
+        clear(files);
+        if (label) files.append(fileTag(label));
       }
-
-      const thinking = State.stateOverride === "thinking";
-      const count = State.chatHistory.length + (thinking ? 0.5 : 0);
-      if (count !== renderedCount && !live) {
-        renderedCount = count;
-        clear(log);
-        for (const m of State.chatHistory) log.append(bubble(m));
-        if (thinking) log.append(typingDots());
-        log.scrollTop = log.scrollHeight;
+      const wait = State.stateOverride === "thinking";
+      const n = State.chatHistory.length + (wait ? 0.5 : 0);
+      if (n !== drawn && !growing) {
+        drawn = n;
+        clear(saga);
+        for (const m of State.chatHistory) saga.append(line(m));
+        if (wait) saga.append(thinking());
+        saga.scrollTop = saga.scrollHeight;
       }
-
-      // Leaving the chat folds the picker away.
-      if (State.view !== "prompt" && picker.isOpen) picker.close();
-      drawModelButton();
-
-      input.placeholder = t(State.chatHistory.length === 0 ? STRINGS.placeholderFirst : STRINGS.placeholderNext);
-      input.disabled = sending;
+      if (State.view !== "prompt" && pick.isOpen) pick.close();
+      drawWho();
+      field.placeholder = t(State.chatHistory.length === 0 ? TEXT.first : TEXT.next);
+      field.disabled = busy;
     },
-    focus() {
-      input.focus();
-      input.select();
-    },
+    focus() { field.focus(); field.select(); },
   };
 }

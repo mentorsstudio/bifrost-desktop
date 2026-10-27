@@ -174,8 +174,8 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
       side.append(b);
     }
   };
-  group("Flow", FLOW_PAGES);
-  group(t("Notch"), NOTCH_PAGES);
+  group("Voz", FLOW_PAGES);
+  group("Ilha", NOTCH_PAGES);
   side.append(h("div", { class: "spacer" }), statusLine, h("div", { class: "hub-version", text: `Bifrost ${opts.version}` }));
 
   clear(root);

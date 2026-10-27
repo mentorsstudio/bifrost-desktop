@@ -521,17 +521,20 @@ Credenciais no cofre do sistema (`secrets.rs`): `mcp-token:<nome>` (Hermes VPS e
 * Login OAuth dos serviços na nuvem depende do `mcp-remote` (npx). O GitHub remoto pode pedir OAuth que nem todo cliente aceita; nesse caso use o `gh` (já instalado) ou um token como credencial do servidor.
 * Verificação = compilação + suites automatizadas + capturas headless; não houve teste interativo no Windows.
 
-## 10. Fase 2 — paridade (pass/fail) e o que foi reescrito
+## 10. Paridade (fase 3) — pass/fail e o que é nosso
 
-| Item | Situação | Resultado |
+| Item | Situação | Paridade |
 |---|---|---|
-| Motor do mascote (canvas) | **Reescrito**: `src/bifrost/raven.ts` (RavenEngine) substitui `src/mochi/engine.ts` (apagado); mesma API pública | PASS (475/475 testes TS) |
-| Pasta `src/mochi` → `src/huginn` | Renomeada; imports e `include_str!` do Rust atualizados | PASS (562 testes Rust) |
-| Corvos SVG Huginn/Muninn | **Redesenhados**: camadas limpas (asa de trás · corpo · asa da frente · cabeça por último), contorno único, efeitos fora do rosto, "partindo" visível em laço | PASS (tiras 0/25/50/75% e 32/64/128 px) |
-| Menu da bandeja | **Reescrito**: janela webview nórdica `traymenu.html` + `tray_menu_items`/`tray_menu_activate`; menu nativo só no Linux (AppIndicator não entrega cliques) | PASS (compila; ações = menu antigo) — validar no Windows |
-| Huginn de mesa | Usa o RavenEngine novo; guarda-roupa e clique direito herdados (lógica) | PASS |
-| Ilha / chat / hub / pílula / boas-vindas | **Pele nórdica nova** (`src/bifrost/skin.css`); estrutura, máquina de estados e layout **herdados** | PARCIAL — não reescrito do zero |
-| Roupas (`huginn/outfits.ts`) | Arte herdada, mantida pela paridade do guarda-roupa | HERDADO |
-| Chat do celular com "IA do PC" | `cli` aceito em `chat_backend.rs` e oferecido sem chave em `phone-chat.ts` | PASS (testes) |
-| Nomes de protocolo (`coucou-relay/v1`, `mochiOutfit`, janela `mochi`) | Mantidos | PASS |
-| Menu nativo do WebView2 | Desligado em todas as janelas, inclusive `traymenu` | PASS |
+| Mascote em canvas (ilha, pílula, hub, Huginn de mesa, minibots, ícones do guarda-roupa) | **Novo**: `RavenEngine` desenha o mesmo corvo dos SVGs (asa de trás · cauda · corpo · runa · asa da frente · cabeça); o blob redondo não existe mais em nenhum lugar | PASS |
+| Huginn/Muninn SVG | **Novo**, camadas sem colisão, tiras 0/25/50/75% e 32/64/128 px conferidas | PASS |
+| Adornos | **Arte nova**: elmo com asas, manto de pele, amuleto rúnico, coroa de ouro, auréola de aurora, lanterna (`src/bifrost/outfits.ts`); `src/huginn/outfits.ts` apagado; ids guardados mantidos | PASS |
+| Chat da ilha ("Saga") | **Reescrito** (`src/views/chat.ts`, layout `saga.css`): cabeçalho com a IA, falas entalhadas, proa com runa de enviar | PASS (testes do chat) |
+| Faixa das páginas do hub | **Reescrita** (`hero()`): Yggdrasil, runas, galho com Huginn e Muninn em SVG | PASS |
+| Menu da bandeja | **Novo**, webview nórdica | PASS (validar no Windows) |
+| Ícone do app / bandeja | **Novo**: Huginn sobre fiorde e ponte | PASS |
+| Pílula | Corvo novo + pele nórdica; lógica (fases, bandas, voz) herdada | PASS de paridade; lógica herdada |
+| Ilha: casca, máquina de estados (`island/fsm.ts`, `island.ts`) e demais vistas | Pele nórdica; **código herdado** (port TS) | PASS de paridade; **não reescrito** |
+| Boas-vindas / novidades (`huginn/greeting.ts`, `views/whatsnew.ts`) | Corvo novo no lugar do blob; código herdado | PASS de paridade; **não reescrito** |
+| Chat do celular com "IA do PC" | `cli` aceito | PASS |
+| Menu nativo do WebView2 | Bloqueado em todas as janelas | PASS |
+| Nomes de protocolo (`coucou-relay/v1`, `mochiOutfit`, janela `mochi`) | Mantidos de propósito | HERDADO (protocolo) |

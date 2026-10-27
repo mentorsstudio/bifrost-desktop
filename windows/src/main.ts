@@ -4,6 +4,7 @@ import "./style.css";
 import "./theme/bifrost.css";
 import "./bifrost/nordic.css";
 import "./bifrost/skin.css";
+import "./bifrost/saga.css";
 import "./bifrost/contextmenu";
 import { Bridge, IS_TAURI, onEvent } from "./core/bridge";
 import { Sound } from "./core/sound";

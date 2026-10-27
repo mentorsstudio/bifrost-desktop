@@ -9,6 +9,7 @@
 // scrolled out of sight.
 
 import { BotEngine, hexToRGB } from "../bifrost/raven";
+import { Mascot } from "../bifrost/mascots";
 import { onScreen, shouldAnimate } from "./frames";
 import type { BotEmoteName, BotStateName } from "../core/layout";
 import type { Outfit } from "../huginn/wardrobe";
@@ -424,21 +425,36 @@ export const THEMES: Record<string, Theme> = {
   shortcuts: { color: "#6366F1", cast: [m("#6366F1", 56, 0.2, { outfit: "runeBand" }), m("#F5F6F8", 46, 0.8)] },
 };
 
-/** The band itself: title, line, actions, and the Huginns. */
+/** Yggdrasil entalhada: tronco, galhos e raízes, em traço de ouro. */
+const YGGDRASIL = `<svg class="bf-hero-tree" viewBox="0 0 220 160" aria-hidden="true">
+  <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+    <path d="M110 150 V70"/><path d="M110 96 C90 84 70 80 46 62"/><path d="M110 88 C132 76 152 72 178 52"/>
+    <path d="M110 74 C100 56 96 40 98 20"/><path d="M110 72 C122 52 128 38 132 16"/>
+    <path d="M70 79 C60 66 58 54 60 40"/><path d="M152 72 C164 62 170 50 172 36"/>
+    <path d="M110 150 C96 152 84 156 64 158"/><path d="M110 150 C124 152 138 156 158 158"/><path d="M110 150 C108 154 104 158 98 160"/>
+  </g>
+  <circle cx="110" cy="40" r="44" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2 6" opacity=".6"/>
+</svg>`;
+
+/** A faixa de cada página: Yggdrasil ao fundo, runa e título, e o galho onde
+ *  Huginn e Muninn pousam (SVG, com os estados do motor de movimento). */
 export function hero(page: string, title: string, subtitle: string | null, actions: HTMLElement[] = [], compact = false): HTMLElement {
   const theme = THEMES[page] ?? THEMES.general;
   const el = document.createElement("div");
-  el.className = compact ? "hub-hero compact" : "hub-hero";
+  el.className = compact ? "hub-hero bf-hero compact" : "hub-hero bf-hero";
+  el.style.setProperty("--hero-accent", theme.color);
   el.style.setProperty("--hero-line", rgba(theme.color, 0.16));
-  const back = document.createElement("canvas");
-  back.className = "backdrop";
-  const mochis = document.createElement("canvas");
-  mochis.className = "troupe";
+  const sky = document.createElement("div");
+  sky.className = "bf-hero-sky";
+  sky.innerHTML = YGGDRASIL;
   const copy = document.createElement("div");
-  copy.className = "copy";
+  copy.className = "copy bf-hero-copy";
+  const kicker = document.createElement("div");
+  kicker.className = "bf-hero-kicker";
+  kicker.textContent = "ᚺ ᚢ ᚷ ᛁ ᚾ ᚾ  ·  ᛗ ᚢ ᚾ ᛁ ᚾ ᚾ";
   const h1 = document.createElement("h1");
   h1.textContent = title;
-  copy.append(h1);
+  copy.append(kicker, h1);
   if (subtitle) {
     const p = document.createElement("p");
     p.textContent = subtitle;
@@ -450,9 +466,22 @@ export function hero(page: string, title: string, subtitle: string | null, actio
     row.append(...actions);
     copy.append(row);
   }
-  el.append(back, mochis, copy);
-  backdrop(back, theme.color, el);
-  troupe(mochis, theme.cast, compact ? 280 : 340);
+  const perch = document.createElement("div");
+  perch.className = "bf-hero-perch";
+  const branch = document.createElement("div");
+  branch.className = "bf-hero-branch";
+  const huginn = new Mascot("huginn");
+  const muninn = new Mascot("muninn");
+  huginn.el.classList.add("bf-hero-h");
+  muninn.el.classList.add("bf-hero-m");
+  perch.append(huginn.el, muninn.el, branch);
+  // Chegam voando quando a página abre e reagem ao cursor.
+  huginn.set("flyIn");
+  setTimeout(() => muninn.set("flyIn"), 160);
+  setTimeout(() => { huginn.set(page === "chat" || page === "agents" ? "thinking" : "idle"); muninn.set("idle"); }, 900);
+  el.addEventListener("pointerenter", () => { if (!compact) huginn.set("listening"); });
+  el.addEventListener("pointerleave", () => huginn.set("idle"));
+  el.append(sky, copy, perch);
   return el;
 }
 

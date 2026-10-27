@@ -4,6 +4,7 @@ import "../src/style.css";
 import "../src/theme/bifrost.css";
 import "../src/bifrost/nordic.css";
 import "../src/bifrost/skin.css";
+import "../src/bifrost/saga.css";
 import "../src/traymenu/traymenu.css";
 import { renderTray } from "../src/traymenu/main";
 import { showMenu } from "../src/bifrost/contextmenu";
@@ -112,6 +113,11 @@ if (shot === "tray") {
     hook({ hook_event_name: "PermissionRequest", session_id: "s1", request_id: "r1", tool_name: "Bash", tool_input: { command: "cargo test --workspace" } });
   }
   if (shot === "chat") {
+    State.settings = { ...State.settings, chatProvider: "cli", chatModels: { cli: "claude" } } as typeof State.settings;
+    State.chatHistory = [
+      { id: 1, role: "user", content: "Resuma o README do projeto" },
+      { id: 2, role: "assistant", content: "O **Bifrost** é uma ilha no topo da tela que acompanha seus agentes de IA, com ditado, notas e chat pelo MCP." },
+    ];
     island.expand("prompt");
   }
 }

@@ -4,7 +4,7 @@
 
 import { h } from "./dom";
 import { State } from "../core/state";
-import { drawWardrobeIcon } from "../huginn/outfits";
+import { drawWardrobeIcon } from "../bifrost/outfits";
 import {
   OUTFIT_KEYS, OUTFIT_SELECTIONS, WARDROBE_STRINGS, parseOutfit, resolveOutfit, seasonalOutfit,
   wardrobeHeader, type Outfit, type OutfitSelection,

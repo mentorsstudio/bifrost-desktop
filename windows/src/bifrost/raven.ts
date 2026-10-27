@@ -11,7 +11,7 @@
 import { Curves, type Curve } from "./motion";
 import { Sound } from "../core/sound";
 import type { BotEmoteName, BotStateName } from "../core/layout";
-import { drawOutfitBehind, drawOutfitFront, makeHead } from "../huginn/outfits";
+import { drawOutfitBehind, drawOutfitFront, setRavenPainter, type RavenHead } from "./outfits";
 import type { Outfit } from "../huginn/wardrobe";
 
 export type EyeShape =
@@ -581,33 +581,121 @@ export class RavenEngine {
     if (this.tilt) x.rotate(this.tilt);
     x.scale(this.sx, this.sy);
 
-    if (!this.isMini && m < 0.6) this.wings(x, R, rx, ry, 1 - m / 0.6, "back");
-    const dressed = !this.isMini && this.outfit !== "none";
-    const head = dressed ? makeHead(R, this.yaw, this.pitch, this.physDx, this.physDy) : null;
-    const st = { presence: this.outfitPresence, morph: m };
-    if (head) drawOutfitBehind(x, this.outfit, head, st);
-
-    const body = this.silhouette(rx, ry, R);
-    this.plumage(x, body, R, rx, ry);
-    if (!this.isMini && m < 0.5) this.knot(x, body, R, rx, ry);
-    const flush = Math.max(this.blush, this.tint * 0.5) * (1 - m);
-    if (flush > 0.01) {
-      x.save(); x.clip(body);
-      x.fillStyle = `rgba(180,124,255,${0.42 * flush})`;
-      const off = Math.sin(this.yaw) * rx * 0.8;
-      for (const s of [-1, 1]) { x.beginPath(); x.ellipse(s * rx * 0.55 + off, ry * 0.2, R * 0.17, R * 0.1, 0, 0, Math.PI * 2); x.fill(); }
+    // O corvo (mesmo desenho dos SVGs de Huginn/Muninn) some enquanto a caixa
+    // de mensagem aparece: os dois nunca se cruzam por mais que um instante.
+    const ravenA = Math.max(0, 1 - m * 1.8);
+    if (ravenA > 0.004) this.figure(x, R, ravenA);
+    if (m > 0.01) {
+      x.save();
+      x.globalAlpha *= Math.min(1, m * 1.6);
+      const box = this.silhouette(rx, ry, R);
+      this.plumage(x, box, R, rx, ry);
+      if (m > 0.35) this.eyes(x, box, R, rx, ry);
+      this.slot(x, R, m);
       x.restore();
     }
-    if (!this.isMini && m < 0.6) this.crest(x, R, ry, (1 - m / 0.6) * (this.outfit === "none" ? 1 : 0));
-    this.eyes(x, body, R, rx, ry);
-    if (!this.isMini && m < 0.5) this.beak(x, R, rx, ry, 1 - m * 2);
-    if (m > 0.05) this.slot(x, R, m);
-    if (!this.isMini && m < 0.6) this.wings(x, R, rx, ry, 1 - m / 0.6, "front");
-    if (head) drawOutfitFront(x, this.outfit, head, st);
     x.restore();
     x.restore();
     if (this.badge && this.badgeS > 0.01 && m < 0.25) this.rune(x, this.badge, R, cx, cy);
     this.drawSparks(x, R, cx, cy);
+  }
+
+  /** Huginn de corpo inteiro, nas coordenadas do SVG (viewBox 120): asa de trás ·
+   *  cauda · corpo · runa · asa da frente · cabeça. Os adornos usam a cabeça. */
+  private figure(x: CanvasRenderingContext2D, R: number, a: number) {
+    const k = (R * 2.1) / 100;
+    const t = clock();
+    const flap = Math.sin(t * 26) * this.wingBeat * 0.5;
+    const wave = this.hands * (0.7 + Math.sin(t * 14) * 0.3);
+    const gx = Math.sin(this.yaw) * 4;
+    const gy = Math.sin(this.pitch) * 3;
+    const lit = this.bodyColor ? mix(this.bodyColor, FEATHER_LIT, 0.45) : FEATHER_LIT;
+    const dark = this.bodyColor ? mix(this.bodyColor, FEATHER_DARK, 0.7) : FEATHER_DARK;
+    const tint = this.tint * 0.55;
+    const feather = (c0: number, c1: number) => {
+      const g = x.createLinearGradient(0, c0, 0, c1);
+      g.addColorStop(0, css(tint > 0.01 ? mix(lit, this.col, tint * 0.6) : lit));
+      g.addColorStop(1, css(tint > 0.01 ? mix(dark, this.col, tint * 0.35) : dark));
+      return g;
+    };
+    const ink = "#070b16";
+    x.save();
+    x.globalAlpha *= a;
+    x.scale(k, k);
+    x.translate(-60, -62);
+    x.lineJoin = "round";
+    x.lineWidth = 2;
+    x.strokeStyle = ink;
+    const head: RavenHead = { x: 60 + gx * 0.5, y: 40 + gy * 0.5 + this.physDy * 4, r: 17, chestY: 82, bodyR: 22 };
+    const dressed = !this.isMini && this.outfit !== "none";
+    const st = { presence: this.outfitPresence, morph: 0 };
+    if (dressed) drawOutfitBehind(x, this.outfit, head, st);
+    const wing = (side: -1 | 1) => {
+      x.save();
+      x.translate(side < 0 ? 42 : 78, 64);
+      x.rotate(side * (-flap) - (side > 0 ? wave : 0));
+      x.translate(side < 0 ? -42 : -78, -64);
+      const p = new Path2D(side < 0 ? "M42 62 C30 62 20 70 16 84 C26 82 34 80 42 76 Z" : "M78 62 C90 62 100 70 104 84 C94 82 86 80 78 76 Z");
+      x.fillStyle = feather(60, 86);
+      x.fill(p); x.stroke(p);
+      x.restore();
+    };
+    if (!this.isMini) wing(-1);
+    const tail = new Path2D("M50 94 L44 108 L56 102 L60 110 L64 102 L76 108 L70 94 Z");
+    x.fillStyle = css(dark); x.fill(tail); x.stroke(tail);
+    const body = new Path2D(); body.ellipse(60, 76, 22, 22, 0, 0, Math.PI * 2);
+    x.fillStyle = feather(54, 98); x.fill(body); x.stroke(body);
+    if (!this.isMini && !(dressed && this.outfit === "runeBand")) {
+      x.save();
+      x.fillStyle = GOLD_A; x.globalAlpha *= 0.9;
+      x.font = '700 12px "Segoe UI Historic","Segoe UI Symbol",serif';
+      x.textAlign = "center"; x.textBaseline = "middle";
+      x.fillText("ᚨ", 60, 82);
+      x.restore();
+    }
+    if (!this.isMini) wing(1);
+    // Cabeça: crista, círculo, olhos, bico — sempre por cima do corpo e das asas.
+    x.save();
+    x.translate(head.x - 60, head.y - 40);
+    if (!this.isMini && this.outfit === "none") {
+      const sw = this.physDx * 0.3 + Math.sin(t * 1.7) * 0.05;
+      x.save(); x.translate(60, 26); x.rotate(sw); x.translate(-60, -26);
+      const crest = new Path2D("M54 26 L50 14 L58 22 L61 10 L65 22 L70 15 L67 27 Z");
+      x.fillStyle = css(lit); x.fill(crest); x.stroke(crest);
+      x.restore();
+    }
+    const hp = new Path2D(); hp.arc(60, 40, 17, 0, Math.PI * 2);
+    x.fillStyle = feather(23, 57); x.fill(hp); x.stroke(hp);
+    const flush = Math.max(this.blush, this.tint * 0.4);
+    if (flush > 0.02) {
+      x.fillStyle = `rgba(180,124,255,${0.4 * flush})`;
+      for (const ex of [49, 71]) { x.beginPath(); x.ellipse(ex, 45, 3.6, 2, 0, 0, Math.PI * 2); x.fill(); }
+    }
+    let shape: EyeShape = this.eyeOverride ?? this.cfg.eye;
+    if (this.isDancing && this.dancingLevel > 0.15 && (this.state === "idle" || this.state === "finished")) shape = "happy";
+    x.save();
+    x.clip(hp);
+    x.fillStyle = x.strokeStyle = EYE;
+    x.shadowColor = this.tint > 0.2 ? css(this.col, 0.9) : EYE_HALO;
+    x.shadowBlur = Math.max(2, R * 0.12);
+    const big = this.isMini ? 1.5 : 1;
+    for (const side of [-1, 1]) {
+      x.save();
+      x.translate(60 + side * 7 + gx, 37 + gy);
+      eyeShape(x, shape, 7 * this.es * big, 8.4 * this.es * big, side, this.open);
+      x.restore();
+    }
+    x.restore();
+    if (!this.isMini) {
+      const beak = new Path2D("M56 44 L60 53 L64 44 Q60 42.5 56 44 Z");
+      x.save(); x.translate(gx * 0.6, gy * 0.6);
+      const g = x.createLinearGradient(56, 43, 64, 53); g.addColorStop(0, GOLD_A); g.addColorStop(1, GOLD_B);
+      x.fillStyle = g; x.lineWidth = 1.2; x.fill(beak); x.stroke(beak);
+      x.restore();
+    }
+    x.restore();
+    if (dressed) drawOutfitFront(x, this.outfit, head, st);
+    x.restore();
   }
 
   /** Corpo de corvo (cabeça mais estreita) que vira a caixa de mensagem no morph. */
@@ -664,98 +752,6 @@ export class RavenEngine {
     sh.addColorStop(1, "rgba(0,0,0,0.25)");
     x.fillStyle = sh;
     x.fill(body);
-  }
-
-  /** Peito: nó nórdico entalhado em ouro. */
-  private knot(x: CanvasRenderingContext2D, body: Path2D, R: number, rx: number, _ry: number) {
-    x.save();
-    x.clip(body);
-    x.globalAlpha *= Math.max(0, 1 - this.morph * 2);
-    const ox = Math.sin(this.yaw) * rx * 0.5;
-    const g = x.createLinearGradient(-R * 0.3, 0, R * 0.3, 0);
-    g.addColorStop(0, GOLD_A);
-    g.addColorStop(1, GOLD_B);
-    x.strokeStyle = g;
-    x.lineWidth = Math.max(0.7, R * 0.035);
-    x.lineCap = "round";
-    x.globalAlpha *= 0.35;
-    // Sem traços no peito: nada cruza o bico nem os olhos (só o contorno dourado).
-    void ox;
-    x.restore();
-    x.save();
-    x.strokeStyle = "rgba(226,181,90,0.22)";
-    x.lineWidth = Math.max(0.8, R * 0.03);
-    x.stroke(body);
-    x.restore();
-  }
-
-  private crest(x: CanvasRenderingContext2D, R: number, ry: number, a: number) {
-    const swing = this.physDx * 0.35 + Math.sin(clock() * 1.7) * 0.04;
-    x.save();
-    x.globalAlpha *= a;
-    for (const [dx, len, rot] of [[-0.12, 0.3, -0.5], [0.02, 0.42, -0.1], [0.15, 0.28, 0.32]] as const) {
-      x.save();
-      x.translate(dx * R + Math.sin(this.yaw) * R * 0.4, -ry * 0.92);
-      x.rotate(rot + swing);
-      x.beginPath();
-      x.moveTo(-R * 0.06, 0);
-      x.lineTo(0, -len * R);
-      x.lineTo(R * 0.06, 0);
-      x.closePath();
-      x.fillStyle = css(FEATHER_LIT);
-      x.fill();
-      x.restore();
-    }
-    x.restore();
-  }
-
-  /** Asas: batem quando ele se assusta, comemora ou é tocado; acenam no greet. */
-  private wings(x: CanvasRenderingContext2D, R: number, rx: number, ry: number, a: number, layer: "back" | "front") {
-    const flap = Math.sin(clock() * 26) * this.wingBeat * 0.55;
-    const wave = this.hands * (0.6 + Math.sin(clock() * 14) * 0.25);
-    x.save();
-    x.globalAlpha *= a * (layer === "back" ? 0.9 : 1);
-    for (const side of layer === "back" ? [-1] : [1]) {
-      x.save();
-      x.translate(side * rx * 0.82, ry * 0.05);
-      x.rotate(side * (0.25 + flap) - (side > 0 ? wave : 0));
-      const g = x.createLinearGradient(0, 0, side * R * 0.6, -R * 0.4);
-      g.addColorStop(0, css(FEATHER_LIT));
-      g.addColorStop(1, css(FEATHER_DARK));
-      x.beginPath();
-      x.moveTo(0, -R * 0.25);
-      x.quadraticCurveTo(side * R * 0.55, -R * 0.4, side * R * 0.62, R * 0.1);
-      x.lineTo(side * R * 0.42, R * 0.05);
-      x.lineTo(side * R * 0.48, R * 0.28);
-      x.lineTo(side * R * 0.26, R * 0.2);
-      x.quadraticCurveTo(side * R * 0.08, R * 0.3, 0, R * 0.25);
-      x.closePath();
-      x.fillStyle = g;
-      x.fill();
-      x.restore();
-    }
-    x.restore();
-  }
-
-  private beak(x: CanvasRenderingContext2D, R: number, rx: number, ry: number, a: number) {
-    if (Math.cos(this.yaw) <= 0.1) return;
-    const bx = Math.sin(this.yaw) * rx * 0.9;
-    const by = -Math.sin(-0.12 + this.pitch) * ry + R * 0.18;
-    x.save();
-    x.globalAlpha *= a;
-    x.translate(bx, by);
-    x.scale(Math.max(0.3, Math.cos(this.yaw)), 1);
-    const g = x.createLinearGradient(0, -R * 0.08, 0, R * 0.2);
-    g.addColorStop(0, GOLD_A);
-    g.addColorStop(1, GOLD_B);
-    x.beginPath();
-    x.moveTo(-R * 0.11, 0);
-    x.quadraticCurveTo(0, -R * 0.06, R * 0.11, 0);
-    x.lineTo(0, R * 0.2);
-    x.closePath();
-    x.fillStyle = g;
-    x.fill();
-    x.restore();
   }
 
   /** A caixa de mensagem: uma fenda que abre (engolir arquivos) e mastiga. */
@@ -950,3 +946,15 @@ function boxPoint(c: number, s: number, W: number, H: number, r: number): { x: n
   }
   return { x: px, y: py };
 }
+
+// Os ícones do guarda-roupa desenham o mesmo corvo do motor, já vestido.
+setRavenPainter((c, size, outfit) => {
+  const e = new RavenEngine();
+  e.outfit = outfit;
+  e.outfitPresence = 1;
+  e.update(0);
+  c.save();
+  c.translate(0, size * 0.06);
+  e.draw(c, size, size);
+  c.restore();
+});
