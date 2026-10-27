@@ -85,10 +85,12 @@ if ($proc) {
 # 4. Pipe dos hooks
 Secao "Pipe dos hooks"
 $pipes = @()
-try { $pipes = [System.IO.Directory]::GetFiles("\\.\pipe\") | ForEach-Object { Split-Path $_ -Leaf } } catch { Aviso "Não deu para listar os pipes: $($_.Exception.Message)" }
-$esperado = if ($diag) { Split-Path $diag.pipe -Leaf } else { "" }
-$achado = $pipes | Where-Object { $_ -like "bifrost-desktop-*" } | Select-Object -First 1
-if ($esperado -and ($pipes -contains $esperado)) { Ok "Pipe aberto: \\.\pipe\$esperado" }
+# Split-Path não entende caminhos \\.\pipe\…: o nome é o que vem depois da última barra.
+try { $pipes = @([System.IO.Directory]::GetFiles("\\.\pipe\") | ForEach-Object { ($_ -split '\\')[-1] }) } catch { Aviso "Não deu para listar os pipes: $($_.Exception.Message)" }
+$esperado = if ($diag) { ($diag.pipe -split '\\')[-1] } else { "" }
+$achado = $pipes | Where-Object { $_.StartsWith("bifrost-desktop-", [System.StringComparison]::OrdinalIgnoreCase) } | Select-Object -First 1
+if ($esperado -and ($pipes | Where-Object { $_ -ieq $esperado })) { Ok "Pipe aberto: \\.\pipe\$esperado" }
+elseif ($esperado -and [System.IO.File]::Exists("\\.\pipe\$esperado")) { Ok "Pipe aberto: \\.\pipe\$esperado" }
 elseif ($achado) { Aviso "Pipe aberto ($achado), mas diferente do esperado ($esperado)" }
 else { Falha "Nenhum pipe bifrost-desktop-* aberto: os hooks do Claude Code não chegam à ilha" }
 
