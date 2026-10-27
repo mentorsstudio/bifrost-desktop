@@ -60,9 +60,9 @@ function detectedRow(d: DetectedAgent, a: ViewActions, now: number, hooked: Set<
   const since = clock.start(d.id, now);
   const icon = h("span", { class: "ag-icon", text: monogram(d.name) });
   icon.style.setProperty("--ag", AGENT_COLOR[d.agent] ?? "#9AA3B8");
-  const status = h("span", { class: "ag-status s-found", text: t(DETECTED_LABEL[d.kind]) });
+  const status = h("span", { class: "ag-status s-found", text: t(d.kind === "ollama" && !d.folder ? DETECTED_LABEL.cli : DETECTED_LABEL[d.kind]) });
   status.style.setProperty("--st", AGENT_COLOR[d.agent] ?? "#9AA3B8");
-  const where = d.kind === "ollama" ? d.folder : [d.folder ? `📁 ${d.folder}` : null, d.host].filter(Boolean).join(" · ");
+  const where = d.kind === "ollama" ? (d.folder ?? t("No model loaded")) : [d.folder ? `📁 ${d.folder}` : null, d.host].filter(Boolean).join(" · ");
   const acts: HTMLElement[] = [];
   let hookBtn: HTMLElement | null = null;
   if (d.window != null) acts.push(iconButton(t("Go to the window"), ICONS.arrowUpRight, () => void Bridge.agentsFocus(d.window!)));
