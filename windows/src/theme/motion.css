@@ -102,3 +102,8 @@ input, textarea, select {
   .bf-skeleton::after { animation: none !important; }
 }
 .hub-stat b { display: inline-block; contain: layout paint; min-width: 2ch; }
+
+/* A página montada de antemão: com layout e pintura prontos, invisível e inerte. */
+.hub-prefetch { position: absolute; left: 0; right: 0; top: 0; height: 0; overflow: hidden; visibility: hidden; pointer-events: none; z-index: -1; }
+.hub-scroll { position: relative; }
+.hub-prefetch .hub-page *, .hub-prefetch .hub-page { animation-play-state: paused !important; }

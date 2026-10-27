@@ -23,7 +23,7 @@ import { h, clear } from "../views/dom";
 import { t } from "../i18n/i18n";
 import { onEvent } from "../core/bridge";
 import { FlowBridge, type FlowPrefs, type FlowStatus, type ModelsStatus } from "../core/flow";
-import { hero, liveRaven, setWindowShown } from "./hero";
+import { hero, liveRaven, setWindowShown, windowShown } from "./hero";
 import { icon, keyLabel } from "./ui";
 
 export type PageId =
@@ -81,7 +81,12 @@ export interface HubOptions {
   version: string;
   flowPages: Partial<Record<PageId, FlowPageRenderer>>;
   /** Draws the island's settings for one of the Notch pages into `container`. */
-  renderNotch(page: PageId, container: HTMLElement): Promise<void>;
+  /**
+   * Draws the island's settings for one of the Notch pages into `container`.
+   * `prefetch`: built ahead, not shown yet — the active page's state stays as is.
+   * Returns what makes it the active page.
+   */
+  renderNotch(page: PageId, container: HTMLElement, prefetch?: boolean): Promise<(() => void) | void>;
 }
 
 const DEFAULT_STATUS: FlowStatus = {
@@ -153,26 +158,86 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
     statusLine.append(h("i", { class: "dot", style: `background:${color}` }), h("span", { text }));
   }
 
-  async function show(page: PageId) {
-    const def = ALL.find((p) => p.id === page) ?? FLOW_PAGES[0];
-    ctx.onLeave?.();
-    ctx.onLeave = undefined;
-    current = def.id;
-    for (const [id, el] of items) el.classList.toggle("on", id === current);
-    const token = ++rendering;
+  // ── Montagem separada da ativação ──
+  // Uma página é montada com um contexto só dela (o onLeave dela, não o da ativa).
+  // Montada de antemão (a próxima da lista, no ócio; no hover custava um quadro longo),
+  // ela já tem layout e pintura prontos num palco escondido; o clique só a ativa.
+  interface Built { id: PageId; el: HTMLElement; local: HubContext; activate?: () => void; at: number }
+  const prefetchHolder = h("div", { class: "hub-prefetch", "aria-hidden": "true" });
+  scroll.append(prefetchHolder);
+  let pre: Built | null = null;
+  let active: Built | null = null;
+  let epoch = 0;
+
+  async function build(def: PageDef, prefetch: boolean): Promise<Built> {
+    const local = Object.create(ctx) as HubContext;
+    local.onLeave = undefined;
     const page_ = h("div", { class: "hub-page" });
     page_.dataset.page = def.id;
     const renderer = opts.flowPages[def.id];
+    let activate: (() => void) | undefined;
+    if (prefetch) prefetchHolder.append(page_);
     if (renderer) {
-      await renderer(page_, ctx);
+      await renderer(page_, local);
     } else {
       page_.append(hero(def.id, def.title(), def.subtitle?.() ?? null));
-      const container = h("div", { id: "settings-root" });
+      const container = h("div", { id: prefetch ? "settings-root-next" : "settings-root" });
       page_.append(container);
-      await opts.renderNotch(def.id, container);
+      activate = (await opts.renderNotch(def.id, container, prefetch)) ?? undefined;
     }
-    if (token !== rendering) return;
-    await swapPage(page_, token);
+    return { id: def.id, el: page_, local, activate, at: Date.now() };
+  }
+
+  function drop(b: Built | null) {
+    if (!b) return;
+    b.local.onLeave?.();
+    b.el.remove();
+  }
+
+  async function prefetch(id: PageId) {
+    if (reducedMotion() || id === current || pre?.id === id || !windowShown()) return;
+    const def = ALL.find((p) => p.id === id);
+    if (!def) return;
+    const mine = epoch;
+    drop(pre);
+    pre = null;
+    const b = await build(def, true);
+    if (mine !== epoch || id === current) { drop(b); return; }
+    pre = b;
+  }
+
+  function idle(fn: () => void) {
+    const ric = (window as unknown as { requestIdleCallback?: (f: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+    if (ric) ric(fn, { timeout: 1500 }); else window.setTimeout(fn, 300);
+  }
+
+  async function show(page: PageId) {
+    const def = ALL.find((p) => p.id === page) ?? FLOW_PAGES[0];
+    active?.local.onLeave?.();
+    if (active) active.local.onLeave = undefined;
+    current = def.id;
+    for (const [id, el] of items) el.classList.toggle("on", id === current);
+    const token = ++rendering;
+    let next: Built;
+    if (pre && pre.id === def.id && Date.now() - pre.at < 20_000) {
+      next = pre;
+      pre = null;
+      if (next.el.querySelector("#settings-root-next")) next.el.querySelector("#settings-root-next")!.id = "settings-root";
+    } else {
+      drop(pre);
+      pre = null;
+      next = await build(def, false);
+    }
+    if (token !== rendering) { drop(next); return; }
+    next.activate?.();
+    active = next;
+    await swapPage(next.el, token);
+    // No ócio: a próxima página da lista fica pronta.
+    const i = ALL.findIndex((p) => p.id === current);
+    const after = ALL[i + 1]?.id;
+    // Depois da entrada e de uma pausa: montar no meio de uma animação custaria quadros.
+    const mine = rendering;
+    if (after) window.setTimeout(() => idle(() => { if (mine === rendering) void prefetch(after); }), 700);
   }
 
   /**
@@ -239,7 +304,7 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
     drawStatus();
   });
   return {
-    redraw: () => void show(current),
+    redraw: () => { epoch++; drop(pre); pre = null; void show(current); },
     current: () => current,
   };
 }

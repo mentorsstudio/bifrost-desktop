@@ -645,7 +645,7 @@ const INTEGRATIONS: IntegrationDef[] = [
 const MAX_ACTIVE = MAX_DECLARED;
 
 /** Everything that shows the declared pills, redrawn when any of them changes. */
-const declaredViews: (() => void)[] = [];
+let declaredViews: (() => void)[] = [];
 
 function declaredChanged() {
   for (const redraw of declaredViews) redraw();
@@ -1168,10 +1168,16 @@ async function main() {
   hub = await startHub(windowRoot, {
     version,
     flowPages: FLOW_PAGE_RENDERERS,
-    renderNotch: async (page, container) => {
+    // Cada página guarda o próprio estado (o que redesenhar, quem ouve atalhos);
+    // montar uma página de antemão (prefetch) não mexe no da página ativa.
+    renderNotch: async (page, container, prefetch) => {
+      const before = { notchPage, root, declaredViews, localRedraw, shortcutsListener };
       notchPage = page;
       root = container;
       await render();
+      const mine = { notchPage, root, declaredViews, localRedraw, shortcutsListener };
+      if (prefetch) ({ notchPage, root, declaredViews, localRedraw, shortcutsListener } = before);
+      return () => { ({ notchPage, root, declaredViews, localRedraw, shortcutsListener } = mine); };
     },
   });
   onLanguageChange(() => {
@@ -1217,7 +1223,7 @@ async function render() {
     }
   }
 
-  declaredViews.length = 0;
+  declaredViews = [];
   localRedraw = null;
   shortcutsListener = null;
   clear(root);

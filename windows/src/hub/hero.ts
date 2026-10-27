@@ -10,6 +10,10 @@ import type { Outfit } from "../huginn/wardrobe";
 import { Mascot, type MascotState } from "../bifrost/mascots";
 
 /** A janela do hub está à vista? Sem canvases, só pausa as animações CSS. */
+export function windowShown(): boolean {
+  return !document.documentElement.classList.contains("bf-hub-hidden");
+}
+
 export function setWindowShown(shown: boolean) {
   document.documentElement.classList.toggle("bf-hub-hidden", !shown);
 }
