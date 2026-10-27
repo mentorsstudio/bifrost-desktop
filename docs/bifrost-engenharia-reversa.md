@@ -619,3 +619,20 @@ Credenciais no cofre do sistema (`secrets.rs`): `mcp-token:<nome>` (Hermes VPS e
   - As abas da ilha viraram um seletor central, e as ações ganharam um grupo com divisória de ouro.
   - O estilo fica em `bifrost/realm.css`, e as capturas lado a lado em `bifrost-screens/v13-ui-*`.
 - **Diagnóstico**: o relatório aplica na memória a mesma junção de MCP que o app faz ao abrir. O teste de fumaça mostra os nomes juntados, a origem dos importados e falha se DaVinci, Blender ou Notion aparecerem em dobro.
+
+### 10.14 Fase 14 — comparação tela a tela com o Coucou e composições próprias
+
+Referência: clone limpo do Coucou (louis-cfm/coucou @ 47d1c2d) em `/workspace/coucou-original`, usando as capturas oficiais (`windows/screenshots/*`, `docs/media/*`). Lado a lado em `/workspace/bifrost-screens/v14-ui-*.png`.
+
+| Tela | Coucou | Bifrost v14 |
+|---|---|---|
+| Cartões da ilha (permissão, pergunta, erro, fim, confuso, nota) | mascote à esquerda, texto e botões à direita | Huginn pousa à **direita** atrás de um fio de ouro; texto lê da esquerda; ações numa régua sob o texto; dobrar (⌃) junto ao fio |
+| Visão geral / agentes | mascote+integração à esquerda, pílulas à direita | espelhada: painel "Agentes neste PC" à esquerda, cartão do Huginn à direita |
+| Duas sessões | um mascote só | **Muninn** pousa no canto do cartão quando há ≥2 sessões ativas (`body.bf-pair`) |
+| Pílula do ditado | cápsula redonda, mascote primeiro | placa de runa (cantos 11 px, filete de ouro), voz primeiro, corvo no fim |
+| Menu da bandeja | menu nativo do Windows | tabuleiro de runas 2 colunas, Huginn e Muninn no topo, "Sair" sozinho na base |
+| Menu do botão direito | menu nativo | menu próprio com runas (desde a fase 11) |
+| Saudação / onboarding | mascote parado no centro, campo de estrelas | coreografia própria "o voo de Huginn" (fase 11), mantida |
+| Hub / configurações / cabeçalho | barra lateral, formulário, abas à esquerda | barra superior, livro-razão em 2 colunas, seletor central (fase 13), reconferidos |
+
+Caminhada na área de trabalho: `logic::walk_ledge` — o passeio segue a borda da barra de tarefas (base da área útil) ou, se o corvo está no topo, a borda de baixo da ilha compacta (só ao longo dela). Teste `walk_follows_the_taskbar_or_the_island_edge`.

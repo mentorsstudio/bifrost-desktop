@@ -65,3 +65,30 @@ body.settings-window section:has(> .row) > .row + .hint { grid-column: 2; margin
 body.settings-window section:has(> .row) > .row:not(:has(+ .hint)) { grid-column: 1 / -1; }
 body.settings-window section > h2 { display: flex; align-items: center; gap: 8px; }
 body.settings-window section > h2::before { content: "ᛟ"; font-family: var(--bf-rune-font); color: var(--bf-gold-2, #f6d27a); font-size: 12px; }
+
+/* ── v14: cartões da ilha em composição própria ─────────────────────────
+   O Huginn pousa à DIREITA do cartão (o Coucou põe o mascote à esquerda).
+   O texto lê da esquerda, as ações formam uma régua sob ele, alinhadas ao poleiro. */
+.view.on > .card.wash {
+  background: radial-gradient(360px 140px at 100% 60%, var(--wash, rgba(94,242,201,.2)), transparent 70%),
+              linear-gradient(180deg, #111b36, #070b16) !important; }
+.view > .card.wash::before { content: ""; position: absolute; top: 14px; bottom: 14px; right: 104px; width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(226,181,90,.35), transparent); pointer-events: none; }
+.view > .card .stack > .actions { justify-content: flex-start; border-top: 1px solid rgba(226,181,90,.16); padding-top: 8px; }
+.view > .card > .fold { right: 112px; }
+.view > .card .stack .who-row { padding-left: 0; }
+/* Visão geral espelhada: painel de agentes à esquerda, cartão do Huginn à direita. */
+.overview { flex-direction: row-reverse; }
+.overview .who { padding: 0 108px 0 18px !important; }
+.overview .int-card { padding: 10px 108px 0 14px !important; }
+
+.bf-muninn-perch { position: absolute; right: 6px; bottom: 6px; width: 24px; height: 24px; z-index: 2; opacity: 0; transform: translateY(4px);
+  transition: opacity var(--bf-step) var(--bf-ease-raven), transform var(--bf-step) var(--bf-ease-raven); pointer-events: none; }
+.bf-muninn-perch .bf-mascot { width: 24px; height: 24px; }
+body.bf-pair .bf-muninn-perch { opacity: 1; transform: none; pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) { .bf-muninn-perch { transition: none; } }
+.overview .ticker { margin: 6px 108px 0 16px !important; }
+.overview .diff-card { padding: 4px 108px 4px 12px !important; }
+.overview .np-card, .overview .plan-head, .overview .plan-rows { padding-left: 14px !important; padding-right: 108px !important; }
+.overview .sc-ctx { padding-left: 16px !important; padding-right: 108px !important; text-align: left; }
+.overview .jump { left: auto !important; right: 112px !important; }

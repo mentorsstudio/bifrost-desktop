@@ -164,6 +164,11 @@ if (shot === "greeting") {
   if (shot === "approval") {
     hook({ hook_event_name: "PermissionRequest", session_id: "s1", request_id: "r1", tool_name: "Bash", tool_input: { command: "cargo test --workspace" } });
   }
+  if (shot === "approval-pair") {
+    hook({ hook_event_name: "SessionStart", session_id: "c1", coucou_agent: "codex", cwd: "C:\\Users\\paulo\\projetos\\site-loja" });
+    hook({ hook_event_name: "UserPromptSubmit", session_id: "c1", coucou_agent: "codex", prompt: "Corrija o checkout" });
+    hook({ hook_event_name: "PermissionRequest", session_id: "s1", request_id: "r1", tool_name: "Bash", tool_input: { command: "cargo test --workspace" } });
+  }
   if (shot === "chat") {
     State.settings = { ...State.settings, chatProvider: "cli", chatModels: { cli: "claude" } } as typeof State.settings;
     State.chatHistory = [

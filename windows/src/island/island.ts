@@ -678,6 +678,7 @@ export class Island {
     if (State.wardrobePreview && !(expanded && State.view === "wardrobe")) State.wardrobePreview = null;
 
     this.header.sync();
+    document.body.classList.toggle("bf-pair", State.tasks.filter((t) => t.source !== "n8n" && (t.sessionCwd || t.sessionId || t.state !== "idle")).length >= 2);
     for (const [name, view] of this.views) {
       const on = name === State.view;
       view.el.classList.toggle("on", on);

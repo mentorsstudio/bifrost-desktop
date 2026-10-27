@@ -4,6 +4,7 @@
 
 import { h, svg, clear, dot } from "./dom";
 import { ICONS } from "./icons";
+import { Mascot } from "../bifrost/mascots";
 import { State, type AgentTask } from "../core/state";
 import { washRGBA, type Wash } from "../core/layout";
 import { lastTextStep } from "../core/diff";
@@ -14,12 +15,16 @@ import {
   ClickGuard, QuestionFlow, approvalLine, errorTitleKey, errorWho, finishedTitle, finishedWhoKey, openLabelKey,
 } from "./alert-model";
 
-/** Recuo à esquerda: o lugar do Huginn no cartão. */
+/** Recuo à direita: o poleiro do Huginn no cartão. */
 const RAVEN_GUTTER = 116;
 
 export function alertCard(wash: Wash, ...kids: (Node | string | null)[]): HTMLElement {
   const el = h("div", { class: wash ? "card wash" : "card" }, ...kids);
   if (wash) el.style.setProperty("--wash", washRGBA(wash));
+  // v14: com duas sessões ou mais, Muninn pousa no canto — o companheiro da segunda sessão.
+  const perch = h("div", { class: "bf-muninn-perch", title: "Muninn — a segunda sessão" });
+  new Mascot("muninn", perch);
+  el.append(perch);
   return el;
 }
 
@@ -37,7 +42,8 @@ export function whoRow(task: AgentTask | null, label: string): HTMLElement {
 
 function body(left: number, ...kids: Node[]): HTMLElement {
   const el = h("div", { class: "stack" }, ...kids);
-  el.style.padding = `4px 16px 4px ${left}px`;
+  // v14: o Huginn pousa à direita; o texto lê da esquerda até ele.
+  el.style.padding = `4px ${left}px 4px 20px`;
   return el;
 }
 

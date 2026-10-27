@@ -27,3 +27,19 @@ html, body.bf-traymenu { margin: 0; background: transparent; overflow: hidden; f
 .bf-tray-item.update { color: var(--bf-aurora-2); }
 .bf-tray-item.danger:hover { background: rgba(255, 107, 107, .14); }
 .bf-tray-sep { height: 1px; margin: 6px 8px; background: linear-gradient(90deg, transparent, rgba(226, 181, 90, .4), transparent); }
+
+/* ── v14: o menu da bandeja vira um tabuleiro de runas ──
+   Duas colunas de pedras (runa grande em cima, nome embaixo); o "Sair" fica sozinho
+   na base. O cabeçalho põe Huginn e Muninn lado a lado sobre a ponte. */
+#menu { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+#menu > .bf-tray-head, #menu > .bf-bridge, #menu > .bf-tray-sep { grid-column: 1 / -1; }
+.bf-tray-head { justify-content: center; flex-direction: column; gap: 2px; }
+.bf-tray-head .bf-pair-row { display: flex; gap: 6px; }
+.bf-tray-head .bf-mascot { width: 34px; height: 34px; }
+.bf-tray-item { flex-direction: column; gap: 3px; padding: 9px 4px; margin: 0; text-align: center; font-size: 11.5px;
+  border: 1px solid rgba(226, 181, 90, .16); background: rgba(7, 11, 22, .45); transform: translateY(4px); }
+.bf-tray-item .bf-menu-rune { font-size: 18px; color: var(--bf-gold-2, #f6d27a); }
+.bf-tray-item:hover { transform: translateY(-1px) !important; border-color: rgba(94, 242, 201, .45); }
+.bf-tray-item.danger { grid-column: 1 / -1; flex-direction: row; justify-content: center; }
+.bf-tray-sep { display: none; }
+@media (prefers-reduced-motion: reduce) { #menu, .bf-tray-item { transition: none !important; transform: none !important; } }

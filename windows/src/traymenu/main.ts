@@ -24,8 +24,11 @@ export function renderTray(root: HTMLElement, items: TrayItem[], run: (id: strin
   root.textContent = "";
   const head = document.createElement("div");
   head.className = "bf-tray-head";
-  const raven = new Mascot("huginn");
-  head.append(raven.el);
+  const pair = document.createElement("div");
+  pair.className = "bf-pair-row";
+  new Mascot("huginn", pair);
+  new Mascot("muninn", pair);
+  head.append(pair);
   const title = document.createElement("div");
   title.className = "bf-title bf-tray-title";
   title.textContent = "Bifrost";

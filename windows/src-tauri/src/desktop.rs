@@ -170,6 +170,29 @@ pub mod logic {
 
     /// Top-left corner of the window when Huginn sits in the island: centred
     /// under the top edge, where the flights start and end.
+    /// v14 — the ledge a walk follows: the taskbar edge (bottom of the work
+    /// area) or, when he is up near the top, the lower edge of the compact
+    /// island, which he paces under like a perch. Returns (y, x_min, x_max)
+    /// for the window origin, all in the space's units; `size` is already scaled.
+    pub fn walk_ledge(
+        pos: (f64, f64),
+        size: f64,
+        work: Rect,
+        margin: f64,
+        island: Option<(f64, f64, f64)>,
+    ) -> (f64, f64, f64) {
+        let floor = (work.y + work.h - size - margin, work.x + margin, work.x + work.w - size - margin);
+        match island {
+            Some((cx, top, scale)) if pos.1 < work.y + work.h * 0.35 => {
+                let half = 144.0 * scale; // COMPACT_W / 2
+                let lo = (cx - half - size / 2.0).max(floor.1);
+                let hi = (cx + half - size / 2.0).min(floor.2);
+                (top + 32.0 * scale, lo, hi.max(lo))
+            }
+            _ => floor,
+        }
+    }
+
     pub fn island_spot(island_center_x: f64, island_top: f64, size: f64, scale: f64) -> (f64, f64) {
         (island_center_x - size * scale / 2.0, island_top)
     }
@@ -926,9 +949,18 @@ pub async fn desktop_mochi_walk(app: AppHandle, dx: f64, ms: u64) -> f64 {
     let scale = window(&app).and_then(|w| w.scale_factor().ok()).unwrap_or(1.0);
     let k = if d.mode == DesktopMode::Layer { 1.0 } else { scale };
     let wanted = (pos.0 + dx * k, pos.1);
-    let to = logic::settle(wanted, &displays(&app, &d), SIZE, MARGIN);
-    let to = (to.0, pos.1);
-    if (to.0 - pos.0).abs() < 1.0 {
+    let shown = displays(&app, &d);
+    let to = logic::settle(wanted, &shown, SIZE, MARGIN);
+    // v14: a caminhada segue uma borda — a da barra de tarefas ou a de baixo da ilha.
+    let to = match logic::display_near((pos.0, pos.1), &shown) {
+        Some(disp) => {
+            let s = SIZE * disp.scale;
+            let (y, lo, hi) = logic::walk_ledge(pos, s, disp.work, MARGIN * disp.scale, island_anchor(&app, &d));
+            (to.0.max(lo).min(hi), y)
+        }
+        None => (to.0, pos.1),
+    };
+    if (to.0 - pos.0).abs() < 1.0 && (to.1 - pos.1).abs() < 1.0 {
         return 0.0;
     }
     let ms = ms.clamp(200, 8000);
@@ -983,6 +1015,20 @@ mod tests {
         assert_eq!(clamp_origin((2000.0, 400.0), s, work, m).0, work.x + work.w - s - m, "too-right");
         assert_eq!(clamp_origin((400.0, -50.0), s, work, m).1, work.y + m, "too-high");
         assert_eq!(clamp_origin((400.0, 2000.0), s, work, m).1, work.y + work.h - s - m, "too-low: above the taskbar");
+    }
+
+    #[test]
+    fn walk_follows_the_taskbar_or_the_island_edge() {
+        let work = Rect { x: 0.0, y: 0.0, w: 1440.0, h: 860.0 };
+        let (s, m) = (120.0, 24.0);
+        // Low on the screen: the taskbar edge, whole width.
+        assert_eq!(walk_ledge((300.0, 500.0), s, work, m, Some((720.0, 0.0, 1.0))), (860.0 - s - m, m, 1440.0 - s - m));
+        // Up top with an island: its lower edge, only along its span.
+        let (y, lo, hi) = walk_ledge((700.0, 40.0), s, work, m, Some((720.0, 0.0, 1.0)));
+        assert_eq!(y, 32.0);
+        assert_eq!((lo, hi), (720.0 - 144.0 - 60.0, 720.0 + 144.0 - 60.0));
+        // Up top without an island: back to the taskbar.
+        assert_eq!(walk_ledge((700.0, 40.0), s, work, m, None).0, 860.0 - s - m);
     }
 
     fn two_displays() -> Vec<Display> {

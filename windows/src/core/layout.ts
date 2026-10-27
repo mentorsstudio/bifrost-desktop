@@ -71,13 +71,13 @@ export const WAKE_STRIP_W = 240;
 export const WAKE_STRIP_H = 6;
 
 export const VIEW_LAYOUTS: Record<IslandViewName, ViewLayout> = {
-  overview: { height: 196, botX: 68, botY: null, botDiameter: 58, agentMode: "pills" },
+  overview: { height: 196, botX: EXPANDED_W - 68, botY: null, botDiameter: 58, agentMode: "pills" },
   empty: { height: 160, botX: 70, botY: null, botDiameter: 62, agentMode: "none" },
-  approval: { height: 160, botX: 62, botY: null, botDiameter: 56, agentMode: "column" },
-  question: { height: 160, botX: 62, botY: null, botDiameter: 56, agentMode: "column" },
-  error: { height: 160, botX: 62, botY: null, botDiameter: 58, agentMode: "column" },
-  finished: { height: 160, botX: 62, botY: null, botDiameter: 58, agentMode: "column" },
-  confused: { height: 160, botX: 76, botY: null, botDiameter: 66, agentMode: "column" },
+  approval: { height: 160, botX: EXPANDED_W - 62, botY: null, botDiameter: 56, agentMode: "column" },
+  question: { height: 160, botX: EXPANDED_W - 62, botY: null, botDiameter: 56, agentMode: "column" },
+  error: { height: 160, botX: EXPANDED_W - 62, botY: null, botDiameter: 58, agentMode: "column" },
+  finished: { height: 160, botX: EXPANDED_W - 62, botY: null, botDiameter: 58, agentMode: "column" },
+  confused: { height: 160, botX: EXPANDED_W - 76, botY: null, botDiameter: 66, agentMode: "column" },
   upload: { height: 176, botX: 140, botY: 104, botDiameter: 62, agentMode: "column" },
   // botY 103 = bar top (42 + 58) + 3, so the dot really rides the bar. The Swift
   // layout says 118 while its own comment says 103; the comment matches the spec.
@@ -87,7 +87,7 @@ export const VIEW_LAYOUTS: Record<IslandViewName, ViewLayout> = {
   prompt: { height: 160, botX: 52, botY: null, botDiameter: 44, agentMode: "column" },
   searching: { height: 160, botX: 52, botY: null, botDiameter: 44, agentMode: "column" },
   result: { height: 160, botX: 52, botY: null, botDiameter: 44, agentMode: "column" },
-  note: { height: 160, botX: 60, botY: null, botDiameter: 50, agentMode: "column" },
+  note: { height: 160, botX: EXPANDED_W - 60, botY: null, botDiameter: 50, agentMode: "column" },
   settings: { height: 160, botX: 54, botY: null, botDiameter: 46, agentMode: "none" },
   greeting: { height: 150, botX: 320, botY: 90, botDiameter: 0, agentMode: "none" },
   // Mac: 160. The extra 24 hold the two lines with top agent, project, busiest
