@@ -8,6 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "node --import ./tests/setup.mjs --test \"tests/**/*.test.mjs\"",
+    "test:visual": "node tests/visual/qa.mjs",
     "icons": "tauri icon src-tauri/icons-src/bifrost.svg",
     "tauri": "tauri",
     "predev": "cargo build --release -p bifrost-hook",

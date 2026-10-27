@@ -149,6 +149,13 @@ if (shot === "greeting") {
     await wait(400);
     island.expand("overview");
   }
+  if (shot === "home-session") {
+    // Fase 19: o cartão de sessão que o Paulo mandou (Claude Code parado, pasta longa).
+    hook({ hook_event_name: "Stop", session_id: "s1", cwd: "C:\\Users\\paulo\\bifrost-teste-com-um-nome-bem-comprido", last_assistant_message: "Teste visual v17 — a ilha, o hub e os corvos revisados de ponta a ponta." });
+    hook({ hook_event_name: "SessionEnd", session_id: "s1", cwd: "C:\\Users\\paulo\\bifrost-teste-com-um-nome-bem-comprido" });
+    await wait(400);
+    island.expand("overview");
+  }
   if (shot === "home") {
     hook({ hook_event_name: "PreToolUse", session_id: "s1", tool_name: "Edit", tool_input: { file_path: "src/mcp/client.rs" } });
     hook({ hook_event_name: "SessionStart", session_id: "c1", coucou_agent: "codex", cwd: "C:\\Users\\paulo\\projetos\\site-loja" });
@@ -172,13 +179,15 @@ if (shot === "greeting") {
     hook({ hook_event_name: "UserPromptSubmit", session_id: "c1", coucou_agent: "codex", prompt: "Corrija o checkout" });
     hook({ hook_event_name: "PermissionRequest", session_id: "s1", request_id: "r1", tool_name: "Bash", tool_input: { command: "cargo test --workspace" } });
   }
-  if (shot === "chat") {
+  if (shot === "upload") { island.expand("upload"); }
+  if (shot === "chat" || shot === "chat-picker") {
     State.settings = { ...State.settings, chatProvider: "cli", chatModels: { cli: "claude" } } as typeof State.settings;
     State.chatHistory = [
       { id: 1, role: "user", content: "Resuma o README do projeto" },
       { id: 2, role: "assistant", content: "O **Bifrost** é uma ilha no topo da tela que acompanha seus agentes de IA, com ditado, notas e chat pelo MCP." },
     ];
     island.expand("prompt");
+    if (shot === "chat-picker") { await wait(300); document.querySelector<HTMLElement>(".cmp-model")?.click(); }
   }
   }
 }
