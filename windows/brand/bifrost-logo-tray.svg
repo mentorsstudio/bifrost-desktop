@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Bifrost"><title>Bifrost</title>
+<defs><linearGradient id="a" x1="0" x2="1"><stop offset="0" stop-color="#416A59"/><stop offset=".5" stop-color="#91B5A0"/><stop offset="1" stop-color="#416A59"/></linearGradient></defs>
+<rect x="16" y="16" width="480" height="480" rx="112" fill="#142D28"/>
+<rect x="34" y="34" width="444" height="444" rx="96" fill="none" stroke="#416A59" stroke-width="4"/>
+<g fill="none" stroke-linecap="round">
+<path d="M104 368A152 152 0 0 1 408 368" stroke="#1D3C34" stroke-width="30"/>
+<path d="M104 368A152 152 0 0 1 408 368" stroke="url(#a)" stroke-width="22"/>
+<path d="M144 368A112 112 0 0 1 368 368" stroke="#91B5A0" stroke-width="20"/>
+<path d="M184 368A72 72 0 0 1 328 368" stroke="#F0EADB" stroke-width="18"/>
+</g>
+<path d="M256 100V246M256 168L200 112M256 168L312 112" stroke="#F0EADB" stroke-width="18" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+<rect x="104" y="392" width="304" height="10" rx="5" fill="#91B5A0" opacity=".55"/>
+</svg>

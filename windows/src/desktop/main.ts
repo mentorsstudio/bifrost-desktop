@@ -9,6 +9,8 @@
 
 import "../theme/runic.css";
 import "../theme/motion.css";
+import "../theme/freya.css";
+import "../theme/aurora";
 import "../bifrost/contextmenu";
 import { Bridge, emitToWindow, onEvent, type DesktopMode } from "../core/bridge";
 import type { BotEmoteName } from "../core/layout";

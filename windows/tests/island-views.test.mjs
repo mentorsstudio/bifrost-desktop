@@ -19,7 +19,7 @@ test("pílula: cor no hover e selos", () => {
   assert.equal(pillLook("#112233", false).border, "#11223324");
   assert.equal(pillLook("#112233", true).background, "#1122332e");
   assert.equal(badgeLook("finished").icon, "check");
-  assert.equal(badgeLook("approval").color, "#F5A524");
+  assert.equal(badgeLook("approval").color, "#C9DCCF");
 });
 test("ajustes rápidos: estado real do chat, não um 'API' vermelho fixo", () => {
   const base = { soundEnabled: true, soundVolume: 0.1, autoCloseInterval: 15, hooksInstalled: true, chatProvider: "cli", chatModels: { cli: "codex" }, model: "" };

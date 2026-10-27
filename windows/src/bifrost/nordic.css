@@ -3,23 +3,23 @@
    inscrições rúnicas. Tudo respeita prefers-reduced-motion. */
 
 :root {
-  --bf-night: #070b16;
-  --bf-fjord: #0d1630;
-  --bf-fjord-2: #14203f;
-  --bf-iron: #2b3245;
-  --bf-iron-2: #3d4560;
-  --bf-wood: #3a2618;
-  --bf-gold: #e2b55a;
-  --bf-gold-2: #f6d27a;
-  --bf-frost: #dfe9ff;
-  --bf-mist: #93a1c6;
-  --bf-aurora-1: #5ef2c9;
-  --bf-aurora-2: #6aa8ff;
-  --bf-aurora-3: #b47cff;
-  --bf-ember: #ff7a4a;
-  --bf-blood: #ff6b6b;
+  --bf-night: #142D28;
+  --bf-fjord: #142D28;
+  --bf-fjord-2: #1D3C34;
+  --bf-iron: #1D3C34;
+  --bf-iron-2: #416A59;
+  --bf-wood: #1D3C34;
+  --bf-gold: #91B5A0;
+  --bf-gold-2: #F0EADB;
+  --bf-frost: #F0EADB;
+  --bf-mist: #91B5A0;
+  --bf-aurora-1: #91B5A0;
+  --bf-aurora-2: #C9DCCF;
+  --bf-aurora-3: #F0EADB;
+  --bf-ember: #F0EADB;
+  --bf-blood: #91B5A0;
   /* Fase 13: a ponte é aurora (sem vermelho/laranja/amarelo de arco-íris), com marcas rúnicas. */
-  --bf-bridge: repeating-linear-gradient(90deg, transparent 0 21px, rgba(246, 210, 122, .7) 21px 22px, transparent 22px 44px), linear-gradient(90deg, rgba(47, 211, 166, 0) 0%, #2fd3a6 16%, #5ef2c9 36%, #6f8dff 62%, #9a6bff 84%, rgba(154, 107, 255, 0) 100%);
+  --bf-bridge: repeating-linear-gradient(90deg, transparent 0 21px, rgba(240, 234, 219, .7) 21px 22px, transparent 22px 44px), linear-gradient(90deg, rgba(65, 106, 89, 0) 0%, #416A59 16%, #91B5A0 36%, #91B5A0 62%, #C9DCCF 84%, rgba(201, 220, 207, 0) 100%);
   --bf-ease-fjord: var(--m-ease-out);
   --bf-ease-raven: var(--m-bouncy);
   --bf-ease-tide: var(--m-ease);
@@ -28,19 +28,19 @@
   --bf-step: 360ms;
   --bf-glide: 620ms;
   --bf-rune-font: "Bifrost Runic", "Segoe UI Historic", "Segoe UI Symbol", "Noto Sans Runic", serif;
-  --bf-heading-font: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --bf-heading-font: "Bifrost UI", "DejaVu Sans", sans-serif;
 }
 
 /* ── Céu: aurora que respira + ponte que atravessa ─────────────────────── */
 body.bf-sky, .bf-sky {
   background:
-    radial-gradient(1200px 500px at 15% -10%, rgba(94, 242, 201, 0.13), transparent 60%),
-    radial-gradient(900px 420px at 85% -20%, rgba(180, 124, 255, 0.14), transparent 60%),
-    linear-gradient(180deg, var(--bf-night), var(--bf-fjord) 70%, #0a1024);
+    radial-gradient(1200px 500px at 15% -10%, rgba(145, 181, 160, 0.13), transparent 60%),
+    radial-gradient(900px 420px at 85% -20%, rgba(145, 181, 160, 0.14), transparent 60%),
+    linear-gradient(180deg, var(--bf-night), var(--bf-fjord) 70%, #10231F);
 }
 .bf-aurora {
   position: fixed; inset: 0 0 auto 0; height: 220px; pointer-events: none; z-index: 0;
-  background: linear-gradient(100deg, transparent 10%, rgba(94, 242, 201, .18) 30%, rgba(106, 168, 255, .16) 50%, rgba(180, 124, 255, .14) 70%, transparent 90%);
+  background: linear-gradient(100deg, transparent 10%, rgba(145, 181, 160, .18) 30%, rgba(201, 220, 207, .16) 50%, rgba(145, 181, 160, .14) 70%, transparent 90%);
   filter: blur(28px); mix-blend-mode: screen; transform-origin: 50% 0;
   animation: bf-aurora-drift 14s var(--bf-ease-tide) infinite alternate;
 }
@@ -51,15 +51,15 @@ body.bf-sky, .bf-sky {
 }
 .bf-bridge {
   height: 3px; border-radius: 3px; background: var(--bf-bridge);
-  animation: bf-bridge-flow 6s var(--m-ease) infinite; box-shadow: 0 0 12px rgba(94, 242, 201, .3);
+  animation: bf-bridge-flow 6s var(--m-ease) infinite; box-shadow: 0 0 12px rgba(145, 181, 160, .3);
 }
 @keyframes bf-bridge-flow { 50% { opacity: .6; } }
 
 /* ── Títulos rúnicos e seções entalhadas ──────────────────────────────── */
 .bf-section, section.bf-section {
-  position: relative; border: 1px solid rgba(226, 181, 90, .22); border-radius: 14px;
-  background: linear-gradient(180deg, rgba(20, 32, 63, .85), rgba(13, 22, 48, .85));
-  box-shadow: inset 0 1px 0 rgba(246, 210, 122, .08), 0 10px 30px rgba(0, 0, 0, .35);
+  position: relative; border: 1px solid rgba(145, 181, 160, .22); border-radius: 14px;
+  background: linear-gradient(180deg, rgba(20, 45, 40, .85), rgba(20, 45, 40, .85));
+  box-shadow: inset 0 1px 0 rgba(240, 234, 219, .08), 0 10px 30px rgba(0, 0, 0, .35);
   animation: bf-rise var(--bf-step) var(--bf-ease-raven) both;
 }
 .bf-section::before { /* nó entalhado no canto */
@@ -74,7 +74,7 @@ body.bf-sky, .bf-sky {
 }
 .bf-rune {
   font-family: var(--bf-rune-font); color: var(--bf-aurora-1); font-size: 1.2em;
-  text-shadow: 0 0 10px rgba(94, 242, 201, .6); animation: bf-rune-glow 3.2s var(--m-ease) infinite;
+  text-shadow: 0 0 10px rgba(145, 181, 160, .6); animation: bf-rune-glow 3.2s var(--m-ease) infinite;
 }
 @keyframes bf-rune-glow { 50% { opacity: .7; } }
 @keyframes bf-rise { from { opacity: 0; transform: translateY(12px) scale(.985); } to { opacity: 1; transform: none; } }
@@ -84,7 +84,7 @@ body.bf-sky, .bf-sky {
   transition: transform var(--bf-tap) var(--bf-ease-raven), box-shadow var(--bf-quick) var(--bf-ease-fjord), background var(--bf-quick);
 }
 .bf-scope button:hover:not(:disabled), .bf-section button:hover:not(:disabled) {
-  transform: translateY(-1px); box-shadow: 0 0 0 1px rgba(246, 210, 122, .45), 0 6px 18px rgba(94, 242, 201, .15);
+  transform: translateY(-1px); box-shadow: 0 0 0 1px rgba(240, 234, 219, .45), 0 6px 18px rgba(145, 181, 160, .15);
 }
 .bf-scope button:active:not(:disabled), .bf-section button:active:not(:disabled) { transform: translateY(1px) scale(.97); }
 
@@ -92,8 +92,8 @@ body.bf-sky, .bf-sky {
 .bf-ai-grid, .bf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
 .bf-ai-card, .bf-card {
   display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px;
-  background: linear-gradient(160deg, rgba(43, 50, 69, .7), rgba(13, 22, 48, .9));
-  border: 1px solid rgba(147, 161, 198, .16); position: relative; overflow: hidden;
+  background: linear-gradient(160deg, rgba(29, 60, 52, .7), rgba(20, 45, 40, .9));
+  border: 1px solid rgba(145, 181, 160, .16); position: relative; overflow: hidden;
   transition: transform var(--bf-quick) var(--bf-ease-raven), border-color var(--bf-quick);
   animation: bf-rise var(--bf-step) var(--bf-ease-raven) both;
 }
@@ -101,26 +101,26 @@ body.bf-sky, .bf-sky {
 .bf-ai-card:nth-child(3), .bf-card:nth-child(3) { animation-delay: 90ms; }
 .bf-ai-card:nth-child(4), .bf-card:nth-child(4) { animation-delay: 135ms; }
 .bf-ai-card:nth-child(n+5), .bf-card:nth-child(n+5) { animation-delay: 180ms; }
-.bf-ai-card:hover, .bf-card:hover { transform: translateY(-2px); border-color: rgba(246, 210, 122, .4); }
+.bf-ai-card:hover, .bf-card:hover { transform: translateY(-2px); border-color: rgba(240, 234, 219, .4); }
 .bf-ai-card.found::after, .bf-card.on::after {
   content: ""; position: absolute; inset: auto 0 0 0; height: 2px; background: var(--bf-bridge);
   animation: bf-bridge-flow 6s var(--m-ease) infinite;
 }
-.bf-ai-card.active { border-color: var(--bf-aurora-1); box-shadow: 0 0 0 1px rgba(94, 242, 201, .35), 0 0 24px rgba(94, 242, 201, .12); }
+.bf-ai-card.active { border-color: var(--bf-aurora-1); box-shadow: 0 0 0 1px rgba(145, 181, 160, .35), 0 0 24px rgba(145, 181, 160, .12); }
 .bf-ai-name, .bf-card-name { font-weight: 600; color: var(--bf-frost); }
 .bf-card-note { font-size: 12px; color: var(--bf-mist); line-height: 1.35; }
 .bf-badge { align-self: flex-start; font-size: 11px; padding: 2px 8px; border-radius: 999px; letter-spacing: .04em; }
-.bf-badge.ok { background: rgba(94, 242, 201, .14); color: var(--bf-aurora-1); border: 1px solid rgba(94, 242, 201, .35); }
-.bf-badge.off { background: rgba(147, 161, 198, .1); color: var(--bf-mist); border: 1px solid rgba(147, 161, 198, .2); }
-.bf-badge.cloud { background: rgba(106, 168, 255, .14); color: var(--bf-aurora-2); border: 1px solid rgba(106, 168, 255, .35); }
-.bf-badge.imp { background: rgba(226, 181, 90, .14); color: var(--bf-gold-2); border: 1px solid rgba(226, 181, 90, .35); }
+.bf-badge.ok { background: rgba(145, 181, 160, .14); color: var(--bf-aurora-1); border: 1px solid rgba(145, 181, 160, .35); }
+.bf-badge.off { background: rgba(145, 181, 160, .1); color: var(--bf-mist); border: 1px solid rgba(145, 181, 160, .2); }
+.bf-badge.cloud { background: rgba(201, 220, 207, .14); color: var(--bf-aurora-2); border: 1px solid rgba(201, 220, 207, .35); }
+.bf-badge.imp { background: rgba(145, 181, 160, .14); color: var(--bf-gold-2); border: 1px solid rgba(145, 181, 160, .35); }
 .bf-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 
 /* ── Menu de contexto nórdico ─────────────────────────────────────────── */
 .bf-menu {
   position: fixed; z-index: 99999; min-width: 180px; padding: 6px; border-radius: 12px;
-  background: linear-gradient(180deg, rgba(20, 32, 63, .97), rgba(7, 11, 22, .97));
-  border: 1px solid rgba(226, 181, 90, .4); box-shadow: 0 18px 40px rgba(0, 0, 0, .55), 0 0 0 1px rgba(0, 0, 0, .4);
+  background: linear-gradient(180deg, rgba(20, 45, 40, .97), rgba(20, 45, 40, .97));
+  border: 1px solid rgba(145, 181, 160, .4); box-shadow: 0 18px 40px rgba(0, 0, 0, .55), 0 0 0 1px rgba(0, 0, 0, .4);
   backdrop-filter: blur(10px); transform-origin: top left;
   animation: bf-menu-in var(--bf-quick) var(--bf-ease-raven) both; font-family: var(--font, sans-serif);
 }
@@ -130,7 +130,7 @@ body.bf-sky, .bf-sky {
   background: transparent; color: var(--bf-frost); font-size: 13px; text-align: left; cursor: pointer;
   transition: background var(--bf-tap), transform var(--bf-tap) var(--bf-ease-raven);
 }
-.bf-menu-item:hover:not(:disabled) { background: rgba(94, 242, 201, .12); transform: translateX(2px); }
+.bf-menu-item:hover:not(:disabled) { background: rgba(145, 181, 160, .12); transform: translateX(2px); }
 .bf-menu-item:disabled { opacity: .4; cursor: default; }
 .bf-menu-rune { font-family: var(--bf-rune-font); color: var(--bf-gold-2); width: 16px; text-align: center; }
 

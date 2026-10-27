@@ -21,7 +21,7 @@ export function pillLook(color: string, hovered: boolean) {
 }
 
 const BADGE = {
-  approval: { color: "#F5A524", icon: "bang", stroke: 0 },
+  approval: { color: "#C9DCCF", icon: "bang", stroke: 0 },
   finished: { color: "#22C55E", icon: "check", stroke: 3 },
   error: { color: "#F4505E", icon: "xmark", stroke: 0 },
 } as const;

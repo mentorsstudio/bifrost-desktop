@@ -17,52 +17,52 @@
 }
 
 :root {
-  --font: "Space Grotesk", "Segoe UI Variable Text", "Segoe UI", "Nirmala UI", "Microsoft YaHei UI",
+  --font: "Segoe UI Variable Text", "Segoe UI", "Nirmala UI", "Microsoft YaHei UI",
     "Microsoft YaHei", "Noto Sans", "Noto Sans Devanagari", "Noto Sans Bengali", "Noto Sans Arabic",
     "Noto Sans CJK SC", "Noto Sans SC", "Droid Sans Fallback", sans-serif;
   --mono: "JetBrains Mono", "Cascadia Mono", "Consolas", ui-monospace, monospace;
 
   /* Noite */
-  --night-0: #05070f;
-  --night-1: #0a0f1f;
-  --night-2: #111830;
-  --night-3: #18213f;
+  --night-0: #10231F;
+  --night-1: #142D28;
+  --night-2: #142D28;
+  --night-3: #1D3C34;
   --bg: var(--night-1);
-  --card: #0f1529;
-  --card-flat: #0b1022;
-  --tab-on: #1a2346;
-  --hairline: rgba(148, 170, 255, 0.10);
+  --card: #142D28;
+  --card-flat: #142D28;
+  --tab-on: #1D3C34;
+  --hairline: rgba(145, 181, 160, 0.10);
 
   /* Texto */
-  --ink: #eef2ff;
-  --ink-2: #e4e9fb;
-  --dim: #9aa6c8;
-  --dim-2: #8590b3;
-  --dim-3: #67729a;
-  --dim-4: #57618a;
-  --dim-5: #48527a;
+  --ink: #F0EADB;
+  --ink-2: #F0EADB;
+  --dim: #91B5A0;
+  --dim-2: #86A693;
+  --dim-3: #6E8F7E;
+  --dim-4: #5E7F6E;
+  --dim-5: #4E6F5F;
 
   /* Aurora (o arco da ponte) */
-  --aurora-teal: #4fe3c1;
-  --aurora-sky: #5aa9ff;
-  --aurora-violet: #9d7bff;
-  --aurora-rose: #ff6fae;
-  --aurora-gold: #ffc65c;
+  --aurora-teal: #91B5A0;
+  --aurora-sky: #C9DCCF;
+  --aurora-violet: #91B5A0;
+  --aurora-rose: #C9DCCF;
+  --aurora-gold: #C9DCCF;
   /* Fase 13: nada de arco-íris. A "ponte" do Bifrost é uma faixa de aurora boreal
      (verde-água → verde → violeta, pontas que somem na noite) com marcas rúnicas de ouro. */
-  --prism: linear-gradient(100deg, #2fd3a6 0%, #5ef2c9 45%, #7d9cff 100%);
-  --bf-aurora-band: linear-gradient(90deg, rgba(47, 211, 166, 0) 0%, #2fd3a6 16%, #5ef2c9 36%, #6f8dff 62%, #9a6bff 84%, rgba(154, 107, 255, 0) 100%);
-  --bf-rune-ticks: repeating-linear-gradient(90deg, transparent 0 21px, rgba(246, 210, 122, 0.7) 21px 22px, transparent 22px 44px);
+  --prism: linear-gradient(100deg, #416A59 0%, #91B5A0 45%, #C9DCCF 100%);
+  --bf-aurora-band: linear-gradient(90deg, rgba(65, 106, 89, 0) 0%, #416A59 16%, #91B5A0 36%, #91B5A0 62%, #C9DCCF 84%, rgba(201, 220, 207, 0) 100%);
+  --bf-rune-ticks: repeating-linear-gradient(90deg, transparent 0 21px, rgba(240, 234, 219, 0.7) 21px 22px, transparent 22px 44px);
 
   /* Estados */
-  --red: #ff5c7a;
-  --red-text: #ff9fb2;
-  --green: #3ee6a8;
-  --green-2: #4fe3c1;
-  --amber: #ffc65c;
-  --cyan: #5ad7ff;
-  --indigo: #7c8cff;
-  --pink: #ff6fae;
+  --red: #91B5A0;
+  --red-text: #91B5A0;
+  --green: #91B5A0;
+  --green-2: #91B5A0;
+  --amber: #C9DCCF;
+  --cyan: #C9DCCF;
+  --indigo: #91B5A0;
+  --pink: #C9DCCF;
 }
 
 html, body { font-family: var(--font); letter-spacing: 0.005em; }
@@ -70,10 +70,10 @@ html, body { font-family: var(--font); letter-spacing: 0.005em; }
 /* ── Ilha (overlay no topo da tela) ─────────────────────────────────────── */
 #island {
   background:
-    radial-gradient(120% 140% at 50% -40%, rgba(90, 169, 255, 0.10), transparent 60%),
-    linear-gradient(180deg, var(--night-0), #070b18) !important;
+    radial-gradient(120% 140% at 50% -40%, rgba(201, 220, 207, 0.10), transparent 60%),
+    linear-gradient(180deg, var(--night-0), #10231F) !important;
   border-radius: 0 0 10px 10px;
-  box-shadow: 0 10px 30px -12px rgba(77, 120, 255, 0.35), inset 0 -1px 0 rgba(157, 123, 255, 0.18);
+  box-shadow: 0 10px 30px -12px rgba(145, 181, 160, 0.35), inset 0 -1px 0 rgba(145, 181, 160, 0.18);
 }
 #island::after {
   content: "";
@@ -83,7 +83,7 @@ html, body { font-family: var(--font); letter-spacing: 0.005em; }
   border-radius: 2px;
   background: var(--bf-rune-ticks), var(--bf-aurora-band);
   opacity: 0.85;
-  filter: drop-shadow(0 0 5px rgba(94, 242, 201, 0.45));
+  filter: drop-shadow(0 0 5px rgba(145, 181, 160, 0.45));
   transform-origin: 50% 100%;
   animation: bifrost-aurora 7s var(--m-ease) infinite;
   pointer-events: none;
@@ -108,7 +108,7 @@ html, body { font-family: var(--font); letter-spacing: 0.005em; }
 }
 .btn.primary, .send-btn {
   background: var(--prism) !important;
-  color: #071022 !important;
+  color: #10231F !important;
   font-weight: 600;
 }
 .tab.on, .tab[aria-selected="true"] { background: var(--tab-on) !important; box-shadow: inset 0 -2px 0 var(--aurora-violet); }
@@ -117,24 +117,24 @@ html, body { font-family: var(--font); letter-spacing: 0.005em; }
 /* ── Janela de configurações ────────────────────────────────────────────── */
 body.settings-window {
   background:
-    radial-gradient(900px 420px at 85% -10%, rgba(157, 123, 255, 0.16), transparent 60%),
-    radial-gradient(800px 380px at 0% 0%, rgba(79, 227, 193, 0.10), transparent 55%),
+    radial-gradient(900px 420px at 85% -10%, rgba(145, 181, 160, 0.16), transparent 60%),
+    radial-gradient(800px 380px at 0% 0%, rgba(145, 181, 160, 0.10), transparent 55%),
     var(--night-1) !important;
   background-attachment: fixed !important;
 }
 body.settings-window h1 {
   font: 700 20px var(--font);
   letter-spacing: -0.01em;
-  background: linear-gradient(100deg, #eef2ff 0%, #bff7e8 55%, #c9b8ff 100%);
+  background: linear-gradient(100deg, #F0EADB 0%, #91B5A0 55%, #91B5A0 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 body.settings-window section {
-  background: linear-gradient(180deg, rgba(24, 33, 63, 0.75), rgba(15, 21, 41, 0.9)) !important;
+  background: linear-gradient(180deg, rgba(29, 60, 52, 0.75), rgba(20, 45, 40, 0.9)) !important;
   border: 1px solid var(--hairline) !important;
   border-radius: 10px !important;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 12px 28px -18px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 1px 0 rgba(240, 234, 219, 0.03) inset, 0 12px 28px -18px rgba(0, 0, 0, 0.8);
 }
 body.settings-window section > h2 { font: 600 13.5px var(--font); letter-spacing: 0.02em; text-transform: none; }
 body.settings-window button {
@@ -143,13 +143,13 @@ body.settings-window button {
 }
 body.settings-window button.primary {
   background: var(--prism) !important;
-  color: #071022 !important;
+  color: #10231F !important;
   font-weight: 600;
 }
-body.settings-window button.danger { background: rgba(255, 92, 122, 0.14) !important; color: var(--red-text) !important; }
+body.settings-window button.danger { background: rgba(145, 181, 160, 0.14) !important; color: var(--red-text) !important; }
 body.settings-window input, body.settings-window select, body.settings-window textarea {
   background: var(--night-0) !important;
-  border: 1px solid rgba(148, 170, 255, 0.16) !important;
+  border: 1px solid rgba(145, 181, 160, 0.16) !important;
   border-radius: 7px !important;
   color: var(--ink) !important;
   font-family: var(--font);
@@ -157,7 +157,7 @@ body.settings-window input, body.settings-window select, body.settings-window te
 body.settings-window input:focus, body.settings-window select:focus, body.settings-window textarea:focus {
   outline: none;
   border-color: var(--aurora-violet) !important;
-  box-shadow: 0 0 0 3px rgba(157, 123, 255, 0.22);
+  box-shadow: 0 0 0 3px rgba(145, 181, 160, 0.22);
 }
 body.settings-window .notice { border-radius: 8px !important; }
 body.settings-window .hint { color: var(--dim) !important; }
@@ -166,26 +166,26 @@ body.settings-window .switch.on { background: var(--aurora-teal) !important; }
 
 /* Barra de rolagem fina, fria */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: rgba(148, 170, 255, 0.18); border-radius: 6px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb { background: rgba(145, 181, 160, 0.18); border-radius: 6px; border: 2px solid transparent; background-clip: padding-box; }
 ::-webkit-scrollbar-track { background: transparent; }
 
 /* ── Janela do Bifrost (hub) ─────────────────────────────────────────────── */
 :root {
-  --hub-panel: #0b1022;
-  --hub-card: #121a33;
-  --hub-field: #182143;
-  --hub-line: rgba(148, 170, 255, 0.10);
-  --hub-text: #eef2ff;
-  --hub-body: #dfe5fb;
-  --hub-secondary: #9aa6c8;
-  --hub-muted: #67729a;
-  --hub-accent: #9d7bff;
-  --hub-on-accent: #0a0820;
-  --hub-green: #3ee6a8;
-  --hub-red: #ff5c7a;
+  --hub-panel: #142D28;
+  --hub-card: #142D28;
+  --hub-field: #1D3C34;
+  --hub-line: rgba(145, 181, 160, 0.10);
+  --hub-text: #F0EADB;
+  --hub-body: #F0EADB;
+  --hub-secondary: #91B5A0;
+  --hub-muted: #6E8F7E;
+  --hub-accent: #91B5A0;
+  --hub-on-accent: #142D28;
+  --hub-green: #91B5A0;
+  --hub-red: #91B5A0;
 }
 body.hub-window {
-  background: radial-gradient(900px 500px at 0% 0%, rgba(79, 227, 193, 0.08), transparent 60%), #05070f !important;
+  background: radial-gradient(900px 500px at 0% 0%, rgba(145, 181, 160, 0.08), transparent 60%), #10231F !important;
 }
 .hub-side { background: transparent !important; }
 .hub-item.on { box-shadow: inset 2px 0 0 var(--aurora-violet); }

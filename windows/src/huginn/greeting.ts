@@ -220,7 +220,7 @@ export class Greeting {
     x.beginPath();
     x.roundRect(left, top, w, h, 20);
     const g = x.createLinearGradient(0, top, 0, top + h);
-    g.addColorStop(0, "#0d1630"); g.addColorStop(1, "#070b16");
+    g.addColorStop(0, "#142D28"); g.addColorStop(1, "#10231F");
     x.fillStyle = g; x.fill();
     x.clip();
     const breathe = 0.5 + Math.sin(t * 1.6) * 0.5;
@@ -232,10 +232,10 @@ export class Greeting {
     // Ponte de aurora na base (fase 13: sem arco-íris), com marcas rúnicas de ouro.
     const bw = w * easeOut(clamp(p.fx * 1.4, 0, 1));
     const bg = x.createLinearGradient(left, 0, left + w, 0);
-    [["rgba(47,211,166,0)", 0], ["#2fd3a6", 0.16], ["#5ef2c9", 0.36], ["#6f8dff", 0.62], ["#9a6bff", 0.84], ["rgba(154,107,255,0)", 1]].forEach(([c, o]) => bg.addColorStop(o as number, c as string));
+    [["rgba(65, 106, 89,0)", 0], ["#416A59", 0.16], ["#91B5A0", 0.36], ["#91B5A0", 0.62], ["#C9DCCF", 0.84], ["rgba(201, 220, 207,0)", 1]].forEach(([c, o]) => bg.addColorStop(o as number, c as string));
     x.fillStyle = bg; x.globalAlpha = p.card * 0.7;
     x.fillRect(left + (w - bw) / 2, top + h - 3, bw, 3);
-    x.fillStyle = "rgba(246,210,122,0.7)";
+    x.fillStyle = "rgba(240, 234, 219,0.7)";
     for (let rx = left + (w - bw) / 2 + 22; rx < left + (w + bw) / 2 - 10; rx += 44) x.fillRect(rx, top + h - 3, 1, 3);
     x.globalAlpha = p.card;
     if (this.sparks.length < 14 && Math.random() < dt * 9) {
@@ -246,7 +246,7 @@ export class Greeting {
     x.textAlign = "center";
     for (const s of this.sparks) {
       s.life += dt; s.y -= s.vy * dt;
-      x.fillStyle = `rgba(226,181,90,${Math.max(0, 0.6 - s.life * 0.3)})`;
+      x.fillStyle = `rgba(145, 181, 160,${Math.max(0, 0.6 - s.life * 0.3)})`;
       x.fillText(s.rune, s.x, s.y);
     }
     this.sparks = this.sparks.filter((s) => s.life < 2);

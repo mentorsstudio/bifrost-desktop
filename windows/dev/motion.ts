@@ -1,5 +1,7 @@
 // Página de captura do sistema de movimento (dev only).
 import "../src/bifrost/nordic.css";
+import "../src/theme/freya.css";
+import "../src/theme/aurora";
 import { Mascot, MASCOT_STATES, type MascotState } from "../src/bifrost/mascots";
 import { showMenu } from "../src/bifrost/contextmenu";
 

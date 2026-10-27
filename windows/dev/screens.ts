@@ -7,6 +7,8 @@ import "../src/bifrost/skin.css";
 import "../src/bifrost/saga.css";
 import "../src/bifrost/realm.css";
 import "../src/traymenu/traymenu.css";
+import "../src/theme/freya.css";
+import "../src/theme/aurora";
 import { renderTray } from "../src/traymenu/main";
 import { showMenu } from "../src/bifrost/contextmenu";
 import { Greeting, GREETING_W, GREETING_H } from "../src/huginn/greeting";

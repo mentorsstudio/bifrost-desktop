@@ -30,7 +30,7 @@ export const STATUS_LABEL: Record<AgentStatus, string> = {
 };
 
 export const STATUS_COLOR: Record<AgentStatus, string> = {
-  working: "#5ef2c9", waiting: "#f2b84b", finished: "#7ee08a", error: "#ff6b6b", idle: "#93a1c6",
+  working: "#91B5A0", waiting: "#C9DCCF", finished: "#7ee08a", error: "#ff6b6b", idle: "#91B5A0",
 };
 
 /** É uma sessão de agente (não um cartão de serviço como Stripe ou Spotify)? */
@@ -132,7 +132,7 @@ export function mergeDetected<T extends DetectedLike>(live: SessionLike[], found
 export const DETECTED_LABEL = { cli: N_("running"), editor: N_("open"), ollama: N_("model loaded") } as const;
 export const AGENT_COLOR: Record<string, string> = {
   claude: "#E07950", codex: "#2DD4BF", gemini: "#8AB4F8", ollama: "#F5F5F5",
-  vscode: "#3EA6FF", cursor: "#C0C4CC", antigravity: "#B47CFF", windsurf: "#5EF2C9",
+  vscode: "#3EA6FF", cursor: "#C0C4CC", antigravity: "#F0EADB", windsurf: "#91B5A0",
 };
 /** Codex e Gemini aceitam hooks do Bifrost; um clique instala. */
 export const HOOKABLE = new Set(["codex", "gemini"]);

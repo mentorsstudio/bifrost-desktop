@@ -8,6 +8,8 @@ import "./bifrost/skin.css";
 import "./bifrost/saga.css";
 import "./theme/motion.css";
 import "./bifrost/realm.css";
+import "./theme/freya.css";
+import "./theme/aurora";
 import "./bifrost/contextmenu";
 import { Bridge, IS_TAURI, onEvent } from "./core/bridge";
 import { Sound } from "./core/sound";

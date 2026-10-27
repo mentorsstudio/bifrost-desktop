@@ -8,7 +8,7 @@
 html, body {
   width: 100%; height: 100%; overflow: hidden; background: transparent;
   user-select: none; -webkit-user-select: none; cursor: default;
-  font: 500 12.5px "Space Grotesk", "Segoe UI Variable Text", "Segoe UI", sans-serif; color: #dfe9ff;
+  font: 500 12.5px "Segoe UI Variable Text", "Segoe UI", sans-serif; color: #F0EADB;
 }
 
 #pill { position: absolute; inset: 0; display: flex; gap: 8px; }
@@ -19,23 +19,23 @@ html, body {
 /* ── A placa ── */
 .capsule {
   position: relative; flex: 0 0 auto; border-radius: 999px; overflow: hidden;
-  background: linear-gradient(180deg, rgba(43, 50, 69, .55), rgba(7, 11, 22, .45));
-  box-shadow: inset 0 0 0 1.2px rgba(226, 181, 90, .55);
+  background: linear-gradient(180deg, rgba(29, 60, 52, .55), rgba(20, 45, 40, .45));
+  box-shadow: inset 0 0 0 1.2px rgba(145, 181, 160, .55);
   /* motion: morph — a cápsula muda de forma como a Dynamic Island (um elemento isolado, contain: layout) */
   contain: layout paint;
   transition: width .38s var(--m-bouncy), height .38s var(--m-bouncy), background .22s, box-shadow .22s;
 }
 .capsule::after { /* faixa de aurora fininha (fase 13: sem arco-íris), só aberta */
   content: ""; position: absolute; left: 38%; right: 12%; bottom: 2px; height: 1.5px; border-radius: 2px;
-  background: linear-gradient(90deg, rgba(47, 211, 166, 0) 0%, #2fd3a6 16%, #5ef2c9 36%, #6f8dff 62%, #9a6bff 84%, rgba(154, 107, 255, 0) 100%);
+  background: linear-gradient(90deg, rgba(65, 106, 89, 0) 0%, #416A59 16%, #91B5A0 36%, #91B5A0 62%, #C9DCCF 84%, rgba(201, 220, 207, 0) 100%);
   opacity: 0; transition: opacity .25s;
 }
 .capsule.open {
-  background: radial-gradient(120px 40px at 30% 0%, rgba(94, 242, 201, .16), transparent 70%), linear-gradient(180deg, #111b36, #070b16);
-  box-shadow: inset 0 0 0 1px rgba(226, 181, 90, .5), 0 6px 16px rgba(0, 0, 0, .45), 0 0 14px rgba(94, 242, 201, .12);
+  background: radial-gradient(120px 40px at 30% 0%, rgba(145, 181, 160, .16), transparent 70%), linear-gradient(180deg, #1D3C34, #142D28);
+  box-shadow: inset 0 0 0 1px rgba(145, 181, 160, .5), 0 6px 16px rgba(0, 0, 0, .45), 0 0 14px rgba(145, 181, 160, .12);
 }
 .capsule.open::after { opacity: .7; }
-.capsule.handsfree { box-shadow: inset 0 0 0 1.5px rgba(255, 122, 74, .9), 0 6px 16px rgba(0, 0, 0, .45), 0 0 16px rgba(255, 122, 74, .25); }
+.capsule.handsfree { box-shadow: inset 0 0 0 1.5px rgba(240, 234, 219, .9), 0 6px 16px rgba(0, 0, 0, .45), 0 0 16px rgba(240, 234, 219, .25); }
 
 .content {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 9px;
@@ -54,47 +54,47 @@ html, body {
 
 /* ── Botões-runa ── */
 .pbtn {
-  width: 28px; height: 28px; flex: 0 0 28px; border: 0; border-radius: 9px; background: transparent; color: #f6d27a;
+  width: 28px; height: 28px; flex: 0 0 28px; border: 0; border-radius: 9px; background: transparent; color: #F0EADB;
   display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
   transition: background .12s, transform .2s var(--m-bouncy);
 }
-.pbtn:hover { background: rgba(94, 242, 201, .14); transform: translateY(-1px); }
-.pbtn.small { width: 22px; height: 22px; flex-basis: 22px; border-radius: 7px; background: rgba(226, 181, 90, .14); }
-.pbtn.filled { background: linear-gradient(180deg, #f6d27a, #b8862f); color: #070b16; }
+.pbtn:hover { background: rgba(145, 181, 160, .14); transform: translateY(-1px); }
+.pbtn.small { width: 22px; height: 22px; flex-basis: 22px; border-radius: 7px; background: rgba(145, 181, 160, .14); }
+.pbtn.filled { background: linear-gradient(180deg, #F0EADB, #416A59); color: #142D28; }
 .pbtn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .pbtn.small svg { width: 11px; height: 11px; stroke-width: 2.6; }
 
 /* ── A voz: barras de aurora ── */
 .bars { display: flex; align-items: center; gap: 3.2px; height: 22px; }
-.bars i { width: 3.4px; height: 3.4px; border-radius: 2px; background: linear-gradient(180deg, #5ef2c9, #6aa8ff); box-shadow: 0 0 4px rgba(94, 242, 201, .45); }
+.bars i { width: 3.4px; height: 3.4px; border-radius: 2px; background: linear-gradient(180deg, #91B5A0, #C9DCCF); box-shadow: 0 0 4px rgba(145, 181, 160, .45); }
 .vertical .bars { flex-direction: column; height: auto; width: 22px; }
-.vertical .bars i { height: 3.4px; background: linear-gradient(90deg, #5ef2c9, #6aa8ff); }
+.vertical .bars i { height: 3.4px; background: linear-gradient(90deg, #91B5A0, #C9DCCF); }
 
-.message { font: 500 12px "Space Grotesk", "Segoe UI", sans-serif; color: #dfe9ff; white-space: nowrap; }
-.rec { width: 8px; height: 8px; border-radius: 50%; background: #ff7a4a; box-shadow: 0 0 6px rgba(255, 122, 74, .7); flex: 0 0 8px; animation: bf-pill-ember 1.4s var(--m-ease) infinite; }
+.message { font: 500 12px "Segoe UI", sans-serif; color: #F0EADB; white-space: nowrap; }
+.rec { width: 8px; height: 8px; border-radius: 50%; background: #F0EADB; box-shadow: 0 0 6px rgba(240, 234, 219, .7); flex: 0 0 8px; animation: bf-pill-ember 1.4s var(--m-ease) infinite; }
 @keyframes bf-pill-ember { 50% { opacity: .55; } }
-.clock { font: 600 12px "Space Grotesk", "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; color: #f6d27a; }
+.clock { font: 600 12px "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; color: #F0EADB; }
 .vertical .clock { font-size: 10px; }
-.stop { width: 22px; height: 22px; border-radius: 7px; border: 0; background: rgba(226, 181, 90, .16); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
-.stop i { width: 8px; height: 8px; border-radius: 2px; background: #f6d27a; }
+.stop { width: 22px; height: 22px; border-radius: 7px; border: 0; background: rgba(145, 181, 160, .16); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.stop i { width: 8px; height: 8px; border-radius: 2px; background: #F0EADB; }
 
 /* ── O balão ao lado: dica, aviso, conversa do OK Bifrost ── */
 .bubble {
   flex: 0 0 auto; border-radius: 12px; padding: 0 14px; height: 30px; display: flex; align-items: center; white-space: nowrap;
-  background: linear-gradient(180deg, #111b36, #070b16); box-shadow: inset 0 0 0 1px rgba(226, 181, 90, .4), 0 6px 16px rgba(0, 0, 0, .4);
-  font: 600 12.5px "Space Grotesk", "Segoe UI", sans-serif;
+  background: linear-gradient(180deg, #1D3C34, #142D28); box-shadow: inset 0 0 0 1px rgba(145, 181, 160, .4), 0 6px 16px rgba(0, 0, 0, .4);
+  font: 600 12.5px "Segoe UI", sans-serif;
   animation: bf-pill-pop .3s var(--m-bouncy);
 }
 .bubble.announce { border-radius: 14px; height: auto; padding: 10px 10px 10px 14px; gap: 10px; white-space: normal; max-width: 420px; }
 .bubble.voice { border-radius: 14px; height: auto; padding: 9px 14px; flex-direction: column; align-items: flex-start; gap: 3px; white-space: normal; max-width: 440px; }
-.bubble.voice .heard { color: #93a1c6; font-weight: 500; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.bubble.voice .answer { color: #dfe9ff; font-weight: 500; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-.bubble.voice .answer::before { content: "ᚺ "; font-family: "Bifrost Runic", "Segoe UI Historic", serif; color: #5ef2c9; }
-.bubble .icon { width: 18px; height: 18px; flex: 0 0 18px; color: #f6d27a; }
+.bubble.voice .heard { color: #91B5A0; font-weight: 500; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.bubble.voice .answer { color: #F0EADB; font-weight: 500; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.bubble.voice .answer::before { content: "ᚺ "; font-family: "Bifrost Runic", "Segoe UI Historic", serif; color: #91B5A0; }
+.bubble .icon { width: 18px; height: 18px; flex: 0 0 18px; color: #F0EADB; }
 .bubble .icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .bubble .text { font-weight: 500; line-height: 1.35; flex: 1 1 auto; }
-.bubble .act { border: 0; border-radius: 9px; padding: 6px 12px; background: linear-gradient(180deg, #f6d27a, #b8862f); color: #070b16; font: 600 12px "Space Grotesk", "Segoe UI", sans-serif; cursor: pointer; white-space: nowrap; }
-.bubble .close { border: 0; width: 22px; height: 22px; border-radius: 7px; background: rgba(226, 181, 90, .14); color: #f6d27a; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.bubble .act { border: 0; border-radius: 9px; padding: 6px 12px; background: linear-gradient(180deg, #F0EADB, #416A59); color: #142D28; font: 600 12px "Segoe UI", sans-serif; cursor: pointer; white-space: nowrap; }
+.bubble .close { border: 0; width: 22px; height: 22px; border-radius: 7px; background: rgba(145, 181, 160, .14); color: #F0EADB; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
 .bubble .close svg { width: 10px; height: 10px; stroke: currentColor; stroke-width: 2.6; fill: none; }
 @keyframes bf-pill-pop { from { opacity: 0; transform: translateY(6px) scale(.85); } }
 
@@ -108,6 +108,6 @@ html, body {
    aqui a voz vem primeiro e o corvo pousa no fim da placa, sob uma marca de ouro. */
 .capsule.open { border-radius: 11px; }
 .capsule.open::before { content: ""; position: absolute; top: 3px; bottom: 3px; left: 3px; width: 2px; border-radius: 2px;
-  background: linear-gradient(180deg, #f6d27a, rgba(184, 134, 47, .2)); }
+  background: linear-gradient(180deg, #F0EADB, rgba(65, 106, 89, .2)); }
 #pill:not(.vertical) .capsule.open .content > .mochi { order: 9; }
 .vertical .capsule.open .content > .mochi { order: 9; }

@@ -40,8 +40,9 @@ export interface Rhythm {
 }
 
 export const RHYTHM: Record<"huginn" | "muninn", Rhythm> = {
-  huginn: { flap: 0.3, flight: 0.26, hop: 0.44, takeoff: 0.38, land: 0.44, reach: 1 },
-  muninn: { flap: 0.36, flight: 0.31, hop: 0.52, takeoff: 0.44, land: 0.5, reach: 1.06 },
+  // Fase 16: ritmo mais calmo (Apple-like) — batidas e pulinhos mais lentos.
+  huginn: { flap: 0.4, flight: 0.3, hop: 0.6, takeoff: 0.44, land: 0.52, reach: 0.92 },
+  muninn: { flap: 0.46, flight: 0.35, hop: 0.68, takeoff: 0.5, land: 0.58, reach: 0.96 },
 };
 
 /** Limite de segurança: além disto a ponta da asa chegaria perto do elmo e da coroa. */
@@ -69,7 +70,23 @@ export function flapCycle(phase: number, low: number, high: number): { angle: nu
 }
 
 /** A pose de uma marcha em `t` segundos desde que ela começou. */
+/** Fase 16: quanto da amplitude original sobra (corpo, quique, inclinação). */
+export const CALM = 0.55;
+
 export function pose(gait: Gait, t: number, r: Rhythm = RHYTHM.huginn, travelTilt = 0): Pose {
+  const p = rawPose(gait, t, r, travelTilt);
+  if (p === REST) return p;
+  const k = CALM;
+  const ground = gait === "walk" || gait === "flap";
+  return {
+    ...p,
+    dy: ground ? p.dy * k : p.dy, sx: 1 + (p.sx - 1) * k, sy: 1 + (p.sy - 1) * k, bob: p.bob * k,
+    tilt: ground ? p.tilt * k : p.tilt, crest: p.crest * k, footL: p.footL * k, footR: p.footR * k,
+    wing: ground ? p.wing * 0.8 : p.wing,
+  };
+}
+
+function rawPose(gait: Gait, t: number, r: Rhythm, travelTilt: number): Pose {
   switch (gait) {
     case "none": return REST;
     case "flap": {

@@ -6,6 +6,8 @@ import "../theme/bifrost.css";
 import "../bifrost/nordic.css";
 import "./traymenu.css";
 import "../theme/motion.css";
+import "../theme/freya.css";
+import "../theme/aurora";
 import "../bifrost/contextmenu";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";

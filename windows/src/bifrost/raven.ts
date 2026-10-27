@@ -48,21 +48,21 @@ const mix = (a: RGB, b: RGB, t: number): RGB => [a[0] + (b[0] - a[0]) * t, a[1] 
 const clock = () => performance.now() / 1000;
 
 // Paleta do fiorde.
-const FEATHER_LIT = hex("#2A3F73");
-const FEATHER_DARK = hex("#0A1024");
-const HUGINN = { lit: hex("#2E4A86"), dark: hex("#0B1430") };
-const MUNINN = { lit: hex("#54466A"), dark: hex("#1A1422") };
-const EYE = "rgb(214,255,244)";
-const EYE_HALO = "rgba(94,242,201,0.9)";
-const MUNINN_EYE = "rgb(255,226,160)";
-const MUNINN_HALO = "rgba(242,184,75,0.85)";
-const GOLD_A = "#F6D27A";
-const GOLD_B = "#B8862F";
+const FEATHER_LIT = hex("#2B5246");
+const FEATHER_DARK = hex("#10231F");
+const HUGINN = { lit: hex("#2B5246"), dark: hex("#142D28") };
+const MUNINN = { lit: hex("#A9C6B4"), dark: hex("#6C907D") };
+const EYE = "rgb(240,234,219)";
+const EYE_HALO = "rgba(145, 181, 160,0.9)";
+const MUNINN_EYE = "rgb(20,45,40)";
+const MUNINN_HALO = "rgba(145, 181, 160,0.85)";
+const GOLD_A = "#F0EADB";
+const GOLD_B = "#91B5A0";
 
 const TONE = {
-  idle: hex("#DFE9FF"), working: hex("#6AA8FF"), thinking: hex("#B47CFF"), searching: hex("#7C8CFF"),
-  approval: hex("#F2B84B"), question: hex("#5EF2C9"), error: hex("#FF6B6B"), finished: hex("#4BE3A0"),
-  ratelimit: hex("#FF9A4A"), sleeping: hex("#6B7AA8"), dizzy: hex("#FF7AC0"),
+  idle: hex("#F0EADB"), working: hex("#C9DCCF"), thinking: hex("#F0EADB"), searching: hex("#91B5A0"),
+  approval: hex("#C9DCCF"), question: hex("#91B5A0"), error: hex("#91B5A0"), finished: hex("#91B5A0"),
+  ratelimit: hex("#91B5A0"), sleeping: hex("#91B5A0"), dizzy: hex("#91B5A0"),
 };
 const calm = { hop: false, scan: false, breathe: false, snore: false, sweat: false, gaze: null, lean: 0 };
 export const BOT_STATES: Record<BotStateName, Mood> = {
@@ -706,7 +706,7 @@ export class RavenEngine {
     x.lineJoin = "round";
     // Sem contorno preto: só um aro de luz finíssimo, para o corvo não "colar" no fundo.
     x.lineWidth = 0.9;
-    x.strokeStyle = "rgba(190,205,255,0.16)";
+    x.strokeStyle = "rgba(145, 181, 160,0.16)";
     const H = RAVEN.head;
     const footLift = (s: number) => (s < 0 ? P.footL : P.footR) + P.tuck * 3.2;
     const head: RavenHead = { x: 60 + gx * 0.4, y: H.cy + gy * 0.4 + this.physDy * 2, r: H.r, chestY: 82, bodyR: 28, footX: 60 + RAVEN.feet.dx, footY: RAVEN.feet.y - footLift(1), spread: Math.min(1, P.wing / 1.5) };
@@ -736,7 +736,7 @@ export class RavenEngine {
       const p = new Path2D(side < 0 ? RAVEN.wingL : RAVEN.wingR);
       x.fillStyle = fill; x.fill(p); x.stroke(p);
       if (quill) {
-        x.strokeStyle = muninn ? "rgba(207,214,234,0.5)" : "rgba(94,242,201,0.5)";
+        x.strokeStyle = muninn ? "rgba(207, 214, 234,0.5)" : "rgba(145, 181, 160,0.5)";
         x.lineWidth = 1.3; x.lineCap = "round";
         x.beginPath(); x.moveTo(60 + side * 26.6, 70); x.bezierCurveTo(60 + side * 29.4, 76, 60 + side * 29.6, 83, 60 + side * 28, 88.6); x.stroke();
       }
@@ -750,11 +750,11 @@ export class RavenEngine {
     // Peito: aurora (Huginn) ou prata (Muninn), e o brilho macio do alto da cabeça.
     const belly = new Path2D(RAVEN.belly);
     const bg = x.createRadialGradient(60, 72, 1, 60, 82, 18);
-    bg.addColorStop(0, muninn ? "rgba(207,214,234,0.32)" : "rgba(94,242,201,0.22)");
-    bg.addColorStop(1, muninn ? "rgba(207,214,234,0.06)" : "rgba(106,168,255,0.06)");
+    bg.addColorStop(0, muninn ? "rgba(207, 214, 234,0.32)" : "rgba(145, 181, 160,0.22)");
+    bg.addColorStop(1, muninn ? "rgba(207, 214, 234,0.06)" : "rgba(201, 220, 207,0.06)");
     x.fillStyle = bg; x.fill(belly);
     const gloss = x.createRadialGradient(52, 33, 0.5, 54, 36, 15);
-    gloss.addColorStop(0, "rgba(255,255,255,0.2)"); gloss.addColorStop(1, "rgba(255,255,255,0)");
+    gloss.addColorStop(0, "rgba(255, 255, 255,0.2)"); gloss.addColorStop(1, "rgba(255, 255, 255,0)");
     x.fillStyle = gloss; x.fill(body);
     if (!this.isMini && !(dressed && this.outfit === "runeBand")) {
       x.save();
@@ -769,11 +769,11 @@ export class RavenEngine {
     x.save();
     x.translate(gx, gy);
     if (muninn && !this.isMini && !(dressed && (this.outfit === "helm" || this.outfit === "starCrown"))) {
-      x.fillStyle = "rgba(207,214,234,0.85)"; x.fill(new Path2D(RAVEN.moon));
+      x.fillStyle = "rgba(207, 214, 234,0.85)"; x.fill(new Path2D(RAVEN.moon));
     }
     const flush = Math.max(this.blush, this.tint * 0.4);
     if (flush > 0.02) {
-      x.fillStyle = `rgba(180,124,255,${0.4 * flush})`;
+      x.fillStyle = `rgba(145, 181, 160,${0.4 * flush})`;
       for (const ex of [45.5, 74.5]) { x.beginPath(); x.ellipse(ex, 54.5, 3.6, 2, 0, 0, Math.PI * 2); x.fill(); }
     }
     let shape: EyeShape = this.eyeOverride ?? this.cfg.eye;
@@ -793,7 +793,7 @@ export class RavenEngine {
     x.shadowBlur = 0;
     // Brilho nos olhos abertos (só nas formas "pill"/"wide"), e a pálpebra mansa do Muninn.
     if (!this.isMini && (shape === "pill" || shape === "wide") && this.open > 0.5) {
-      x.fillStyle = "rgba(255,255,255,0.85)";
+      x.fillStyle = "rgba(255, 255, 255,0.85)";
       for (const side of [-1, 1]) { x.beginPath(); x.arc(60 + side * RAVEN.eyes.dx + 1.6, RAVEN.eyes.y - 2.2, 1.3, 0, Math.PI * 2); x.fill(); }
       if (muninn) {
         x.fillStyle = css(dark);
@@ -860,13 +860,13 @@ export class RavenEngine {
     }
     // Brilho de aurora no alto e sombra na borda.
     const hl = x.createRadialGradient(rx * 0.3, -ry * 0.5, 0, rx * 0.3, -ry * 0.5, R * 0.5);
-    hl.addColorStop(0, "rgba(94,242,201,0.18)");
-    hl.addColorStop(1, "rgba(94,242,201,0)");
+    hl.addColorStop(0, "rgba(145, 181, 160,0.18)");
+    hl.addColorStop(1, "rgba(145, 181, 160,0)");
     x.fillStyle = hl;
     x.fill(body);
     const sh = x.createRadialGradient(0, 0, R * 0.6, 0, 0, R * 1.3);
-    sh.addColorStop(0, "rgba(0,0,0,0)");
-    sh.addColorStop(1, "rgba(0,0,0,0.25)");
+    sh.addColorStop(0, "rgba(0, 0, 0,0)");
+    sh.addColorStop(1, "rgba(0, 0, 0,0.25)");
     x.fillStyle = sh;
     x.fill(body);
   }
@@ -877,8 +877,8 @@ export class RavenEngine {
     const w = R * 0.9 * m;
     const chew = this.isChewing ? Math.sin(clock() * 30) * R * 0.02 : 0;
     x.save();
-    x.fillStyle = "rgba(5,8,18,0.85)";
-    x.strokeStyle = "rgba(246,210,122,0.5)";
+    x.fillStyle = "rgba(5, 8, 18,0.85)";
+    x.strokeStyle = "rgba(240, 234, 219,0.5)";
     x.lineWidth = Math.max(0.6, R * 0.02);
     rounded(x, -w / 2, R * 0.38 - h / 2 + chew, w, h, h / 2);
     x.fill();
@@ -930,7 +930,7 @@ export class RavenEngine {
     x.translate(bx, by);
     x.beginPath();
     x.arc(0, 0, r, 0, Math.PI * 2);
-    x.fillStyle = "rgba(10,16,36,0.92)";
+    x.fillStyle = "rgba(10, 16, 36,0.92)";
     x.fill();
     x.lineWidth = Math.max(1, R * 0.05);
     x.strokeStyle = css(b.color, 0.95);
@@ -974,11 +974,11 @@ export class RavenEngine {
       x.rotate(s.spin + s.age);
       const sz = s.size * R;
       switch (s.kind) {
-        case "heart": x.fillStyle = "#FF6B8A"; heart(x, sz); x.fill(); break;
+        case "heart": x.fillStyle = "#91B5A0"; heart(x, sz); x.fill(); break;
         case "star": x.fillStyle = GOLD_A; star(x, sz, sz * 0.45); x.fill(); break;
-        case "spark": x.strokeStyle = "#5EF2C9"; x.lineWidth = sz * 0.25; x.beginPath(); x.moveTo(-sz, 0); x.lineTo(sz, 0); x.moveTo(0, -sz); x.lineTo(0, sz); x.stroke(); break;
-        case "sweat": x.fillStyle = "#8FD3FF"; x.beginPath(); x.ellipse(0, 0, sz * 0.45, sz * 0.7, 0, 0, Math.PI * 2); x.fill(); break;
-        case "z": x.rotate(-(s.spin + s.age)); x.fillStyle = "#AFC0E8"; x.font = `600 ${sz * 2.2}px "Bifrost Runic", "Palatino Linotype", Georgia, serif`; x.fillText(SLEEP_RUNE, 0, 0); break;
+        case "spark": x.strokeStyle = "#91B5A0"; x.lineWidth = sz * 0.25; x.beginPath(); x.moveTo(-sz, 0); x.lineTo(sz, 0); x.moveTo(0, -sz); x.lineTo(0, sz); x.stroke(); break;
+        case "sweat": x.fillStyle = "#91B5A0"; x.beginPath(); x.ellipse(0, 0, sz * 0.45, sz * 0.7, 0, 0, Math.PI * 2); x.fill(); break;
+        case "z": x.rotate(-(s.spin + s.age)); x.fillStyle = "#91B5A0"; x.font = `600 ${sz * 2.2}px "Bifrost Runic", "DejaVu Sans", sans-serif`; x.fillText(SLEEP_RUNE, 0, 0); break;
       }
       x.restore();
     }
@@ -1034,7 +1034,7 @@ function eyeShape(x: CanvasRenderingContext2D, shape: EyeShape, w: number, h: nu
         if (a === 0) x.moveTo(Math.cos(aa) * r, Math.sin(aa) * r); else x.lineTo(Math.cos(aa) * r, Math.sin(aa) * r);
       }
     }); break;
-    case "heart": { const f = x.fillStyle; x.fillStyle = "#FF6B8A"; heart(x, w * 1.2); x.fill(); x.fillStyle = f; break; }
+    case "heart": { const f = x.fillStyle; x.fillStyle = "#91B5A0"; heart(x, w * 1.2); x.fill(); x.fillStyle = f; break; }
     case "star": { const f = x.fillStyle; x.fillStyle = GOLD_A; x.rotate(t * 1.5 * side); star(x, w * 1.05, w * 0.46); x.fill(); x.fillStyle = f; break; }
     case "tired": rounded(x, -w / 2, -h * 0.02, w, h * 0.38, w / 2); x.fill(); break;
     case "wink":

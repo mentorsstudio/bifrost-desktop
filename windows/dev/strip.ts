@@ -1,5 +1,7 @@
 // Tiras de quadros dos corvos (0/25/50/75%) para checar colisões. Só desenvolvimento.
 import "../src/bifrost/nordic.css";
+import "../src/theme/freya.css";
+import "../src/theme/aurora";
 import { Mascot, MASCOT_STATES, type MascotName } from "../src/bifrost/mascots";
 const root = document.getElementById("root")!;
 const name = (new URLSearchParams(location.search).get("m") ?? "huginn") as MascotName;

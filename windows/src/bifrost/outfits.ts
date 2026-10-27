@@ -17,9 +17,9 @@ export interface RavenHead {
 }
 export interface OutfitState { presence: number; morph: number }
 
-const GOLD = ["#F6D27A", "#B8862F"] as const;
-const IRON = ["#9AA3B8", "#3D4560"] as const;
-const INK = "#070b16";
+const GOLD = ["#F0EADB", "#416A59"] as const;
+const IRON = ["#C9DCCF", "#416A59"] as const;
+const INK = "#10231F";
 
 function lin(c: Ctx, x0: number, y0: number, x1: number, y1: number, a: string, b: string) {
   const g = c.createLinearGradient(x0, y0, x1, y1);
@@ -27,7 +27,7 @@ function lin(c: Ctx, x0: number, y0: number, x1: number, y1: number, a: string, 
   return g;
 }
 function alpha(st: OutfitState) { return Math.max(0, Math.min(1, st.presence)) * Math.max(0, 1 - st.morph * 2); }
-function outline(c: Ctx, w: number) { c.lineWidth = w * 0.6; c.strokeStyle = "rgba(7,11,22,.35)"; c.lineJoin = "round"; c.stroke(); }
+function outline(c: Ctx, w: number) { c.lineWidth = w * 0.6; c.strokeStyle = "rgba(16, 35, 31,.35)"; c.lineJoin = "round"; c.stroke(); }
 
 function halo(c: Ctx, h: RavenHead, front: boolean) {
   const t = performance.now() / 1000;
@@ -37,9 +37,9 @@ function halo(c: Ctx, h: RavenHead, front: boolean) {
   c.lineWidth = h.r * 0.22;
   const g = c.createLinearGradient(-h.r, 0, h.r, 0);
   const p = (Math.sin(t * 1.3) + 1) / 2;
-  g.addColorStop(0, "#5ef2c9"); g.addColorStop(0.5 + p * 0.2 - 0.1, "#6aa8ff"); g.addColorStop(1, "#b47cff");
+  g.addColorStop(0, "#91B5A0"); g.addColorStop(0.5 + p * 0.2 - 0.1, "#C9DCCF"); g.addColorStop(1, "#F0EADB");
   c.strokeStyle = g;
-  c.shadowColor = "rgba(94,242,201,.8)"; c.shadowBlur = h.r * 0.5;
+  c.shadowColor = "rgba(145, 181, 160,.8)"; c.shadowBlur = h.r * 0.5;
   c.beginPath();
   if (front) c.arc(0, 0, h.r * 0.95, 0, Math.PI); else c.arc(0, 0, h.r * 0.95, Math.PI, Math.PI * 2);
   c.stroke();
@@ -72,7 +72,7 @@ function cloakBehind(c: Ctx, h: RavenHead) {
   c.bezierCurveTo(x - w * 0.5, low + 4, x + w * 0.5, low + 4, x + w * 0.92, low);
   c.bezierCurveTo(x + w * 1.12, low - 14, x + w * 1.05, top + 4, x + h.r * 0.55, top);
   c.closePath();
-  c.fillStyle = lin(c, 0, top, 0, low, "#8a3434", "#3e1616");
+  c.fillStyle = lin(c, 0, top, 0, low, "#1D3C34", "#10231F");
   c.fill(); outline(c, h.r * 0.05);
   c.restore();
 }
@@ -88,7 +88,7 @@ function cloakFront(c: Ctx, h: RavenHead) {
   c.quadraticCurveTo(x, y + h.r * 0.72, x - h.r * 0.62, y + h.r * 0.36);
   c.quadraticCurveTo(x - h.r * 0.74, y + h.r * 0.3, x - h.r * 0.72, y - 1.5);
   c.closePath();
-  c.fillStyle = lin(c, 0, y - 2, 0, y + h.r * 0.6, "#e6d6b8", "#9c8664");
+  c.fillStyle = lin(c, 0, y - 2, 0, y + h.r * 0.6, "#F0EADB", "#91B5A0");
   c.fill(); outline(c, h.r * 0.04);
   c.beginPath(); c.arc(x + h.r * 0.5, y + h.r * 0.3, h.r * 0.12, 0, Math.PI * 2);
   c.fillStyle = lin(c, x + h.r * 0.55, y, x + h.r * 0.8, y + h.r * 0.4, GOLD[0], GOLD[1]); c.fill();
@@ -105,7 +105,7 @@ function helm(c: Ctx, h: RavenHead) {
     c.quadraticCurveTo(x + s * r * 1.45, y - r * 0.9, x + s * r * 1.35, y - r * 1.45);
     c.quadraticCurveTo(x + s * r * 1.05, y - r * 0.95, x + s * r * 0.7, y - r * 0.7);
     c.closePath();
-    c.fillStyle = lin(c, x, y - r * 1.4, x + s * r, y, "#f4f6ff", "#aab4cf");
+    c.fillStyle = lin(c, x, y - r * 1.4, x + s * r, y, "#F0EADB", "#91B5A0");
     c.fill(); outline(c, r * 0.06);
   }
   // Cúpula: cobre só o alto da cabeça, termina acima dos olhos.
@@ -139,7 +139,7 @@ function crown(c: Ctx, h: RavenHead) {
   c.fillStyle = lin(c, x, top, x, base, GOLD[0], GOLD[1]);
   c.fill(); outline(c, r * 0.06);
   for (const [dx, dy] of [[-0.5, 0.28], [0, 0], [0.5, 0.28]]) { c.beginPath(); c.arc(x + dx * r, top + dy * r, r * 0.1, 0, Math.PI * 2); c.fillStyle = GOLD[0]; c.fill(); }
-  c.fillStyle = "#5ef2c9";
+  c.fillStyle = "#91B5A0";
   for (const dx of [-0.42, 0, 0.42]) { c.beginPath(); c.arc(x + dx * r, base - r * 0.12, r * 0.07, 0, Math.PI * 2); c.fill(); }
   c.restore();
 }
@@ -158,8 +158,8 @@ function lantern(c: Ctx, h: RavenHead) {
   c.translate(0, h.r * 0.22);
   c.beginPath(); c.roundRect(-h.r * 0.2, 0, h.r * 0.4, h.r * 0.5, h.r * 0.12);
   const g = c.createRadialGradient(0, h.r * 0.25, 0, 0, h.r * 0.25, h.r * 0.4);
-  g.addColorStop(0, "#ffe59a"); g.addColorStop(1, "#ff7a4a");
-  c.fillStyle = g; c.shadowColor = "rgba(255,180,90,.9)"; c.shadowBlur = h.r * 0.8; c.fill();
+  g.addColorStop(0, "#F0EADB"); g.addColorStop(1, "#F0EADB");
+  c.fillStyle = g; c.shadowColor = "rgba(145, 181, 160,.9)"; c.shadowBlur = h.r * 0.8; c.fill();
   c.shadowBlur = 0; c.strokeStyle = IRON[1]; c.lineWidth = h.r * 0.07; c.stroke();
   c.restore();
 }
@@ -203,7 +203,7 @@ export function drawWardrobeIcon(c: Ctx, size: number, selection: OutfitSelectio
   c.clearRect(0, 0, size, size);
   if (selection === "none") {
     c.save(); c.translate(size / 2, size / 2);
-    c.strokeStyle = "#93a1c6"; c.lineWidth = 1.4; c.lineCap = "round";
+    c.strokeStyle = "#91B5A0"; c.lineWidth = 1.4; c.lineCap = "round";
     c.beginPath(); c.arc(0, 0, size * 0.22, 0, Math.PI * 2);
     c.moveTo(-size * 0.15, size * 0.15); c.lineTo(size * 0.15, -size * 0.15); c.stroke();
     c.restore();
@@ -214,9 +214,9 @@ export function drawWardrobeIcon(c: Ctx, size: number, selection: OutfitSelectio
   const bw = size * 0.5, bh = size * 0.2;
   c.save(); c.translate(size / 2, size - bh * 0.8);
   c.beginPath(); c.roundRect(-bw / 2, -bh / 2, bw, bh, bh / 2);
-  c.fillStyle = "rgba(7,11,22,.85)"; c.fill();
-  c.strokeStyle = "rgba(226,181,90,.6)"; c.lineWidth = 0.8; c.stroke();
-  c.fillStyle = "#f6d27a"; c.font = `700 ${bh * 0.62}px "Segoe UI",sans-serif`;
+  c.fillStyle = "rgba(16, 35, 31,.85)"; c.fill();
+  c.strokeStyle = "rgba(145, 181, 160,.6)"; c.lineWidth = 0.8; c.stroke();
+  c.fillStyle = "#F0EADB"; c.font = `700 ${bh * 0.62}px "DejaVu Sans",sans-serif`;
   c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(autoLabel, 0, 0.3);
   c.restore();
 }

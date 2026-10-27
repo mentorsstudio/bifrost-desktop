@@ -11,6 +11,8 @@ import "../bifrost/hub.css";
 import "../bifrost/hub-pages.css";
 import "../theme/motion.css";
 import "../bifrost/realm.css";
+import "../theme/freya.css";
+import "../theme/aurora";
 import "../bifrost/contextmenu";
 
 // Céu nórdico atrás da janela inteira: aurora e ponte.

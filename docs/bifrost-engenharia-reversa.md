@@ -645,3 +645,15 @@ Caminhada na área de trabalho: `logic::walk_ledge` — o passeio segue a borda 
 - **Windhawk opcional** (`windows/windhawk/`): mod C++ para o `explorer.exe` que devolve a ilha ao topo a cada troca de janela em primeiro plano; só para casos em que outro programa topmost ainda a cubra. O Windhawk não tem CSS/JS — o visual continua no CSS/TS do Bifrost.
 - O clique-através fora do formato da ilha continua o mesmo (região/poll do cursor).
 - Achado no PC real: ao registrar a AppBar o Windows empurrou a janela da ilha para y=40 (dentro da área útil); o vigia agora a devolve ao topo do monitor (dentro da faixa reservada).
+
+### 10.16 Fase 16 — identidade própria na família Freya
+
+Fonte: Freya Branding v1 (`/workspace/freya-branding/kit`). Bifrost não usa o letreiro nem o retrato da Freya: tem logo e wordmark próprios (`windows/brand/`, SVG em paths).
+
+- **Tokens** (`src/theme/freya.css`, importado por último em todas as janelas): Pinheiro #142D28, Marfim #F0EADB, Sálvia #91B5A0; escuro bg #10231F, surface #142D28, elevated #1D3C34, border #416A59. Todos os tokens antigos (`--bf-gold*`, `--bf-aurora-*`, `--hub-*`, `--ink`, `--card`…) apontam para eles. Varredura de cores em todo o CSS (ouro/âmbar/azuis/roxos/cinzas → paleta Freya por luminância); botões primários em Sálvia com texto Pinheiro. Fontes DejaVu Sans / Sans Mono (WOFF do kit, licença em `theme/fonts/LICENCA-DejaVu.txt`).
+- **Ornamentos**: ícones em quadrado arredondado (os escudos do hub viraram quadrados de 26 px de raio); nó celta discreto no canto dos painéis.
+- **Aurora**: `--fy-aurora` vai do #10231F ao #1D3C34 e à Sálvia, com brilhos Marfim; `src/theme/aurora.ts` faz a ponte correr (Web Animations em `background-position`, inclusive em `::after`), o CSS só "respira" a opacidade. Desliga com prefers-reduced-motion.
+- **Logo**: quadrado arredondado Pinheiro, ponte Bifröst em três arcos (#416A59→Sálvia→Marfim) e a runa Algiz (ᛉ) acima; wordmark BIFROST angular em traço. Ícones do app/bandeja (`tauri icon`) e BMPs do instalador regenerados.
+- **Corvos**: silhueta nova (ovo alto, asas em lâmina, bico curto, mesmas âncoras dos adornos); Huginn é Pinheiro com peito Sálvia e olhos Marfim; Muninn é Sálvia com peito Marfim e olhos Pinheiro. Sem ouro nos pés/bico.
+- **Movimento**: `--m-bouncy`/`--bf-ease-raven` sem mola; `locomotion.ts` com `CALM = 0.55` (amassar, quique, inclinação no chão) e ritmos mais lentos.
+- **Herança removida**: cores de projetos do autor original em `layout.ts` (PROJECT_COLORS) e cores de estado/brilho trocadas pela paleta. Sons já eram próprios (`scripts/gen-sounds.py`). Crédito MIT ao Coucou mantido.

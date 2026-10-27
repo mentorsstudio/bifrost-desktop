@@ -146,13 +146,13 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
     if (!status.prefs.enabled) {
       text = t("Dictation is off");
     } else if (models !== "ready") {
-      color = "#f7b32b";
+      color = "#91B5A0";
       text = models === "downloading" ? t("Downloading the voice model…") : t("Download the voice model to dictate");
     } else if (status.keys !== "ok" && status.keys !== "wayland") {
-      color = "#f7b32b";
+      color = "#91B5A0";
       text = t("Use the pill's microphone to dictate");
     } else {
-      color = "#34d399";
+      color = "#91B5A0";
       text = t("Ready · hold {0}", { 0: keyLabel(status.keys === "wayland" ? "wayland" : status.prefs.key, status.platform) });
     }
     statusLine.append(h("i", { class: "dot", style: `background:${color}` }), h("span", { text }));

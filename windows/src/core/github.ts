@@ -97,7 +97,7 @@ export const GH_STRINGS = {
 
 export const CI_COLORS: Record<CIState, string> = {
   failure: "#F4505E",
-  pending: "#F5A524",
+  pending: "#C9DCCF",
   success: "#22C55E",
   unknown: "#6B7079",
 };
