@@ -40,7 +40,7 @@ import { activePillsSection } from "./page-pills";
 import { localSection } from "./page-chat";
 import { integrationsSection, whatsappSections } from "./page-integrations";
 import { generalSection } from "./page-general";
-import { themesSection } from "./page-themes";
+import { charactersSection, themesSection } from "./page-themes";
 import { shortcutsSection } from "./page-shortcuts";
 
 // ── Language ──────────────────────────────────────────────────────────────────
@@ -127,7 +127,7 @@ async function render() {
   clear(S.root);
   const sections: Partial<Record<PageId, () => HTMLElement[]>> = {
     general: () => [generalSection()],
-    themes: () => [themesSection()],
+    themes: () => [themesSection(), charactersSection()],
     pills: () => [activePillsSection(connected)],
     agents: () => [claudeSection(status), agentsSection(agents), planSection(status)],
     chat: () => [aiSection(), ...mcpSections(S.settings, save, "chat"), localSection(false)],

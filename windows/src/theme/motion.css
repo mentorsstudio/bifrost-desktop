@@ -24,15 +24,15 @@
    LIFT/GLOW: ao passar o mouse sobe 1 px e acende um brilho do tema (só opacity).
    TRANSITION: as mesmas curvas e durações em todo botão e aba. */
 button, .btn, .icon-btn, .hub-item, .chip, [role="button"], [role="switch"], [role="tab"], [role="radio"], .tab, .seg button,
-.toggle, .switch, .tm-item, .pill-btn, a.button, .th-card, .bf-tray-item, .bf-tray-theme, .bf-menu-item, .m-press {
+.toggle, .switch, .tm-item, .pill-btn, a.button, .th-card, .ch-card, .bf-tray-item, .bf-tray-theme, .bf-menu-item, .m-press {
   transition: transform var(--m-base) var(--m-bouncy), opacity var(--m-fast) var(--m-ease),
     background-color var(--m-fast) var(--m-ease), border-color var(--m-fast) var(--m-ease),
     box-shadow var(--m-base) var(--m-ease), color var(--m-fast) var(--m-ease);
   -webkit-tap-highlight-color: transparent;
 }
-button:hover:not(:disabled), .btn:hover, .chip:hover, [role="button"]:hover, .th-card:hover, .m-press:hover { transform: translateY(var(--m-hover-lift)); }
+button:hover:not(:disabled), .btn:hover, .chip:hover, [role="button"]:hover, .th-card:hover, .ch-card:hover, .m-press:hover { transform: translateY(var(--m-hover-lift)); }
 button:active:not(:disabled), .btn:active, .icon-btn:active, .hub-item:active, .chip:active, [role="tab"]:active, [role="radio"]:active, .tab:active, .seg button:active,
-[role="button"]:active, [role="switch"]:active, .toggle:active, .switch:active, .tm-item:active, .th-card:active, .bf-tray-item:active, .bf-tray-theme:active, .bf-menu-item:active, .ag-row:active, .np-icon:active, .np-play:active, .send-btn:active, .m-press:active {
+[role="button"]:active, [role="switch"]:active, .toggle:active, .switch:active, .tm-item:active, .th-card:active, .ch-card:active, .bf-tray-item:active, .bf-tray-theme:active, .bf-menu-item:active, .ag-row:active, .np-icon:active, .np-play:active, .send-btn:active, .m-press:active {
   transform: scale(var(--m-press)) !important; transition-duration: 90ms;
 }
 /* Brilho de hover: um halo do tema num ::before, que só muda a opacidade. */

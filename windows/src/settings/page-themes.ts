@@ -50,3 +50,56 @@ export function themesSection(): HTMLElement {
   sec.append(grid);
   return sec;
 }
+
+// Fase 19 — Personagens: o visual dos corvos, separado do tema. Cada cartão é uma
+// prévia viva (os dois corvos respirando e piscando); escolher faz um pulinho
+// curto de comemoração (some com movimento reduzido, pelo próprio nordic.css).
+import { CHARACTERS, chooseCharacter, currentCharacter, onCharacterChange, ravenTheme, type Character } from "../theme/characters";
+
+export const CHARACTER_TXT = {
+  title: "Personagens",
+  intro: "O visual do Huginn e do Muninn, à parte do tema. Vale para a ilha, o corvo da área de trabalho, a pílula e o chat.",
+  inUse: "Em uso",
+} as const;
+
+export function charactersSection(): HTMLElement {
+  const sec = h("section", { class: "th-section ch-section" });
+  sec.append(h("h2", { text: CHARACTER_TXT.title }), h("div", { class: "hint", text: CHARACTER_TXT.intro }));
+  const grid = h("div", { class: "ch-grid m-stagger", role: "radiogroup", "aria-label": CHARACTER_TXT.title });
+  const cards = new Map<string, { card: HTMLElement; birds: Mascot[]; box: HTMLElement }>();
+  const draw = (c: Character, box: HTMLElement): Mascot[] => {
+    box.replaceChildren();
+    const T = ravenTheme(currentTheme(), c);
+    return [new Mascot("huginn", box, T), new Mascot("muninn", box, T)];
+  };
+  CHARACTERS.forEach((c, i) => {
+    const on = c.id === currentCharacter().id;
+    const box = h("div", { class: "ch-birds", "aria-hidden": "true" });
+    const card = h("button", {
+      class: `ch-card${on ? " on" : ""}`, role: "radio", "aria-checked": String(on), "data-character": c.id,
+      title: `${c.name} — ${c.tagline}`, onclick: () => chooseCharacter(c.id),
+    });
+    card.style.setProperty("--i", String(i));
+    card.append(box,
+      h("div", { class: "th-meta" }, h("span", { class: "th-name", text: c.name }), h("span", { class: "th-badge", text: CHARACTER_TXT.inUse })),
+      h("div", { class: "th-tag", text: c.tagline }));
+    cards.set(c.id, { card, box, birds: draw(c, box) });
+    grid.append(card);
+  });
+  const offC = onCharacterChange((c) => {
+    if (!sec.isConnected) { offC(); offT(); return; }
+    for (const [id, e] of cards) {
+      const on = id === c.id;
+      e.card.classList.toggle("on", on); e.card.setAttribute("aria-checked", String(on));
+      if (on) for (const b of e.birds) { b.set("success"); setTimeout(() => b.set("idle"), 900); }
+    }
+  });
+  // "Seguir o tema" mostra os corvos do tema atual: redesenha quando o tema troca.
+  const offT = onThemeChange(() => {
+    if (!sec.isConnected) { offC(); offT(); return; }
+    const e = cards.get("theme");
+    if (e) e.birds = draw(CHARACTERS[0], e.box);
+  });
+  sec.append(grid);
+  return sec;
+}

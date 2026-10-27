@@ -27,3 +27,21 @@
 .th-card.on .th-badge { opacity: 1; transform: none; }
 .th-tag { font-size: 11.5px; line-height: 1.35; color: var(--dim); }
 @media (prefers-reduced-motion: reduce) { .th-aurora > i { animation: none; } }
+
+/* Fase 19 — Personagens: o visual dos corvos, à parte do tema. */
+.ch-section { margin-top: 26px; }
+.ch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(164px, 1fr)); gap: 12px; margin-top: 12px; }
+.ch-card { --th-card-accent: var(--accent, #f6d27a); --th-card-glow: rgba(var(--th-accent-rgb, 246,210,122), .35);
+  display: flex; flex-direction: column; gap: 6px; padding: 10px; text-align: left; cursor: pointer; color: var(--ink); min-width: 0;
+  border-radius: 18px; border: 1px solid rgba(255, 255, 255, .08); background: rgba(255, 255, 255, .03); font: inherit; }
+.ch-card:hover { box-shadow: 0 10px 28px -12px var(--th-card-glow), 0 0 0 1px var(--th-card-glow); }
+.ch-card.on { border-color: var(--th-card-accent); box-shadow: 0 0 0 2px var(--th-card-accent), 0 12px 30px -14px var(--th-card-glow); }
+.ch-birds { height: 84px; border-radius: 13px; display: flex; align-items: flex-end; justify-content: center; gap: 6px; padding-bottom: 4px; overflow: hidden;
+  background: radial-gradient(120px 60px at 50% 100%, rgba(var(--th-accent-rgb, 246,210,122), .14), transparent 70%), rgba(0, 0, 0, .18); }
+.ch-birds .bf-mascot { width: 62px; height: 62px; flex: none; }
+.ch-card .th-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.ch-card.on .th-badge { opacity: 1; transform: none; }
+.ch-card .th-tag { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.ch-card { position: relative; }
+.ch-card .th-badge { position: absolute; top: 16px; right: 16px; }
+.ch-card .th-name { white-space: normal; }
