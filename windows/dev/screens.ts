@@ -78,6 +78,24 @@ if (shot === "greeting") {
   let last = performance.now();
   const frame = (t: number) => { const dt = Math.min(0.05, (t - last) / 1000); last = t; e.update(dt); ctx.clearRect(0, 0, 320, 320); e.draw(ctx, 320, 320); requestAnimationFrame(frame); };
   requestAnimationFrame(frame);
+} else if (shot === "outfits") {
+  const root = document.getElementById("root")!;
+  root.style.cssText = "display:grid;grid-template-columns:repeat(4,220px);gap:18px;justify-content:center;align-content:center;font:600 14px 'Space Grotesk',sans-serif;color:#eef2ff";
+  const list = [["none", "idle"], ["auroraHalo", "idle"], ["runeBand", "working"], ["frostScarf", "sleeping"], ["frostScarf", "idle"], ["starCrown", "finished"], ["helm", "idle"], ["lantern", "thinking"]] as const;
+  const engines: [BotEngine, CanvasRenderingContext2D][] = [];
+  for (const [o, n] of list) {
+    const cell = document.createElement("div");
+    cell.style.cssText = "background:linear-gradient(180deg,#18213f,#0b1022);border:1px solid rgba(148,170,255,.12);border-radius:12px;padding:10px;text-align:center";
+    const c = document.createElement("canvas"); c.width = c.height = 400; c.style.width = c.style.height = "200px";
+    const ctx = c.getContext("2d")!; ctx.scale(2, 2);
+    const e = new BotEngine(); e.setState(n as BotStateName, true); e.setOutfit(o as never, false);
+    engines.push([e, ctx]);
+    const label = document.createElement("div"); label.textContent = `${o} · ${n}`;
+    cell.append(c, label); root.append(cell);
+  }
+  let last = performance.now();
+  const frame = (t: number) => { const dt = Math.min(0.05, (t - last) / 1000); last = t; for (const [e, ctx] of engines) { e.update(dt); ctx.clearRect(0, 0, 200, 200); e.draw(ctx, 200, 200); } requestAnimationFrame(frame); };
+  requestAnimationFrame(frame);
 } else if (shot === "mascots") {
   const root = document.getElementById("root")!;
   root.style.cssText = "display:grid;grid-template-columns:repeat(4,220px);gap:18px;justify-content:center;align-content:center;font:600 14px 'Space Grotesk',sans-serif;color:#eef2ff";

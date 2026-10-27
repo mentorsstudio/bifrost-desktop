@@ -23,7 +23,7 @@ function lin(c: Ctx, x0: number, y0: number, x1: number, y1: number, a: string, 
   return g;
 }
 function alpha(st: OutfitState) { return Math.max(0, Math.min(1, st.presence)) * Math.max(0, 1 - st.morph * 2); }
-function outline(c: Ctx, w: number) { c.lineWidth = w; c.strokeStyle = INK; c.lineJoin = "round"; c.stroke(); }
+function outline(c: Ctx, w: number) { c.lineWidth = w * 0.6; c.strokeStyle = "rgba(7,11,22,.35)"; c.lineJoin = "round"; c.stroke(); }
 
 function halo(c: Ctx, h: RavenHead, front: boolean) {
   const t = performance.now() / 1000;
@@ -55,34 +55,38 @@ function amulet(c: Ctx, h: RavenHead) {
   c.restore();
 }
 
+// Manto: fica inteiro atrás do corpo redondo e só aparece dos lados e embaixo,
+// como um tecido que cai dos ombros (y ≈ 54) até a cauda; nada na frente do peito.
 function cloakBehind(c: Ctx, h: RavenHead) {
-  const b = h.bodyR;
+  const x = h.x, top = h.y + h.r * 0.8, low = h.chestY + h.bodyR * 0.82;
+  const w = h.bodyR * 1.2;
   c.save();
   c.beginPath();
-  c.moveTo(h.x - h.r * 0.9, h.y + h.r * 0.75);
-  c.quadraticCurveTo(h.x - b * 1.6, h.chestY + b * 0.9, h.x - b * 1.05, h.chestY + b * 1.55);
-  c.lineTo(h.x + b * 1.05, h.chestY + b * 1.55);
-  c.quadraticCurveTo(h.x + b * 1.6, h.chestY + b * 0.9, h.x + h.r * 0.9, h.y + h.r * 0.75);
+  c.moveTo(x - h.r * 0.55, top);
+  c.bezierCurveTo(x - w * 1.05, top + 4, x - w * 1.12, low - 14, x - w * 0.92, low);
+  c.bezierCurveTo(x - w * 0.5, low + 4, x + w * 0.5, low + 4, x + w * 0.92, low);
+  c.bezierCurveTo(x + w * 1.12, low - 14, x + w * 1.05, top + 4, x + h.r * 0.55, top);
   c.closePath();
-  c.fillStyle = lin(c, 0, h.y, 0, h.chestY + b * 1.5, "#7a2a2a", "#3a1414");
-  c.fill(); outline(c, h.r * 0.07);
+  c.fillStyle = lin(c, 0, top, 0, low, "#8a3434", "#3e1616");
+  c.fill(); outline(c, h.r * 0.05);
   c.restore();
 }
+// Gola: uma meia-lua fina de pele no pescoço, abaixo da ponta do bico e acima
+// das asas; o broche fica no ombro direito, fora do rosto.
 function cloakFront(c: Ctx, h: RavenHead) {
-  // Gola de pele sob a cabeça e o broche de ouro.
+  const x = h.x, y = h.y + h.r * 0.86;
   c.save();
-  const y = h.y + h.r * 0.92;
   c.beginPath();
-  for (let i = 0; i <= 8; i++) {
-    const a = Math.PI * (i / 8);
-    const px = h.x - Math.cos(a) * h.r * 1.05, py = y + Math.sin(a) * h.r * 0.28;
-    if (i === 0) c.moveTo(px, py - h.r * 0.12); else c.quadraticCurveTo(px + h.r * 0.07, py + h.r * 0.16, px, py);
-  }
+  c.moveTo(x - h.r * 0.86, y - 1.5);
+  c.quadraticCurveTo(x, y + h.r * 0.34, x + h.r * 0.86, y - 1.5);
+  c.quadraticCurveTo(x + h.r * 0.9, y + h.r * 0.3, x + h.r * 0.62, y + h.r * 0.36);
+  c.quadraticCurveTo(x, y + h.r * 0.72, x - h.r * 0.62, y + h.r * 0.36);
+  c.quadraticCurveTo(x - h.r * 0.9, y + h.r * 0.3, x - h.r * 0.86, y - 1.5);
   c.closePath();
-  c.fillStyle = lin(c, 0, y - h.r * 0.2, 0, y + h.r * 0.4, "#d9c7a8", "#8a7558");
-  c.fill(); outline(c, h.r * 0.06);
-  c.beginPath(); c.arc(h.x + h.r * 0.55, y + h.r * 0.12, h.r * 0.15, 0, Math.PI * 2);
-  c.fillStyle = GOLD[0]; c.fill(); outline(c, h.r * 0.04);
+  c.fillStyle = lin(c, 0, y - 2, 0, y + h.r * 0.6, "#e6d6b8", "#9c8664");
+  c.fill(); outline(c, h.r * 0.04);
+  c.beginPath(); c.arc(x + h.r * 0.66, y + h.r * 0.28, h.r * 0.12, 0, Math.PI * 2);
+  c.fillStyle = lin(c, x + h.r * 0.55, y, x + h.r * 0.8, y + h.r * 0.4, GOLD[0], GOLD[1]); c.fill();
   c.restore();
 }
 
@@ -138,7 +142,8 @@ function crown(c: Ctx, h: RavenHead) {
 function lantern(c: Ctx, h: RavenHead) {
   const t = performance.now() / 1000;
   const sway = Math.sin(t * 1.6) * 0.12;
-  const px = h.x + h.bodyR * 1.55, py = h.chestY - h.bodyR * 0.2;
+  // Pendurada além da ponta da asa direita (x ≈ 104), para não sumir atrás dela.
+  const px = h.x + h.bodyR * 1.95, py = h.chestY - h.bodyR * 0.05;
   c.save();
   c.translate(px, py);
   c.rotate(sway);
@@ -159,14 +164,13 @@ export function drawOutfitBehind(c: Ctx, outfit: Outfit, h: RavenHead, st: Outfi
   c.save(); c.globalAlpha *= a;
   if (outfit === "auroraHalo") halo(c, h, false);
   if (outfit === "frostScarf") cloakBehind(c, h);
-  if (outfit === "lantern") lantern(c, h);
   c.restore();
 }
 
 /** Partes na frente, depois do rosto; caem de cima com mola ao vestir. */
 export function drawOutfitFront(c: Ctx, outfit: Outfit, h: RavenHead, st: OutfitState) {
   const a = alpha(st);
-  if (outfit === "none" || outfit === "lantern" || a <= 0.005) return;
+  if (outfit === "none" || a <= 0.005) return;
   const p = Math.max(0, Math.min(1, st.presence));
   const back = 1 + 2.7 * Math.pow(p - 1, 3) + 1.7 * Math.pow(p - 1, 2);
   c.save(); c.globalAlpha *= a;
@@ -177,6 +181,7 @@ export function drawOutfitFront(c: Ctx, outfit: Outfit, h: RavenHead, st: Outfit
     case "frostScarf": cloakFront(c, h); break;
     case "starCrown": crown(c, h); break;
     case "helm": helm(c, h); break;
+    case "lantern": lantern(c, h); break;
   }
   c.restore();
 }
