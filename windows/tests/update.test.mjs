@@ -52,7 +52,7 @@ const OUT = {
   ...NO_UPDATE,
   consent: true,
   current: "0.5.0",
-  latest: { version: "0.6.0", headline: "Flow dictation", pageUrl: "https://github.com/Louis-CFM/coucou/releases/tag/windows-v0.6.0" },
+  latest: { version: "0.6.0", headline: "Flow dictation", pageUrl: "https://github.com/mentorsstudio/bifrost-desktop/releases/tag/windows-v0.6.0" },
   canInstall: true,
 };
 let shown;

@@ -114,7 +114,7 @@ const out = (version = "0.6.0") => ({
   ...NO_UPDATE,
   consent: true,
   current: "0.5.2",
-  latest: { version, headline: null, pageUrl: "https://github.com/Louis-CFM/coucou/releases/tag/windows-v0.6.0" },
+  latest: { version, headline: null, pageUrl: "https://github.com/mentorsstudio/bifrost-desktop/releases/tag/windows-v0.6.0" },
 });
 
 test("Huginn is blue while a version waits", () => {
@@ -154,8 +154,8 @@ test("the blue only when Huginn has nothing else to say", () => {
 });
 
 test("All changes, and no third-party donation link", () => {
-  assert.equal(releasePage("windows", "0.5.2"), "https://github.com/Louis-CFM/coucou/releases/tag/windows-v0.5.2");
-  assert.equal(releasePage("linux", "0.5.2"), "https://github.com/Louis-CFM/coucou/releases/tag/linux-v0.5.2");
+  assert.equal(releasePage("windows", "0.5.2"), "https://github.com/mentorsstudio/bifrost-desktop/releases/tag/windows-v0.5.2");
+  assert.equal(releasePage("linux", "0.5.2"), "https://github.com/mentorsstudio/bifrost-desktop/releases/tag/linux-v0.5.2");
   const src = readFileSync(new URL("../src/whats-new/whats-new.ts", import.meta.url), "utf8");
   assert.doesNotMatch(src, /buy\.stripe\.com|COFFEE_URL/);
 });
