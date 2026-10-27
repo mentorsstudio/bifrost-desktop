@@ -644,3 +644,4 @@ Caminhada na área de trabalho: `logic::walk_ledge` — o passeio segue a borda 
 - **Ajustes › Geral**: "Reservar a faixa da ilha (notch)" (`notchReserve`, ligado) e "Ficar por cima em tela cheia" (`notchOverFullscreen`, desligado).
 - **Windhawk opcional** (`windows/windhawk/`): mod C++ para o `explorer.exe` que devolve a ilha ao topo a cada troca de janela em primeiro plano; só para casos em que outro programa topmost ainda a cubra. O Windhawk não tem CSS/JS — o visual continua no CSS/TS do Bifrost.
 - O clique-através fora do formato da ilha continua o mesmo (região/poll do cursor).
+- Achado no PC real: ao registrar a AppBar o Windows empurrou a janela da ilha para y=40 (dentro da área útil); o vigia agora a devolve ao topo do monitor (dentro da faixa reservada).

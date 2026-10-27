@@ -46,7 +46,7 @@ mod win {
         APPBARDATA, QUNS_BUSY, QUNS_PRESENTATION_MODE, QUNS_RUNNING_D3D_FULL_SCREEN,
     };
     use windows::Win32::UI::WindowsAndMessaging::{
-        SetWindowPos, HWND_NOTOPMOST, HWND_TOPMOST, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, WM_APP,
+        GetWindowRect, SetWindowPos, HWND_NOTOPMOST, HWND_TOPMOST, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, WM_APP,
     };
 
     static REGISTERED: AtomicBool = AtomicBool::new(false);
@@ -116,7 +116,15 @@ mod win {
                 unsafe {
                     match policy {
                         Policy::OnTop { reserve } => {
-                            let _ = SetWindowPos(hwnd, Some(HWND_TOPMOST), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+                            // A ilha mora DENTRO da faixa reservada: se o Windows a empurrou para a
+                            // área útil (acontece ao registrar a AppBar), volta para o topo do monitor.
+                            let mut wr = RECT::default();
+                            let off = GetWindowRect(hwnd, &mut wr).is_ok() && wr.top != rect.1;
+                            if off {
+                                let _ = SetWindowPos(hwnd, Some(HWND_TOPMOST), wr.left, rect.1, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE);
+                            } else {
+                                let _ = SetWindowPos(hwnd, Some(HWND_TOPMOST), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+                            }
                             if reserve {
                                 if last != Some((policy, rect)) {
                                     register(hwnd, rect);
