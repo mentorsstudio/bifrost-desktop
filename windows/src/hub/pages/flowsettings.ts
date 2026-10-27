@@ -58,7 +58,7 @@ export function modelsControl(ctx: HubContext, onReady?: () => void): HTMLElemen
 export async function flowSettingsPage(page: HTMLElement, ctx: HubContext) {
   const status = await ctx.refresh();
   const prefs = status.prefs;
-  page.append(ctx.hero("flowsettings", t("Settings"), null));
+  page.append(ctx.hero("flowsettings", t("Settings"), t("Dictation keys, microphone, transcription and privacy.")));
 
   // ── Keys ──
   const keys: [FlowKey, string][] = [

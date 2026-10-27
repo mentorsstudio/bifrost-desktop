@@ -22,6 +22,7 @@ export async function stylesPage(page: HTMLElement, ctx: HubContext) {
   const drawApps = () => {
     clear(perApp);
     perApp.classList.toggle("dimmed", !ctx.status.prefs.cleanup);
+    if (styles.length === 0) perApp.append(h("div", { class: "hub-note", text: t("No app with its own style yet. Pick one above: the others use the style of «Other apps».") }));
     styles.forEach((s, i) => {
       if (i > 0) perApp.append(divider());
       perApp.append(row(s.name, null,

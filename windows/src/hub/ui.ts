@@ -137,7 +137,7 @@ export function keyLabel(key: FlowKey | "wayland" | "", platform: "windows" | "l
 /** The key written as keycaps: "Right Ctrl" twice for hands-free. */
 export function keyKeycap(key: FlowKey | "wayland" | "", platform: "windows" | "linux", twice = false): HTMLElement {
   const label = keyLabel(key, platform);
-  return keycap(twice ? `${label} ${label}` : label);
+  return keycap(twice ? `${label} ×2` : label);
 }
 
 /** A number written the way the language writes it. */

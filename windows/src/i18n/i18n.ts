@@ -151,13 +151,15 @@ export function bifrostGlossary(text: string): string {
     .replace(/\bpelo notch\b/g, "pela ilha")
     .replace(/\bo notch\b/g, "a ilha")
     .replace(/\bO notch\b/g, "A ilha")
-    .replace(/\bnotch\b/g, "ilha");
+    .replace(/\bnotch\b/g, "ilha")
+    .replace(/\bNo Notch\b/g, "Na Ilha")
+    .replace(/\bNotch\b/g, "Ilha");
 }
 
 export function lookup(key: string, lang: Language = current): string | Plural | undefined {
   if (lang === "en") return undefined;
   const v = TABLE[key]?.[lang];
-  if (lang === "pt-BR" && typeof v === "string" && v.includes("otch")) return bifrostGlossary(v);
+  if (lang === "pt-BR" && typeof v === "string" && /[nN]otch/.test(v)) return bifrostGlossary(v);
   return v;
 }
 
