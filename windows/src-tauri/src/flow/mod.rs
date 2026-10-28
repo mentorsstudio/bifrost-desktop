@@ -274,7 +274,10 @@ fn run(app: AppHandle, flow: Arc<Flow>, rx: mpsc::Receiver<(KeyEvent, Instant)>)
                     logic.reset();
                 }
             }
-            Action::Lock => pill::update(&app, |s| s.phase = "locked".into()),
+            Action::Lock => {
+                crate::log::line("flow: hands-free on");
+                pill::update(&app, |s| s.phase = "locked".into())
+            }
             Action::Cancel => {
                 drop(listening.take());
                 pill::update(&app, |s| s.phase = "idle".into());
@@ -326,6 +329,7 @@ fn begin(app: &AppHandle, flow: &Arc<Flow>) -> Option<Listening> {
         Ok(capture) => {
             let app_front = os::foreground_app().filter(|(id, _)| !is_shell(id));
             pill::update(app, |s| s.phase = "listening".into());
+            crate::log::line("flow: listening");
             Some(Listening { capture, take, started: Instant::now(), app: app_front })
         }
         Err(err) => {
