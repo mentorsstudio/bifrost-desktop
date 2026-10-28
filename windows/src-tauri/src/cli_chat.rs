@@ -12,7 +12,7 @@ use crate::chat::{plain_question, Chat, ChatContext, ChatReply, ModelInfo};
 use crate::mcp::catalog::{detect, Env};
 
 pub const PROVIDER: &str = "cli";
-const TIMEOUT: Duration = Duration::from_secs(600);
+const TIMEOUT: Duration = Duration::from_secs(180);
 
 /// Provedores antigos que pediam chave de API: o chat sai deles na abertura.
 pub fn needs_migration(provider: &str) -> bool {
@@ -53,6 +53,12 @@ pub async fn send(chat: &Chat, model: &str, query: String, context: Option<ChatC
 
     let turn = chat.begin(PROVIDER);
     let question = plain_question(turn.first, context.as_ref(), &query);
+    // v25: a CLI only had the file's name and went looking for it (minutes, then
+    // nothing). Text files go inline; anything else goes by full path.
+    let question = match context.as_ref().filter(|_| turn.first) {
+        Some(ChatContext::File { name, path }) => with_file(name, path, &query),
+        _ => question,
+    };
     let message = crate::mcp::chat::compose(&turn.history, &question, true);
     let answer = run(&path, args, &message).await?;
     chat.commit(
@@ -63,6 +69,19 @@ pub async fn send(chat: &Chat, model: &str, query: String, context: Option<ChatC
         &answer,
     );
     Ok(ChatReply { text: answer })
+}
+
+/// The question with the file in it: its text (up to 200 KB) or, for a binary, its path.
+fn with_file(name: &str, path: &str, query: &str) -> String {
+    const MAX: usize = 200 * 1024;
+    match std::fs::read(path) {
+        Ok(bytes) if !bytes.iter().take(8192).any(|b| *b == 0) => {
+            let text = String::from_utf8_lossy(&bytes[..bytes.len().min(MAX)]);
+            let cut = if bytes.len() > MAX { "\n[… arquivo cortado em 200 KB]" } else { "" };
+            format!("Arquivo \"{name}\" (conteúdo completo abaixo, entre as marcas):\n<<<ARQUIVO\n{text}{cut}\nARQUIVO>>>\n\n{query}")
+        }
+        _ => format!("Arquivo \"{name}\", em {path} (leia-o desse caminho).\n\n{query}"),
+    }
 }
 
 async fn run(path: &str, args: &[&str], input: &str) -> Result<String, String> {
@@ -83,7 +102,7 @@ async fn run(path: &str, args: &[&str], input: &str) -> Result<String, String> {
     }
     let out = tokio::time::timeout(TIMEOUT, child.wait_with_output())
         .await
-        .map_err(|_| "a IA demorou demais para responder".to_string())?
+        .map_err(|_| "A IA não respondeu em 3 minutos. Tente de novo ou escolha outra IA.".to_string())?
         .map_err(|e| e.to_string())?;
     let text = String::from_utf8_lossy(&out.stdout).trim().to_string();
     if !out.status.success() && text.is_empty() {

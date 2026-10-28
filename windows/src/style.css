@@ -3042,3 +3042,7 @@ html[data-dir="rtl"] #views :is(.bubble, .reply .md-p, .reply .md-h, .reply .md-
 /* v25: Muninn parado à direita da ilha compacta (o Huginn fica à esquerda). */
 #muninn-idle { position: absolute; pointer-events: none; opacity: 0; transition: opacity var(--m-base) var(--m-ease); }
 #muninn-idle .bf-raven-shadow { display: none; }
+
+/* v25: a linha de contexto do cartão da sessão em duas linhas, sem cortar no meio. */
+.sc-meta { display: flex !important; flex-direction: column; gap: 2px; white-space: normal !important; overflow: visible !important; }
+.sc-meta-line { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }

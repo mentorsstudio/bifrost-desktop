@@ -54,6 +54,14 @@ static SINK: Mutex<Option<Sender<(KeyEvent, Instant)>>> = Mutex::new(None);
 static CHORD: Mutex<[u16; 4]> = Mutex::new([0; 4]);
 static DOWN: Mutex<[bool; 256]> = Mutex::new([false; 256]);
 static HELD: AtomicU8 = AtomicU8::new(0);
+/// dwExtraInfo of the keystrokes the PC smoke test injects (tools/smoke-keys.ps1).
+const TEST_MARK: usize = 0xB1F0_5EED;
+/// A key that types nothing (VK 0xE8, unassigned): tapped before a Win key-up so a
+/// chord with Win never opens the Start menu (the AutoHotkey "menu mask" trick).
+fn mask_start_menu() {
+    let inputs = [key_input(0xE8, false), key_input(0xE8, true)];
+    unsafe { SendInput(&inputs, std::mem::size_of::<INPUT>() as i32) };
+}
 
 fn send(event: KeyEvent) {
     if let Some(tx) = SINK.lock().unwrap().as_ref() {
@@ -77,7 +85,8 @@ unsafe extern "system" fn hook(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRE
     if code >= 0 {
         let info = &*(lparam.0 as *const KBDLLHOOKSTRUCT);
         // Our own Ctrl+V, and other programs' synthetic keys, are not the user's.
-        if info.flags.0 & LLKHF_INJECTED.0 == 0 {
+        // TEST_MARK: keystrokes injected by Bifrost's own smoke test count as the user's.
+        if info.flags.0 & LLKHF_INJECTED.0 == 0 || info.dwExtraInfo == TEST_MARK {
             let down = matches!(wparam.0 as u32, WM_KEYDOWN | WM_SYSKEYDOWN);
             let up = matches!(wparam.0 as u32, WM_KEYUP | WM_SYSKEYUP);
             on_key(info.vkCode, down, up);
@@ -112,6 +121,9 @@ fn on_key(vk: u32, down: bool, up: bool) {
         }
         let after = chord_held(&chord, &pressed);
         drop(pressed);
+        if up && (vk == VK_LWIN || vk == VK_RWIN) && (before || HELD.load(Ordering::Relaxed) == 1) {
+            mask_start_menu();
+        }
         if after && down {
             HELD.store(1, Ordering::Relaxed);
             send(KeyEvent::Down); // first press, or key repeat

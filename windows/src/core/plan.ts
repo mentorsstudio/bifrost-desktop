@@ -43,6 +43,11 @@ export const PLAN_TEXT = {
   get codexPillTitle() { return t("Codex plan usage"); },
   get waiting() { return t("Waiting for a response from Claude Code"); },
   get askingCodex() { return t("Asking Codex…"); },
+  get askingClaude() { return t("Asking Claude…"); },
+  claudeError: (code: string) => code === "expired" ? t("Claude Code's sign-in has expired: open Claude Code once to renew it.")
+    : code === "no-login" ? t("Sign in to Claude Code (Pro or Max plan) to see the usage.")
+    : code.startsWith("http-4") ? t("Anthropic refused the usage request: sign in to Claude Code again.")
+    : t("Couldn't reach Anthropic. Trying again in a minute."),
   get justNow() { return t("just now"); },
   minAgo: (n: number) => t("{n} min ago", { n }),
   hAgo: (n: number) => t("{n} h ago", { n }),
@@ -172,8 +177,24 @@ export function resetLabel(w: PlanWindow, weekly: boolean, now = Date.now()): st
 }
 
 /** The Claude card's subtitle. */
-export function claudeSubtitle(u: PlanUsage | null, now = Date.now()): string {
-  return u ? ageLabel(u.updatedAt, now) : PLAN_TEXT.waiting;
+export function claudeSubtitle(u: PlanUsage | null, now = Date.now(), error: string | null = null, asking = false): string {
+  if (u) return ageLabel(u.updatedAt, now);
+  if (error) return PLAN_TEXT.claudeError(error);
+  return asking ? PLAN_TEXT.askingClaude : PLAN_TEXT.waiting;
+}
+
+/** Anthropic's /api/oauth/usage body → PlanUsage (utilization 0–100, resets_at ISO). */
+export function parseClaudeUsageApi(body: unknown, now = Date.now()): PlanUsage | null {
+  const o = asObj(body);
+  const win = (raw: unknown): PlanWindow | undefined => {
+    const w = asObj(raw);
+    const pct = w?.utilization;
+    const at = typeof w?.resets_at === "string" ? Date.parse(w.resets_at) : NaN;
+    if (!isNum(pct) || pct < 0 || pct > 200) return undefined;
+    return { usedPct: Math.min(100, pct), resetsAt: Number.isFinite(at) ? at : now + 5 * 3600_000 };
+  };
+  const fiveHour = win(o?.five_hour), sevenDay = win(o?.seven_day);
+  return fiveHour || sevenDay ? { fiveHour, sevenDay, updatedAt: now } : null;
 }
 
 /** The Codex card's subtitle: "plus · 3 min ago". */

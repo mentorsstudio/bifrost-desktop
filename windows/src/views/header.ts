@@ -6,7 +6,7 @@ import { ICONS } from "./icons";
 import { State } from "../core/state";
 import type { IslandViewName } from "../core/layout";
 import { tl, type Msg } from "../i18n/i18n";
-import { buildPlanPill, claudePillVisible, codexPillVisible, refreshCodexPlanUsage } from "./usage";
+import { buildPlanPill, claudePillVisible, codexPillVisible, refreshClaudePlanUsage, refreshCodexPlanUsage } from "./usage";
 import type { ViewActions, ViewHost } from "./views";
 import { slidingInk } from "../theme/interact";
 
@@ -62,7 +62,7 @@ export function buildHeader(actions: ViewActions): ViewHost {
       codexPill.el.style.display = codexOn ? "" : "none";
       planPills.classList.toggle("on", claudeOn || codexOn);
       right.classList.toggle("both-plans", claudeOn && codexOn);
-      if (claudeOn) claudePill.sync();
+      if (claudeOn) { refreshClaudePlanUsage(); claudePill.sync(); }
       if (codexOn) codexPill.sync();
       const shown = codexOn && State.mode === "expanded";
       if (shown && !codexShown) refreshCodexPlanUsage();

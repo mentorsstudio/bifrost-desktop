@@ -7,6 +7,7 @@ mod chat;
 mod claude;
 mod cli_chat;
 mod codex_plan;
+mod claude_plan;
 mod config_file;
 mod convert;
 mod desktop;
@@ -503,6 +504,12 @@ fn status_line_apply(
 #[tauri::command]
 async fn codex_plan_usage() -> Option<serde_json::Value> {
     tauri::async_runtime::spawn_blocking(codex_plan::read).await.ok().flatten()
+}
+
+/// Claude plan usage from Anthropic with Claude Code's own sign-in (claude_plan.rs).
+#[tauri::command]
+async fn claude_plan_usage() -> serde_json::Value {
+    claude_plan::read().await
 }
 
 #[tauri::command]
@@ -1082,6 +1089,7 @@ pub fn run() {
             convert::convert_extract_text,
             convert::convert_prefs,
             convert::convert_set_prefs,
+            convert::convert_gesture_recording,
             convert::convert_pick_files,
             gesture::filee_menu_action,
             gesture::filee_menu_close,
@@ -1122,6 +1130,7 @@ pub fn run() {
             status_line_preview,
             status_line_apply,
             codex_plan_usage,
+            claude_plan_usage,
             approval_decision,
             approval_answer,
             approval_ack,

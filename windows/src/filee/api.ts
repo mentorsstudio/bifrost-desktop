@@ -43,6 +43,7 @@ export const Convert = {
   extractText: (path: string) => call<string>("convert_extract_text", { path }),
   prefs: () => call<FileePrefs>("convert_prefs"),
   setPrefs: (prefs: FileePrefs) => call<FileePrefs>("convert_set_prefs", { prefs }),
+  gestureRecording: (on: boolean) => call<void>("convert_gesture_recording", { on }),
   pickFiles: () => call<string[]>("convert_pick_files"),
   takePending: () => call<string[]>("convert_take_pending"),
   menuAction: (action: string, paths: string[], prompt?: string) => call<number | null>("filee_menu_action", { action, paths, prompt: prompt ?? null }),

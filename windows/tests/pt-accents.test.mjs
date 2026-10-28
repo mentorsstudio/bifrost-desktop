@@ -65,3 +65,17 @@ test("pt-fixes.json only corrects strings the Mac catalog has", () => {
   const fixes = JSON.parse(readFileSync("src/i18n/pt-fixes.json", "utf8")).strings;
   assert.deepEqual(Object.keys(fixes).filter((k) => !(k in mac)), []);
 });
+
+test("no user-facing text names Filee", () => {
+  const bad = [];
+  for (const f of [...walk("src"), ...walk("src-tauri/src")]) {
+    readFileSync(f, "utf8").split("\n").forEach((line, i) => {
+      if (/^\s*(\/\/|\*|\/\*)/.test(line) || /log::line|eprintln|#\[test\]|assert/.test(line)) return;
+      for (const m of line.matchAll(/"([^"\\]*(?:\\.[^"\\]*)*)"|`([^`]*)`/g)) {
+        const s = m[1] ?? m[2];
+        if (/\s/.test(s) && /\bFilee\b/.test(s)) bad.push(`${f}:${i + 1}: ${s.slice(0, 60)}`);
+      }
+    });
+  }
+  assert.deepEqual(bad, []);
+});

@@ -207,6 +207,17 @@ pub fn convert_set_prefs(app: AppHandle, prefs: prefs::FileePrefs) -> Result<pre
     Ok(saved)
 }
 
+/// v25: enquanto o gravador de gesto escuta, o gancho global do mouse sai do
+/// caminho (senão ele mesmo engolia o Ctrl + botão direito que se quer gravar).
+#[tauri::command]
+pub fn convert_gesture_recording(app: AppHandle, on: bool) {
+    let mut p = prefs::load();
+    if on {
+        p.gesture = false;
+    }
+    crate::gesture::apply(&app, &p);
+}
+
 /// "Escolher arquivos…" do Conversor (diálogo nativo do Windows).
 #[tauri::command]
 pub async fn convert_pick_files() -> Vec<String> {

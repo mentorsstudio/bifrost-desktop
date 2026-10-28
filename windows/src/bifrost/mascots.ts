@@ -8,6 +8,7 @@ import { type RavenLook, type RavenMark, type Theme } from "../theme/themes";
 import { CHARACTERS, currentCharacter, onRavenLookChange, ravenTheme } from "../theme/characters";
 import { currentTheme } from "../theme/themes";
 import { drawRig, rigPalette, onRasterReady, REST_POSE, type RigPose } from "./rig";
+import { rasterReady as rasterReadyFor } from "./rig-raster";
 
 export type MascotName = "huginn" | "muninn";
 export type MascotState = "idle" | "blink" | "flyIn" | "flyOut" | "thinking" | "listening" | "success" | "error" | "sleeping";
@@ -97,6 +98,29 @@ export function mascotSvg(name: MascotName, T: Theme = ravenTheme()): string {
 }
 
 // Corvos vivos: quando o tema troca, cada um é redesenhado no lugar (o estado fica).
+const OFFSETS = new Map<string, [number, number]>();
+/** Centre of the drawn pixels relative to the drawing origin, at rest pose (cached). */
+function visualOffset(who: MascotName, pal: ReturnType<typeof rigPalette>, scale: number, key: string): [number, number] {
+  const hit = OFFSETS.get(key);
+  if (hit) return hit;
+  const S = Math.ceil(scale * 300) + 4;
+  const c = document.createElement("canvas");
+  c.width = c.height = S;
+  const g = c.getContext("2d", { willReadFrequently: true });
+  if (!g) return [0, 0];
+  g.translate(S / 2, S / 2);
+  drawRig(g, who, REST_POSE, pal, scale);
+  let d: Uint8ClampedArray;
+  try { d = g.getImageData(0, 0, S, S).data; } catch { return [0, 0]; }
+  let x0 = S, y0 = S, x1 = -1, y1 = -1;
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (d[(y * S + x) * 4 + 3] > 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0) return [0, 0];
+  const off: [number, number] = [(x0 + x1 + 1) / 2 - S / 2, (y0 + y1 + 1) / 2 - S / 2];
+  // Only cache once the raster art has loaded (the vector stand-in differs).
+  if (pal.original ? rasterReadyFor(who) : true) OFFSETS.set(key, off);
+  return off;
+}
+
 const LIVE = new Set<WeakRef<Mascot>>();
 onRavenLookChange(() => {
   for (const r of LIVE) {
@@ -167,10 +191,16 @@ export class Mascot {
     const id = this.characterId();
     const t = this.theme ?? ravenTheme();
     const look = id === "theme" ? null : this.name === "huginn" ? t.huginn : t.muninn;
+    const pal = rigPalette(this.name, id, look, (this.theme ?? currentTheme()).accent, (this.theme ?? currentTheme()).id);
+    const scale = (size * 0.8) / 112;
+    // v25: centred on what is actually drawn (the raster art is not centred in its
+    // frame), so a raven inside a rune circle sits exactly in the middle.
+    const [ox, oy] = visualOffset(this.name, pal, scale, `${this.name}|${id}|${pal.style ?? ""}|${Math.round(size)}`);
     x.setTransform(dpr, 0, 0, dpr, 0, 0);
     x.clearRect(0, 0, w, hgt);
-    x.translate(w / 2, hgt / 2 + size * 0.05);
-    drawRig(x, this.name, this.pose(), rigPalette(this.name, id, look, (this.theme ?? currentTheme()).accent, (this.theme ?? currentTheme()).id), (size * 0.8) / 112);
+    x.translate(w / 2 - ox, hgt / 2 - oy);
+    drawRig(x, this.name, this.pose(), pal, scale);
+    this.el.dataset.cx = String(ox); this.el.dataset.cy = String(oy);
   }
 
   set(state: MascotState): void {

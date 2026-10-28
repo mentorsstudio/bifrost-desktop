@@ -66,7 +66,7 @@ pub fn conflict(settings_json: &str, trigger: &str) -> Option<String> {
     })?;
     let gesto = if hit.kind == "Hold" { "segurar" } else { "arrastar com" };
     Some(format!(
-        "O Filee já usa {} + {gesto} o botão direito. Para não abrir dois menus, o gesto do Bifrost fica desligado até você escolher outro gatilho.",
+        "Outro programa já usa {} + {gesto} o botão direito. Para não abrir dois menus, o gesto do Bifrost fica desligado até você escolher outro gatilho.",
         hit.modifiers.replace(", ", " + ")
     ))
 }

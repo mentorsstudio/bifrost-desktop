@@ -255,8 +255,8 @@ export async function converterPage(page: HTMLElement, ctx: HubContext) {
     const warn = h("div", { class: "fl-hint" });
     gestureBox.append(warn);
     void Convert.gestureStatus(p.trigger).then((st) => {
-      if (!st?.filee) return;
-      warn.textContent = st.conflict ?? `O Filee também está instalado (${st.fileeTriggers.join(", ") || "sem gatilhos"}). Sem conflito com este gatilho.`;
+      if (!st) return;
+      warn.textContent = st.conflict ? "Outro programa já usa este gesto. Escolha outro gatilho para o anel do Bifrost abrir." : "";
       warn.classList.toggle("warn", !!st.conflict);
     }).catch(() => undefined);
     const out = h("input", { class: "hub-input fl-out", placeholder: "Ao lado do original", value: p.outDir, "aria-label": "Pasta de saída" }) as HTMLInputElement;

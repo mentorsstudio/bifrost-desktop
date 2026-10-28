@@ -1,6 +1,7 @@
 // O gravador do gatilho do anel ("aperte a combinação"), usado em Ajustes e no Conversor.
 
 import { h } from "../views/dom";
+import { Convert } from "./api";
 import { DEFAULT_GESTURE, gestureLabel, gestureProblem, parseGesture, recordGesture } from "../core/gesture-trigger";
 
 export function gesturePicker(value: string, holdMs: number, onPick: (id: string) => void): HTMLElement {
@@ -16,8 +17,10 @@ export function gesturePicker(value: string, holdMs: number, onPick: (id: string
     cap.textContent = "Faça o gesto…";
     cap.classList.add("on");
     note.textContent = "";
+    void Convert.gestureRecording(true);
     stop = recordGesture(document.body, holdMs, (id) => {
       stop = null;
+      void Convert.gestureRecording(false);
       cap.classList.remove("on");
       const g = id ? parseGesture(id) : null;
       const bad = g ? gestureProblem(g) : null;

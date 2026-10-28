@@ -219,3 +219,9 @@ body.settings-window .hub-segmented > button:focus-visible { box-shadow: inset 0
 .hub-status .hub-status-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hub-status .dot { flex: none; }
 :where(.chip, .fl-quick-chip, .bf-chip) { padding-inline: max(10px, 1em); min-width: 0; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+
+/* v25: respiro — o segmentado e as ações da faixa nunca encostam na borda de baixo,
+   e a pílula de status não cola na linha da navegação. */
+.bf-hero { padding: 22px 26px 26px !important; }
+.bf-hero .actions { margin-top: 8px !important; margin-bottom: 2px; }
+.hub-status { margin-top: 10px; margin-bottom: 6px; padding: 9px 18px 9px 16px; }

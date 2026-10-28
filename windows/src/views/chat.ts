@@ -21,6 +21,7 @@ import { State, type ChatMessage } from "../core/state";
 import type { ViewHost } from "./views";
 import { N_, t, tl } from "../i18n/i18n";
 import { flip } from "../theme/interact";
+import { setPromptExtra } from "../core/layout";
 import { DEFAULT_HOLD_KEY, holdKeyLabel } from "../core/hold-key";
 import { FlowBridge } from "../core/flow";
 
@@ -269,6 +270,8 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
         if (label) files.append(fileTag(label), quick);
       }
       quick.hidden = State.chatHistory.length > 0 || busy;
+      // A linha do arquivo (e as perguntas rápidas) ganha altura própria na ilha.
+      if (setPromptExtra(label ? (quick.hidden ? 34 : 70) : 0)) onHeightChange();
       // O balão do gesto já escolheu a pergunta: ela vai sozinha.
       if (FileeIsland.pendingPrompt && State.view === "prompt" && !busy && label) {
         field.value = FileeIsland.pendingPrompt;

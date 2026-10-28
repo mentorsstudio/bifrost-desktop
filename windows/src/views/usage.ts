@@ -12,7 +12,7 @@
 import { Bridge } from "../core/bridge";
 import {
   PLAN_TEXT, claudeSubtitle, codexIsStale, codexResetsLabel, codexSubtitle, dominantPct,
-  effectivePct, parseCodexPlan, pillLabel, planColor, resetLabel,
+  effectivePct, parseClaudeUsageApi, parseCodexPlan, pillLabel, planColor, resetLabel,
   type CodexPlanUsage, type PlanUsage, type PlanWindow,
 } from "../core/plan";
 import { State } from "../core/state";
@@ -105,6 +105,32 @@ export function refreshCodexPlanUsage(): void {
     });
 }
 
+// ── Claude from Anthropic (when no status line ever calls in) ──────────────────
+
+let claudeInFlight = false;
+let claudeAskedAt = 0;
+let claudeError: string | null = null;
+
+/** Asks Anthropic with Claude Code's sign-in when the numbers are missing or older
+ *  than a minute (claude_plan.rs). An error shows as a clear line, never a wait. */
+export function refreshClaudePlanUsage(now = Date.now()): void {
+  const fresh = State.planUsage && now - State.planUsage.updatedAt < 60_000;
+  if (claudeInFlight || State.paused || fresh || now - claudeAskedAt < 30_000) return;
+  claudeInFlight = true;
+  claudeAskedAt = now;
+  void Bridge.claudePlanUsage()
+    .then((r) => {
+      const res = (r ?? {}) as { ok?: unknown; error?: string };
+      const usage = res.ok ? parseClaudeUsageApi(res.ok) : null;
+      if (usage) { claudeError = null; setClaudePlanUsage(usage); }
+      else { claudeError = res.error ?? "network"; State.notify(); }
+    })
+    .catch(() => { claudeError = "network"; State.notify(); })
+    .finally(() => { claudeInFlight = false; });
+}
+export const claudePlanError = () => claudeError;
+export const claudePlanAsking = () => claudeInFlight;
+
 // ── Pill ──────────────────────────────────────────────────────────────────────
 
 export interface PlanPill {
@@ -124,7 +150,7 @@ export function buildPlanPill(codex: boolean): PlanPill {
       const open = isOpen();
       State.planDetailIsCodex = codex;
       State.showingPlanDetail = !open;
-      if (codex) refreshCodexPlanUsage();
+      if (codex) refreshCodexPlanUsage(); else refreshClaudePlanUsage();
       State.notify();
     },
   }, dotEl, label);
@@ -180,7 +206,7 @@ export class PlanCard {
   sync(now = Date.now()) {
     const codex = State.planDetailIsCodex;
     const u = codex ? State.codexPlanUsage : State.planUsage;
-    const key = `${language()}|${codex}|${JSON.stringify(u)}|${Math.floor(now / 30_000)}`;
+    const key = `${language()}|${codex}|${JSON.stringify(u)}|${claudeError}|${claudeInFlight}|${Math.floor(now / 30_000)}`;
     if (key === this.key) return;
     this.key = key;
     clear(this.el);
@@ -190,7 +216,7 @@ export class PlanCard {
 
   private drawClaude(u: PlanUsage | null, now: number) {
     this.el.append(
-      head(claudeColor(now), PLAN_TEXT.claudeTitle, claudeSubtitle(u, now)),
+      head(claudeColor(now), PLAN_TEXT.claudeTitle, claudeSubtitle(u && now - u.updatedAt < 6 * 3600_000 ? u : (claudeError ? null : u), now, claudeError, claudeInFlight)),
       h("div", { class: "plan-rows" },
         gaugeRow(PLAN_TEXT.fiveHours, u?.fiveHour, false, now),
         gaugeRow(PLAN_TEXT.week, u?.sevenDay, true, now),

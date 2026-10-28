@@ -261,3 +261,12 @@
 .ag-row.ag-installed { display: flex; gap: 6px; align-items: baseline; padding: 3px 8px; font-size: 10.5px; border-style: dashed; }
 .ag-installed .ag-inst-lbl { flex: 0 0 auto; color: var(--dim-3); font-weight: 600; }
 .ag-installed .ag-inst-names { min-width: 0; white-space: normal; line-height: 1.35; color: var(--dim-2, #c8ccd6); }
+
+/* v25: arquivo + perguntas rápidas numa faixa própria, acima da conversa (que rola),
+   e o compositor numa grade: [+] [campo] [ferramentas], sem quebrar linha. */
+.bf-saga-body .chip-row { display: flex; flex-wrap: wrap; gap: 6px; flex: 0 0 auto; margin-bottom: 6px; position: relative; z-index: 1; }
+.bf-saga-body .chip-row [hidden] { display: none !important; }
+.bf-saga-body .chat-log { flex: 1 1 auto; min-height: 48px; overflow-y: auto; }
+.cmp { display: grid !important; grid-template-columns: auto minmax(0, 1fr) auto; align-items: end; flex-wrap: nowrap !important; }
+.cmp > .cmp-menu { grid-column: 1 / -1; }
+.cmp .cmp-field { padding: 5px 6px !important; text-indent: 0 !important; width: 100% !important; }

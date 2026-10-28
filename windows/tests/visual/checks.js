@@ -255,6 +255,44 @@
     if (Math.abs(r.width - r.height) > 0.5 || rad < r.width / 2 - 0.5) out.push({ kind: "icon-ring", what: name(el), detail: `${r.width.toFixed(1)}x${r.height.toFixed(1)} raio ${rad}` });
     else if (Math.hypot(dx, dy) > 0.5) out.push({ kind: "icon-ring", what: name(el), detail: `ícone fora do centro ${dx.toFixed(2)},${dy.toFixed(2)}` });
   }
+
+  // 9 (v25). Corvo dentro de um círculo rúnico (escudo da faixa, prévia de tema):
+  // o centro do que está desenhado coincide com o centro do círculo (≤ 1 px).
+  for (const host of document.querySelectorAll(".bf-hero-shield")) {
+    const m = host.querySelector(".bf-mascot");
+    if (!m || !vis(host) || m.dataset.cx == null) continue;
+    const a = host.getBoundingClientRect(), b = m.getBoundingClientRect();
+    const dx = (b.left + b.width / 2) - (a.left + a.width / 2), dy = (b.top + b.height / 2) - (a.top + a.height / 2);
+    if (Math.hypot(dx, dy) > 1) out.push({ kind: "raven-center", what: name(host), detail: `${dx.toFixed(1)},${dy.toFixed(1)}` });
+  }
+
+  // 10 (v25). Respiro: em cartões e faixas (caixas com borda ou fundo, > 64 px),
+  // texto e controles ficam a ≥ 8 px das bordas internas, nos quatro lados.
+  const PAD = 8;
+  for (const box of document.querySelectorAll(".bf-hero, .hub-card, .glow-card, .plan-card, .hub-status, .stat-card, .bf-card, .card, .ov-card, section")) {
+    if (!vis(box)) continue;
+    const bs = getComputedStyle(box);
+    const decorated = bs.borderTopWidth !== "0px" || (bs.backgroundColor !== "rgba(0, 0, 0, 0)" && bs.backgroundColor !== "transparent") || bs.backgroundImage !== "none";
+    if (!decorated) continue;
+    const r = box.getBoundingClientRect();
+    if (r.height < 28) continue;
+    const L = r.left + (parseFloat(bs.borderLeftWidth) || 0), R = r.right - (parseFloat(bs.borderRightWidth) || 0);
+    const T = r.top + (parseFloat(bs.borderTopWidth) || 0), B = r.bottom - (parseFloat(bs.borderBottomWidth) || 0);
+    for (const el of box.querySelectorAll("button, input, select, h1, h2, h3, p, span, label, a, .hub-segmented")) {
+      if (!vis(el) || el.closest("[aria-hidden=true], canvas, svg, .m-leaving, .m-layer")) continue;
+      if (el !== box && el.parentElement?.closest("button, .hub-segmented") && el.parentElement.closest(".bf-hero, .hub-card, .glow-card, .plan-card, .hub-status, .stat-card, .bf-card, .card, .ov-card, section") === box) continue;
+      const cs = getComputedStyle(el);
+      if (cs.position === "absolute" || cs.position === "fixed") continue;
+      if (el.tagName === "SPAN" && !(el.textContent || "").trim()) continue;
+      let scroller = false;
+      for (let q = el.parentElement; q && q !== box; q = q.parentElement) { const qs = getComputedStyle(q); if (/(auto|scroll)/.test(qs.overflowY + qs.overflowX)) { scroller = true; break; } }
+      if (scroller) continue;
+      const e = el.getBoundingClientRect();
+      if (e.width < 2 || e.height < 2) continue;
+      const gap = Math.min(e.left - L, R - e.right, e.top - T, B - e.bottom);
+      if (gap < PAD - 0.5 && gap > -40) { out.push({ kind: "edge-pad", what: `${name(box)} > ${name(el)}`, detail: `${gap.toFixed(1)} px` }); }
+    }
+  }
   // Sem duplicatas.
   const seen = new Set();
   return out.filter((p) => { const k = p.kind + p.what; if (seen.has(k)) return false; seen.add(k); return true; });

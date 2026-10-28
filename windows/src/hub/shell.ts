@@ -144,7 +144,11 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
   if (shown !== null) setWindowShown(shown);
   watchWindowShown();
   let current: PageId = "dictation";
-  let status: FlowStatus = (await FlowBridge.status()) ?? DEFAULT_STATUS;
+  // v25: flow_status fails until the dictation engine is set up (the hub can open
+  // first). Never show — or save back — the placeholder as if it were real: retry.
+  const first = await FlowBridge.status();
+  let status: FlowStatus = first ?? DEFAULT_STATUS;
+  let real = first != null;
   const items = new Map<PageId, HTMLElement>();
   const statusLine = h("div", { class: "hub-status" });
   const scroll = h("div", { class: "hub-scroll" });
@@ -159,11 +163,13 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
     },
     navigate: (page) => void show(page),
     refresh: async () => {
-      status = (await FlowBridge.status()) ?? status;
+      const st = await FlowBridge.status();
+      if (st) { status = st; real = true; }
       drawStatus();
       return status;
     },
     setPrefs: async (change) => {
+      if (!real) { const st = await FlowBridge.status(); if (!st) return; status = st; real = true; }
       const next = { ...status.prefs };
       change(next);
       status = { ...status, prefs: next };
@@ -172,6 +178,16 @@ export async function startHub(root: HTMLElement, opts: HubOptions) {
     },
     hero: (page, title, subtitle, actions = [], compact = false) => hero(page, title, subtitle, actions, compact),
   };
+
+  if (!real) {
+    void (async () => {
+      for (let i = 0; i < 120 && !real; i++) {
+        await new Promise((r) => setTimeout(r, 500));
+        const st = await FlowBridge.status();
+        if (st) { status = st; real = true; drawStatus(); void show(current); }
+      }
+    })();
+  }
 
   function drawStatus() {
     clear(statusLine);

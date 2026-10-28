@@ -223,7 +223,7 @@
 /* O Huginn, pequeno, pousado em cima da borda (à direita do topo). */
 .fm-perch { position: absolute; left: 0; top: 0; width: 0; height: 0; transform: rotate(38deg) translateY(-178px) rotate(-38deg); }
 .fm-raven {
-  position: absolute; left: -18px; top: -26px; width: 36px; height: 36px; pointer-events: none; overflow: visible;
+  position: absolute; left: -18px; top: -18px; width: 36px; height: 36px; pointer-events: none; overflow: visible;
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .55));
   opacity: 0; transform: translateY(-6px);
   transition: opacity var(--m-base) var(--m-ease), transform var(--m-base) var(--m-smooth);

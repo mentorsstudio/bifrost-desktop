@@ -80,8 +80,10 @@ export function buildSessionCard(memory: SessionMemory, open: { settings: () => 
       summary.title = r?.summary ?? "";
       summary.classList.toggle("is-empty", !r?.summary);
       const line = contextLine(cwd, null, now, redraw);
-      meta.textContent = r ? [line, `${t("last activity")} ${elapsed((now - r.at) / 1000)}`].filter(Boolean).join("  ·  ") : line;
-      meta.title = meta.textContent ?? "";
+      // v25: pasta e última atividade em linhas separadas, cada uma inteira.
+      const act = r ? `${t("last activity")} ${elapsed((now - r.at) / 1000)}` : "";
+      meta.replaceChildren(...[line, act].filter(Boolean).map((x) => h("span", { class: "sc-meta-line", text: x })));
+      meta.title = [line, act].filter(Boolean).join(" · ");
       folderBtn.style.display = cwd ? "" : "none";
     },
   };

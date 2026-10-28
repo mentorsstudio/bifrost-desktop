@@ -114,7 +114,15 @@ export const QUESTION_PICKER_H = 200;
 
 /** Chat view grows with the conversation — IslandContainer.chatPromptHeight. */
 export function chatPromptHeight(messageCount: number): number {
-  return Math.min(300, 240 + messageCount * 40);
+  return Math.min(300, 240 + messageCount * 40) + promptExtra;
+}
+/** v25: extra height while the chat shows the dropped file's chip row (and its
+ *  quick questions), so the message list keeps its own room under them. */
+let promptExtra = 0;
+export function setPromptExtra(px: number): boolean {
+  if (px === promptExtra) return false;
+  promptExtra = px;
+  return true;
 }
 
 export function islandSize(

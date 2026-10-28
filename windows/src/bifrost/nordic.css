@@ -240,3 +240,16 @@ body.bf-sky, .bf-sky {
   border-radius: 50% !important; aspect-ratio: 1 / 1; display: inline-grid; place-items: center; outline: none;
 }
 :where(button, [role="button"]):not(.tab):not([role="tab"]):has(> svg:only-child) > svg { display: block; margin: 0; }
+
+/* v25: linha de ajuste — título e descrição à esquerda, controle alinhado à direita. */
+.bf-setlist { display: flex; flex-direction: column; }
+.bf-setrow { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 8px; }
+.bf-setrow + .bf-setrow { border-top: 1px solid rgba(var(--tk-eef2ff-rgb, 238, 242, 255), .07); }
+.bf-setrow-text { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 3px; }
+.bf-setrow-title { font-weight: 600; font-size: 13px; }
+.bf-setrow-detail { font-size: 12px; opacity: .72; line-height: 1.4; }
+.bf-setrow-ctl { flex: 0 0 auto; display: flex; align-items: center; justify-content: flex-end; max-width: 55%; }
+.bf-setrow-warn { font-size: 12px; color: #f7b32b; padding: 0 8px 8px; }
+.bf-setrow-warn:empty { display: none; }
+.bf-rec { flex-wrap: nowrap; }
+.bf-rec .bf-rec-note { display: block; }
