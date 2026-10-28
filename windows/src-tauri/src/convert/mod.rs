@@ -116,7 +116,12 @@ pub async fn convert_install_tool(app: AppHandle, id: String) -> Result<String, 
             let _ = app2.emit("convert-tool", ToolProgress { id: id2.clone(), got, total, done: false, error: None });
         }
     };
-    let r = tools::download(tool, &cb).await;
+    let r = if tool.downloadable() {
+        tools::download(tool, &cb).await
+    } else {
+        let _ = app.emit("convert-tool", ToolProgress { id: id.clone(), got: 0, total: 0, done: false, error: None });
+        tauri::async_runtime::spawn_blocking(move || tools::winget_install(tool)).await.map_err(|e| e.to_string())?
+    };
     let _ = app.emit("convert-tool", ToolProgress { id, got: 0, total: 0, done: true, error: r.as_ref().err().cloned() });
     crate::log::line(format!("conversor: ferramenta {} → {:?}", tool.id(), r.as_ref().map(|p| p.display().to_string())));
     r.map(|p| p.to_string_lossy().into_owned())

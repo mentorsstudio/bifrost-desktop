@@ -166,7 +166,7 @@ export async function converterPage(page: HTMLElement, ctx: HubContext) {
     runRow.append(where, go);
     if (t && !t.ready) {
       const tool = plan?.tools.find((x) => x.id === t.needs);
-      runRow.prepend(h("span", { class: "fl-need", text: tool?.downloadable ? `Baixe o ${tool.label} em Ferramentas, abaixo.` : `Instale o ${t.needsLabel} para isso.` }));
+      runRow.prepend(h("span", { class: "fl-need", text: tool?.downloadable ? `Baixe o ${tool.label} em Ferramentas, abaixo.` : `Instale o ${t.needsLabel} em Ferramentas, abaixo.` }));
     }
   }
 
@@ -215,9 +215,9 @@ export async function converterPage(page: HTMLElement, ctx: HubContext) {
       let trailing: HTMLElement;
       const pct = downloading.get(t.id);
       if (t.path) trailing = h("span", { class: "fl-ok", text: "Pronto" });
-      else if (pct !== undefined) trailing = h("div", { class: "fl-bar small" }, h("i", { style: `transform:scaleX(${pct})` }));
+      else if (pct !== undefined) trailing = t.downloadable ? h("div", { class: "fl-bar small" }, h("i", { style: `transform:scaleX(${pct})` })) : h("span", { class: "fl-missing", text: "Instalando…" });
       else if (t.downloadable) trailing = button(`Baixar (${t.downloadMb} MB)`, () => void install(t.id), "", true);
-      else trailing = h("span", { class: "fl-missing", text: "Não instalado" });
+      else trailing = button("Instalar", () => void install(t.id), "", true);
       toolsBox.append(row(t.label, t.path ? `${t.hint}` : t.hint, trailing));
     }
   }

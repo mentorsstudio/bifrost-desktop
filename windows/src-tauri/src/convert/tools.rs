@@ -94,6 +94,8 @@ pub fn locate(tool: Tool) -> Option<PathBuf> {
             }
             if let Some(l) = env_dir("LOCALAPPDATA") {
                 c.push(l.join(r"Pandoc\pandoc.exe"));
+                c.push(l.join(r"Programs\Pandoc\pandoc.exe"));
+                c.push(l.join(r"Microsoft\WinGet\Links\pandoc.exe"));
             }
             if let Some(pf) = env_dir("ProgramFiles") {
                 c.push(pf.join(r"Pandoc\pandoc.exe"));
@@ -113,6 +115,9 @@ pub fn locate(tool: Tool) -> Option<PathBuf> {
         Tool::Magick => {
             if let Some(p) = which("magick") {
                 c.push(p);
+            }
+            if let Some(l) = env_dir("LOCALAPPDATA") {
+                c.push(l.join(r"Microsoft\WinGet\Links\magick.exe"));
             }
             if let Some(pf) = env_dir("ProgramFiles") {
                 if let Ok(rd) = std::fs::read_dir(&pf) {
@@ -155,10 +160,10 @@ pub fn status() -> Vec<ToolStatus> {
             hint: match t {
                 Tool::Ffmpeg => "Áudio e vídeo (MP4, MKV, WEBM, MOV, MP3, WAV, GIF…) e AVIF.",
                 Tool::Pdfium => "PDF → PNG/JPG e texto de PDF com mais fidelidade.",
-                Tool::Pandoc => "Markdown, HTML, DOCX, ODT e EPUB entre si. Instale de pandoc.org.",
-                Tool::LibreOffice => "DOC/DOCX/ODT/RTF → PDF e PDF → DOCX. Instale de libreoffice.org.",
-                Tool::Magick => "Leitura de HEIC e AVIF. Instale de imagemagick.org.",
-                Tool::SevenZip => "Extrair RAR, ISO, CAB. Instale de 7-zip.org.",
+                Tool::Pandoc => "Markdown, HTML, DOCX, ODT e EPUB entre si.",
+                Tool::LibreOffice => "DOC/DOCX/ODT/RTF → PDF e PDF → DOCX.",
+                Tool::Magick => "Leitura de HEIC e AVIF.",
+                Tool::SevenZip => "Extrair RAR, ISO, CAB.",
             },
         })
         .collect()
@@ -186,6 +191,31 @@ fn source(tool: Tool) -> Option<&'static str> {
         Tool::Pdfium if cfg!(windows) => Some("https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F7881/pdfium-win-x64.tgz"),
         Tool::Pdfium => Some("https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F7881/pdfium-linux-x64.tgz"),
         _ => None,
+    }
+}
+
+/// The winget package for the tools Bifrost installs through Windows' own
+/// package manager (one click in Ferramentas; no download of our own).
+pub fn winget_id(tool: Tool) -> Option<&'static str> {
+    match tool {
+        Tool::Pandoc => Some("JohnMacFarlane.Pandoc"),
+        Tool::LibreOffice => Some("TheDocumentFoundation.LibreOffice"),
+        Tool::Magick => Some("ImageMagick.ImageMagick"),
+        Tool::SevenZip => Some("7zip.7zip"),
+        _ => None,
+    }
+}
+
+/// Installs `tool` with winget, silently, then finds it again.
+pub fn winget_install(tool: Tool) -> Result<PathBuf, String> {
+    let id = winget_id(tool).ok_or_else(|| format!("{} não é instalável pelo Bifrost.", tool.label()))?;
+    let out = command(Path::new("winget"))
+        .args(["install", "-e", "--id", id, "--silent", "--accept-package-agreements", "--accept-source-agreements"])
+        .output()
+        .map_err(|_| "O Windows não tem o winget (Instalador de Aplicativos). Instale-o pela Microsoft Store.".to_string())?;
+    match locate(tool) {
+        Some(p) => Ok(p),
+        None => Err(format!("A instalação do {} não terminou (código {}).", tool.label(), out.status.code().unwrap_or(-1))),
     }
 }
 

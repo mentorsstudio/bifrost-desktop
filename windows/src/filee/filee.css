@@ -127,7 +127,8 @@
 .fl-q.failed .fl-bar i { background: var(--th-error, var(--hub-red)); }
 
 /* ── Ferramentas ── */
-.fl-tools { display: flex; flex-direction: column; gap: 4px; }
+.fl-tools { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.fl-tools > * { padding: 4px 0; }
 .fl-ok { color: var(--th-ok, var(--hub-green)); font-size: 12px; font-weight: 600; white-space: nowrap; }
 .fl-missing { color: var(--hub-muted); font-size: 12px; white-space: nowrap; }
 .fl-gesture { display: flex; flex-direction: column; gap: 6px; }
