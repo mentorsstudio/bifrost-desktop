@@ -3,6 +3,7 @@
 // (drop.ts) e o Huginn desenhado pelo RavenEngine. Reescrita do zero sobre o
 // mesmo contrato público (o que main.ts, hooks.ts, shortcuts.ts e companhia chamam).
 
+import { Mascot } from "../bifrost/mascots";
 import { RavenLife, listenRavenSignals } from "../bifrost/raven-life";
 import { Tracked, Spring } from "../core/anim";
 import { Springs } from "../bifrost/motion";
@@ -63,6 +64,7 @@ export class Island {
   /** O Huginn na área de trabalho: ciclo de vida e o arrasto para fora da ilha. */
   readonly desktop: DesktopLink;
   readonly engine = new BotEngine();
+  private muninn!: Mascot;
 
   onGreetingDone: (() => void) | null = null;
   onWake: (() => void) | null = null;
@@ -169,7 +171,11 @@ export class Island {
     const grid = h("div", { id: "mini-grid" });
     const clock = h("div", { id: "island-clock" });
     const countdown = h("div", { id: "countdown" });
-    const island = h("div", { id: "island" }, clip, glow, bot, grid, clock, countdown);
+    // v25: parada, a ilha compacta mostra o par — Huginn (preto) à esquerda e
+    // Muninn (prata) à direita, no estilo de personagem escolhido.
+    this.muninn = new Mascot("muninn");
+    this.muninn.el.id = "muninn-idle";
+    const island = h("div", { id: "island" }, clip, glow, bot, grid, this.muninn.el, clock, countdown);
     const wake = h("div", { id: "wake-strip" });
     this.dom = { wake, island, clip, content, views, bot, glow, greeting, grid, clock, countdown };
     const dpr = dprNow();
@@ -387,6 +393,12 @@ export class Island {
     island.style.borderRadius = `0 0 ${r}px ${r}px`;
     island.style.transform = "translateX(-50%)";
     grid.style.left = `${w - 54.5}px`;
+    // Muninn espelha o Huginn: mesmo tamanho e altura, à mesma distância da borda.
+    const ms = Math.round(this.ravenSize.value * 0.72);
+    const mu = this.muninn.el.style;
+    mu.width = mu.height = `${ms}px`;
+    mu.left = `${w - this.ravenX.value - ms / 2}px`;
+    mu.top = `${this.ravenY.value - ms / 2}px`;
     grid.style.top = `${hh / 2 - 14.5}px`;
     clock.style.height = `${hh}px`;
     const off = `${(w - EXPANDED_W) / 2}px`;
@@ -713,7 +725,9 @@ export class Island {
       } else if (leftChat) void Bridge.focusWindow(false);
     }
     const compact = State.mode === "compact";
-    grid.style.opacity = compact ? "1" : "0";
+    // Parada (nada trabalhando, pensando ou pedindo): o par de corvos no lugar da grade.
+    const pair = compact && State.effectiveState === "idle" && State.otherTasks.every((t) => t.state === "idle");
+    grid.style.opacity = compact && !pair ? "1" : "0";
     if (compact) {
       const others = State.otherTasks.slice(0, 4);
       const key = others.map((t) => t.id).join("|");
@@ -723,6 +737,7 @@ export class Island {
         pruneMiniBots();
       }
     }
+    this.muninn.el.style.opacity = pair ? "1" : "0";
     this.updateClock();
     syncMiniBotStates(State.tasks);
     this.engine.setState(State.effectiveState);

@@ -4,6 +4,7 @@
 import { h } from "../views/dom";
 import { t } from "../i18n/i18n";
 import type { FlowKey } from "../core/flow";
+import { DEFAULT_HOLD_KEY, holdKeyLabel } from "../core/hold-key";
 
 /** Stroke icons on a 24×24 grid, standing in for the Mac's SF Symbols. */
 export const HUB_ICONS: Record<string, string> = {
@@ -119,21 +120,11 @@ export function select<T extends string>(options: [T, string][], value: T, onCha
   return el;
 }
 
-/** "Right Ctrl", "Ctrl + Win"… */
+/** "Right Ctrl", "Ctrl + Win", "Ctrl + Alt + F8"… (any recorded combination). */
 export function keyLabel(key: FlowKey | "wayland" | "", platform: "windows" | "linux" = "windows"): string {
-  switch (key) {
-    case "right_alt":
-      return t("Right {0}", { 0: "Alt" });
-    case "right_shift":
-      return t("Right {0}", { 0: "Shift" });
-    case "left_ctrl_super":
-      return platform === "windows" ? "Ctrl + Win" : "Ctrl + Super";
-    case "wayland":
-      // Held by the desktop (GlobalShortcuts portal): the keys Bifrost suggests.
-      return "Ctrl+Alt+V";
-    default:
-      return t("Right {0}", { 0: "Ctrl" });
-  }
+  // Held by the desktop (GlobalShortcuts portal): the keys Bifrost suggests.
+  if (key === "wayland") return "Ctrl+Alt+V";
+  return holdKeyLabel(key || DEFAULT_HOLD_KEY, platform, (k) => t("Right {0}", { 0: k }), (k) => t("Left {0}", { 0: k }));
 }
 
 /** The key written as keycaps: "Right Ctrl" twice for hands-free. */

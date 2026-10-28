@@ -89,6 +89,9 @@ pub struct Prefs {
     /// Hold a key to dictate anywhere. Off until the user turns it on.
     pub enabled: bool,
     pub key: FlowKey,
+    /// v25: the key was picked in the recorder. Older files with the old
+    /// default (Right Ctrl, missing on many keyboards) move to Ctrl + Win once.
+    pub key_chosen: bool,
     pub edge: Edge,
     /// The microphone by name; empty is the system's default.
     pub mic: String,
@@ -114,6 +117,7 @@ impl Default for Prefs {
         Self {
             enabled: false,
             key: FlowKey::default(),
+            key_chosen: false,
             edge: Edge::Bottom,
             mic: String::new(),
             keep_days: 30,
@@ -170,6 +174,14 @@ pub struct Store {
     folder: PathBuf,
 }
 
+/// The old default key (Right Ctrl) was never chosen: it becomes the new default.
+fn migrate(mut p: Prefs) -> Prefs {
+    if !p.key_chosen && p.key == FlowKey::RightCtrl {
+        p.key = FlowKey::default();
+    }
+    p
+}
+
 fn load<T: DeserializeOwned>(folder: &std::path::Path, name: &str) -> Option<T> {
     let text = std::fs::read_to_string(folder.join(name)).ok()?;
     serde_json::from_str(&text).ok()
@@ -203,7 +215,7 @@ impl Store {
             words: load(&folder, "words.json").unwrap_or_default(),
             snippets: load(&folder, "snippets.json").unwrap_or_default(),
             app_styles: load(&folder, "styles.json").unwrap_or_else(default_app_styles),
-            prefs: load(&folder, "prefs.json").unwrap_or_default(),
+            prefs: migrate(load(&folder, "prefs.json").unwrap_or_default()),
             last_unkept: None,
             folder,
         };

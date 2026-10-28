@@ -33,6 +33,11 @@ fn yes() -> bool {
 
 /// As teclas de um gatilho nosso ("ctrl-hold" → Ctrl).
 fn our_mods(trigger: &str) -> (bool, bool, bool) {
+    if let Some(rest) = trigger.strip_prefix("custom:") {
+        let mods = rest.split(':').next().unwrap_or("");
+        let has = |k: &str| mods.split('+').any(|m| m == k);
+        return (has("ctrl"), has("alt"), has("shift"));
+    }
     match trigger {
         "ctrl-alt" => (true, true, false),
         "alt-hold" => (false, true, false),
@@ -52,6 +57,10 @@ pub fn conflict(settings_json: &str, trigger: &str) -> Option<String> {
         return None;
     }
     let ours = our_mods(trigger);
+    // Um gatilho nosso em outro botão (meio, laterais) não disputa o botão direito do Filee.
+    if trigger.starts_with("custom:") && !trigger.contains(":right:") {
+        return None;
+    }
     let hit = s.triggers.iter().find(|t| {
         t.enabled && t.button.eq_ignore_ascii_case("Right") && matches!(t.kind.as_str(), "Hold" | "Drag") && mods_of(&t.modifiers) == ours
     })?;

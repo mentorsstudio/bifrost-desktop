@@ -1,6 +1,6 @@
 // QA visual (fase 19): roda DENTRO da página (page.evaluate). Sem dependências.
 // Devolve uma lista de problemas { kind, what, detail }.
-// Tipos: overlap, clip, offscreen, tail, double, collide, blank, button-cut.
+// Tipos: overlap, clip, offscreen, tail, double, collide, blank, button-cut, icon-ring.
 (() => {
   const out = [];
   const vis = (el) => {
@@ -238,6 +238,22 @@
     const y = hero ? hero.getBoundingClientRect().bottom : page.getBoundingClientRect().top + 80;
     const shown = [...page.querySelectorAll("*")].filter((e) => !e.children.length && (e.textContent || "").trim() && e.getBoundingClientRect().top >= y - 2 && vis(e));
     if (!shown.length) out.push({ kind: "blank", what: `página ${page.dataset.page} vazia abaixo do cabeçalho` });
+  }
+
+  // 8 (v25). Botão só de ícone: o anel de foco é um círculo (quadrado + raio ≥ metade),
+  // concêntrico com o ícone (≤ 0,5 px), e um contorno só (sem outline além do halo).
+  for (const el of document.querySelectorAll("button, [role=button]")) {
+    if (!vis(el) || (el.textContent || "").trim()) continue;
+    if (el.matches(".tab, [role=tab], [role=radio], .m-ink-seg *, .hub-segmented *")) continue; // anel = cápsula do indicador
+    const ic = el.querySelector(":scope > svg, :scope > img, :scope > canvas, :scope > span > svg");
+    if (!ic) continue;
+    const r = el.getBoundingClientRect(), ir = ic.getBoundingClientRect();
+    if (r.width > 56 || r.height > 56) continue; // cartões com arte: não são botões de ícone
+    const s = getComputedStyle(el);
+    const rad = Math.min(parseFloat(s.borderTopLeftRadius) || 0, parseFloat(s.borderBottomRightRadius) || 0);
+    const dx = (ir.left + ir.width / 2) - (r.left + r.width / 2), dy = (ir.top + ir.height / 2) - (r.top + r.height / 2);
+    if (Math.abs(r.width - r.height) > 0.5 || rad < r.width / 2 - 0.5) out.push({ kind: "icon-ring", what: name(el), detail: `${r.width.toFixed(1)}x${r.height.toFixed(1)} raio ${rad}` });
+    else if (Math.hypot(dx, dy) > 0.5) out.push({ kind: "icon-ring", what: name(el), detail: `ícone fora do centro ${dx.toFixed(2)},${dy.toFixed(2)}` });
   }
   // Sem duplicatas.
   const seen = new Set();

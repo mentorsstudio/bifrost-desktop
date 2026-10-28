@@ -21,6 +21,16 @@ import { State, type ChatMessage } from "../core/state";
 import type { ViewHost } from "./views";
 import { N_, t, tl } from "../i18n/i18n";
 import { flip } from "../theme/interact";
+import { DEFAULT_HOLD_KEY, holdKeyLabel } from "../core/hold-key";
+import { FlowBridge } from "../core/flow";
+
+/** The hold-to-talk keys as the user set them ("Ctrl + Win" by default). */
+let holdKey = holdKeyLabel(DEFAULT_HOLD_KEY, "windows", (k) => t("Right {0}", { 0: k }), (k) => t("Left {0}", { 0: k }));
+const refreshHoldKey = () => void FlowBridge.status().then((st) => {
+  if (!st) return;
+  holdKey = holdKeyLabel(st.keys === "wayland" ? "chord:11+12" : st.prefs.key || DEFAULT_HOLD_KEY, st.platform, (k) => t("Right {0}", { 0: k }), (k) => t("Left {0}", { 0: k }));
+  if (st.keys === "wayland") holdKey = "Ctrl+Alt+V";
+}).catch(() => undefined);
 
 const TEXT = {
   first: "Pergunte qualquer coisa…",
@@ -99,7 +109,9 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
   const name = h("span", { class: "model-name" });
   const who = h("button", { class: "model-btn cmp-model", title: tl(TEXT.switchModel), "aria-haspopup": "dialog" }, dot, name, svg(ICONS.chevronUpDown, 9, { stroke: 2 }));
   const plus = h("button", { class: "cmp-icon cmp-plus", title: "Anexar", "aria-haspopup": "menu" }, svg(ICONS.plus, 13));
-  const mic = h("button", { class: "cmp-icon cmp-mic", title: "Ditar: segure Ctrl da direita e fale — o Bifrost escreve aqui" }, svg(ICONS.mic, 13));
+  const mic = h("button", { class: "cmp-icon cmp-mic", title: t("Dictate: hold {0} and speak — Bifrost writes here", { 0: holdKey }) }, svg(ICONS.mic, 13));
+  refreshHoldKey();
+  mic.addEventListener("pointerenter", () => { refreshHoldKey(); mic.title = t("Dictate: hold {0} and speak — Bifrost writes here", { 0: holdKey }); });
   const sendBtn = h("button", { class: "send-btn cmp-send", title: tl(TEXT.send), "aria-label": "Enviar" },
     h("span", { class: "cmp-send-go" }, svg(ICONS.arrowUp, 14)), h("span", { class: "cmp-send-stop" }, svg(ICONS.stop, 11)));
   const menu = h("div", { class: "cmp-menu", role: "menu" });
@@ -160,7 +172,7 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
   });
   mic.addEventListener("click", () => {
     field.focus();
-    hint.textContent = "Segure Ctrl da direita e fale: o ditado escreve neste campo.";
+    hint.textContent = t("Hold {0} and speak: dictation writes in this field.", { 0: holdKey });
     hint.classList.add("on");
     window.setTimeout(() => hint.classList.remove("on"), 3200);
   });

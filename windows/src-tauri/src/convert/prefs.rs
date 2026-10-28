@@ -34,7 +34,9 @@ pub fn load() -> FileePrefs {
 }
 
 pub fn sanitize(mut p: FileePrefs) -> FileePrefs {
-    if !matches!(p.trigger.as_str(), "ctrl-hold" | "ctrl" | "ctrl-alt" | "alt-hold") {
+    if !matches!(p.trigger.as_str(), "ctrl-hold" | "ctrl" | "ctrl-alt" | "alt-hold")
+        && crate::gesture::logic::Trigger::parse_custom(&p.trigger, p.hold_ms).is_none()
+    {
         p.trigger = "ctrl-hold".into();
     }
     p.hold_ms = p.hold_ms.clamp(150, 1200);

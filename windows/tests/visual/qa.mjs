@@ -48,7 +48,7 @@ const jsonAt = process.argv.indexOf("--json");
 export const THEMES = ["bifrost", "asgard", "muspelheim", "niflheim", "yggdrasil", "valhalla", "ragnarok"];
 export const PAGES = ["dictation", "notes", "insights", "dictionary", "snippets", "styles", "flowsettings",
   "general", "themes", "pills", "agents", "chat", "voice", "integrations", "phone", "shortcuts"];
-export const ISLAND = ["idle", "home", "home-last", "home-session", "home-empty", "quick", "notification", "approval", "approval-pair", "chat", "chat-picker", "upload"];
+export const ISLAND = ["idle", "idle-pair", "home", "home-last", "home-session", "home-empty", "quick", "notification", "approval", "approval-pair", "chat", "chat-picker", "upload"];
 // Fase 19: cada tema roda a ilha e a pílula com um personagem diferente.
 export const CHARS = ["theme", "classic", "snow", "ember", "moss", "dusk", "gold", "storm"];
 const SCALES = [1, 1.25, 1.5];

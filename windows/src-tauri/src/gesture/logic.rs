@@ -14,7 +14,19 @@ pub enum Trigger {
     CtrlAlt,
     /// Alt + segurar o botão direito (para quem usa o Ctrl em outro app, como o Filee).
     AltHold(u32),
+    /// Qualquer combinação gravada nos Ajustes: modificadores exatos (bits
+    /// MOD_*), um botão do mouse (BTN_*) e, se `hold` > 0, segurar por `hold` ms.
+    Custom { mods: u8, button: u8, hold: u32 },
 }
+
+pub const MOD_CTRL: u8 = 1;
+pub const MOD_ALT: u8 = 2;
+pub const MOD_SHIFT: u8 = 4;
+pub const MOD_WIN: u8 = 8;
+pub const BTN_RIGHT: u8 = 1;
+pub const BTN_MIDDLE: u8 = 2;
+pub const BTN_X1: u8 = 3;
+pub const BTN_X2: u8 = 4;
 
 impl Trigger {
     pub fn from_prefs(trigger: &str, hold_ms: u32) -> Self {
@@ -22,14 +34,51 @@ impl Trigger {
             "ctrl" => Trigger::Ctrl,
             "ctrl-alt" => Trigger::CtrlAlt,
             "alt-hold" => Trigger::AltHold(hold_ms),
-            _ => Trigger::CtrlHold(hold_ms),
+            other => Self::parse_custom(other, hold_ms).unwrap_or(Trigger::CtrlHold(hold_ms)),
         }
     }
-    fn matches(self, ctrl: bool, alt: bool) -> bool {
+
+    /// "custom:<mods>:<button>:<hold|click>", ex. "custom:ctrl+shift:middle:hold".
+    pub fn parse_custom(s: &str, hold_ms: u32) -> Option<Self> {
+        let mut it = s.strip_prefix("custom:")?.split(':');
+        let (mods_s, button_s, mode) = (it.next()?, it.next()?, it.next()?);
+        let mut mods = 0u8;
+        for m in mods_s.split('+').filter(|m| !m.is_empty() && *m != "none") {
+            mods |= match m { "ctrl" => MOD_CTRL, "alt" => MOD_ALT, "shift" => MOD_SHIFT, "win" => MOD_WIN, _ => return None };
+        }
+        let button = match button_s { "right" => BTN_RIGHT, "middle" => BTN_MIDDLE, "x1" => BTN_X1, "x2" => BTN_X2, _ => return None };
+        // Botão direito sem modificador tomaria todo clique direito: não vale.
+        if button == BTN_RIGHT && mods == 0 {
+            return None;
+        }
+        let hold = match mode { "hold" => hold_ms.max(1), "click" => 0, _ => return None };
+        Some(Trigger::Custom { mods, button, hold })
+    }
+
+    /// O botão do mouse do gesto.
+    pub fn button(self) -> u8 {
+        match self {
+            Trigger::Custom { button, .. } => button,
+            _ => BTN_RIGHT,
+        }
+    }
+
+    fn hold_ms(self) -> Option<u32> {
+        match self {
+            Trigger::CtrlHold(ms) | Trigger::AltHold(ms) => Some(ms),
+            Trigger::Custom { hold, .. } if hold > 0 => Some(hold),
+            _ => None,
+        }
+    }
+
+    fn matches(self, mods: u8) -> bool {
+        let ctrl = mods & MOD_CTRL != 0;
+        let alt = mods & MOD_ALT != 0;
         match self {
             Trigger::CtrlHold(_) | Trigger::Ctrl => ctrl && !alt,
             Trigger::CtrlAlt => ctrl && alt,
             Trigger::AltHold(_) => alt && !ctrl,
+            Trigger::Custom { mods: want, .. } => mods == want,
         }
     }
 }
@@ -86,14 +135,20 @@ impl Machine {
     /// Botão direito apertado. `eligible` = o cursor está sobre a lista de
     /// arquivos do Explorador ou da área de trabalho.
     pub fn right_down(&mut self, ctrl: bool, alt: bool, eligible: bool, x: i32, y: i32) -> (Out, Effect) {
+        let mods = if ctrl { MOD_CTRL } else { 0 } | if alt { MOD_ALT } else { 0 };
+        self.button_down(mods, eligible, x, y)
+    }
+
+    /// O botão do gesto (`trigger.button()`) apertado com os modificadores `mods`.
+    pub fn button_down(&mut self, mods: u8, eligible: bool, x: i32, y: i32) -> (Out, Effect) {
         match self.phase {
             Phase::Idle => {
-                if !(eligible && self.trigger.matches(ctrl, alt)) {
+                if !(eligible && self.trigger.matches(mods)) {
                     return (Out::Pass, Effect::None);
                 }
                 self.swallow_up = true;
-                match self.trigger {
-                    Trigger::CtrlHold(ms) | Trigger::AltHold(ms) => {
+                match self.trigger.hold_ms() {
+                    Some(ms) => {
                         self.token += 1;
                         self.phase = Phase::Pending { token: self.token, x, y };
                         (Out::Swallow, Effect::StartTimer { token: self.token, ms })
@@ -259,5 +314,22 @@ mod tests {
         assert!(inside_ring(330 + 140, 330, rect, 150.0));
         // canto do quadrado: dentro do retângulo, fora do anel
         assert!(!inside_ring(110, 110, rect, 150.0));
+    }
+}
+
+#[cfg(test)]
+mod custom_tests {
+    use super::*;
+
+    #[test]
+    fn custom_triggers_parse_and_match_exactly() {
+        let t = Trigger::parse_custom("custom:ctrl+shift:middle:click", 280).unwrap();
+        assert_eq!(t, Trigger::Custom { mods: MOD_CTRL | MOD_SHIFT, button: BTN_MIDDLE, hold: 0 });
+        let mut m = Machine::new(t);
+        assert_eq!(m.button_down(MOD_CTRL, true, 1, 1).0, Out::Pass);
+        assert_eq!(m.button_down(MOD_CTRL | MOD_SHIFT, true, 1, 1), (Out::Swallow, Effect::Open { x: 1, y: 1 }));
+        // Botão direito sozinho tomaria todo clique: recusado.
+        assert!(Trigger::parse_custom("custom::right:hold", 280).is_none());
+        assert!(matches!(Trigger::from_prefs("custom:alt+win:x1:hold", 300), Trigger::Custom { hold: 300, button: BTN_X1, .. }));
     }
 }

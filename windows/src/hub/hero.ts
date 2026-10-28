@@ -1,5 +1,5 @@
 // Bifrost — as peças visuais do hub, escritas do zero: a faixa de cada página
-// (Yggdrasil + galho dos corvos), o painel entalhado que segura o conteúdo
+// (runas subindo, hero-runes.ts, e os corvos nos escudos), o painel entalhado que segura o conteúdo
 // (no lugar do antigo cartão com partículas) e o estado vazio com um corvo SVG.
 // Nada aqui usa canvas nem laço de quadros: só DOM, SVG e CSS (hub.css), então
 // a janela não desenha nada quando está escondida.
@@ -8,6 +8,7 @@ import type { BotStateName } from "../core/layout";
 import { toRunes } from "../bifrost/runes";
 import type { Outfit } from "../huginn/wardrobe";
 import { Mascot, type MascotState } from "../bifrost/mascots";
+import { runeField } from "./hero-runes";
 
 /** A janela do hub está à vista? Sem canvases, só pausa as animações CSS. */
 export function windowShown(): boolean {
@@ -76,17 +77,6 @@ export const THEMES: Record<string, Theme> = {
   shortcuts: { color: "#6366F1", cast: [m("#6366F1", 56, 0.2, { outfit: "runeBand" }), m("#F5F6F8", 46, 0.8)] },
 };
 
-/** Yggdrasil entalhada: tronco, galhos e raízes, em traço de ouro. */
-const YGGDRASIL = `<svg class="bf-hero-tree" viewBox="0 0 220 160" aria-hidden="true">
-  <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-    <path d="M110 150 V70"/><path d="M110 96 C90 84 70 80 46 62"/><path d="M110 88 C132 76 152 72 178 52"/>
-    <path d="M110 74 C100 56 96 40 98 20"/><path d="M110 72 C122 52 128 38 132 16"/>
-    <path d="M70 79 C60 66 58 54 60 40"/><path d="M152 72 C164 62 170 50 172 36"/>
-    <path d="M110 150 C96 152 84 156 64 158"/><path d="M110 150 C124 152 138 156 158 158"/><path d="M110 150 C108 154 104 158 98 160"/>
-  </g>
-  <circle cx="110" cy="40" r="44" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2 6" opacity=".6"/>
-</svg>`;
-
 /** A faixa de cada página: Yggdrasil ao fundo, runa e título, e o galho onde
  *  Huginn e Muninn pousam (SVG, com os estados do motor de movimento). */
 export function hero(page: string, title: string, subtitle: string | null, actions: HTMLElement[] = [], compact = false): HTMLElement {
@@ -97,7 +87,6 @@ export function hero(page: string, title: string, subtitle: string | null, actio
   el.style.setProperty("--hero-line", rgba(theme.color, 0.16));
   const sky = document.createElement("div");
   sky.className = "bf-hero-sky";
-  sky.innerHTML = YGGDRASIL;
   const copy = document.createElement("div");
   copy.className = "copy bf-hero-copy";
   const kicker = document.createElement("div");
@@ -140,7 +129,10 @@ export function hero(page: string, title: string, subtitle: string | null, actio
   setTimeout(() => { huginn.set(page === "chat" || page === "agents" ? "thinking" : "idle"); muninn.set("idle"); }, 900);
   el.addEventListener("pointerenter", () => { if (!compact) huginn.set("listening"); });
   el.addEventListener("pointerleave", () => huginn.set("idle"));
-  el.append(sky, left, copy, right);
+  sky.append(runeField(el, left));
+  const scrim = document.createElement("div");
+  scrim.className = "bf-hero-scrim";
+  el.append(sky, scrim, left, copy, right);
   return el;
 }
 

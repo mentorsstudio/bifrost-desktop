@@ -926,3 +926,59 @@ sob ela é pena lisa; inclinação limitada a ±0,065 rad. A asa do Muninn gira 
 a raiz sob uma sobreposição de penas do peito; o corpo por trás é repintado com contorno.
 Pálpebras curvas recortadas pelo olho. Laços começam e terminam no repouso exato; o bico
 do Muninn só se mexe no estado "falando". Vídeos renderizados quadro a quadro (`__fix`).
+
+### 10.26 v25: memória, atalhos configuráveis, pt-BR, runas na faixa, par de corvos
+
+**Memória.** `webview_memory.rs` põe o WebView2 em `MemoryUsageTargetLevel::Low`
+quando a janela some (hub, anel do gesto, bandeja) e volta a `Normal` ao mostrar.
+O Parakeet (~650 MB) é descarregado depois de 10 min sem uso (`speech::IDLE_UNLOAD`,
+nunca durante um ditado) e recarregado em ~2 s no início do próximo. No PC do Paulo:
+processo principal 748 MB → 83 MB em repouso; total dos processos 2022 MB → 1581 MB.
+
+**Atalho do ditado.** O padrão passa a ser **Ctrl + Win** (`left_ctrl_super`):
+existe em todo teclado de PC, inclusive nos sem Ctrl direito (o do Paulo). Quem
+nunca escolheu uma tecla e estava no antigo padrão (Ctrl direito) migra sozinho
+(`FlowStore::migrate`, campo `key_chosen`). Em Ditado › Ajustes, "Segurar para ditar"
+é um gravador: clique, segure a combinação (até 4 teclas; ao menos um modificador ou
+teclas que não digitam nada, como F13–F24) e solte. `chord:a2+5b` guarda os códigos
+de tecla virtual do Windows; Ctrl/Alt/Shift genéricos aceitam qualquer lado. "Padrão"
+volta ao Ctrl + Win. Se o anel de arquivos usa os mesmos modificadores, a página avisa.
+Todos os textos (pílula "Pronto · segure {atalho}", faixa, chat, estado vazio) usam a
+combinação escolhida.
+
+**Gesto do anel.** Além dos quatro gatilhos antigos, qualquer modificador + botão
+direito, do meio ou laterais (Voltar/Avançar), clicando ou segurando:
+`custom:ctrl+shift:middle:hold`. Gravador em Ajustes › Gesto e no Conversor
+(`filee/gesture-picker.ts`). Botão direito sem modificador é recusado. Conflito com o
+Filee só é checado no botão direito.
+
+**pt-BR.** Revisão com o dicionário pt_BR (hunspell) de todas as strings em pt-BR e
+dos textos fixos no código: nenhum erro de grafia fora de nomes próprios e termos
+técnicos. Correções de redação sobre o catálogo do Mac ficam em
+`src/i18n/pt-fixes.json` (aplicado em `i18n.ts` e `i18n.rs` depois das tabelas):
+"está colado" → "o texto é colado"; "{0} da direita" → "{0} direito"; "Testa" →
+"Testes"; "Aplica no próximo lançamento" → "Vale a partir da próxima abertura";
+"Fechar island" → "Fechar a ilha"; artigos antes de Bifrost/Claude/Claude Code;
+"pressione → a ilha abre" → "aperte isto → a ilha abre"; "processando…" →
+"escrevendo…"; "Abas ativas" → "Pílulas ativas"; e outras (ver o arquivo). Pasta de
+páginas do PDF: "-paginas" → "-páginas". `tests/pt-accents.test.mjs` reprova palavras
+sem acento (nao, voce, conversao, configuracao, acao, opcoes, ate, tambem, ja, "esta"
+verbo, audio, video, pagina…) no catálogo e nos textos do código.
+
+**Faixa do hub.** A Yggdrasil em traço deu lugar a runas do Futhark Antigo subindo
+e sumindo (`hub/hero-runes.ts`): um canvas por faixa, um laço só, tamanhos e
+profundidades variados com paralaxe leve, brilho na cor `--bf-aurora-1` do tema
+(recolore ao trocar). Pausa com a janela escondida, a aba oculta ou a faixa fora da
+tela; com movimento reduzido, uma constelação parada. Um véu (`.bf-hero-scrim`)
+segura o contraste do texto.
+
+**Easter egg — Fimbulwinter.** Sete cliques no escudo do Huginn em 3 s, ou
+↑ ↑ ↓ ↓ ← → ← → B A: geada nas bordas da faixa e neve por 4 s, e oito runas se
+alinham em ᚱᚨᚷᚾᚨᚱᛟᚲ. Arte e texto originais.
+
+**Ilha parada.** Na ilha compacta, sem nada trabalhando, pensando ou pedindo, o
+Huginn (preto) fica à esquerda e o Muninn (prata) à direita, simétricos, no estilo
+de personagem escolhido; a grade de mini-corvos volta quando algo acontece.
+
+**Botões de ícone.** QA `icon-ring`: todo botão só de ícone tem de ser quadrado com
+raio ≥ metade (o halo de foco é um círculo) e o ícone concêntrico (≤ 0,5 px).

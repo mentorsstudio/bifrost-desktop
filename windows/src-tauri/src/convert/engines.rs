@@ -633,7 +633,7 @@ pub fn split_pdf(input: &str, opts: &Options, progress: &mut dyn FnMut(f32)) -> 
     if n == 0 {
         return Err("PDF sem páginas.".into());
     }
-    let dir = out_dir_for(input, opts).join(format!("{}-paginas", stem(input)));
+    let dir = out_dir_for(input, opts).join(format!("{}-páginas", stem(input)));
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let mut outs = Vec::new();
     for page in 1..=n {

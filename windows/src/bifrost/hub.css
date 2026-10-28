@@ -71,3 +71,17 @@
 .hub-bars > * { background: linear-gradient(180deg, var(--bf-aurora-1), var(--bf-aurora-2)) !important; }
 .hub-segmented { border: 1px solid rgba(var(--tk-e2b55a-rgb, 226, 181, 90),.25) !important; }
 .hub-columns { gap: 18px !important; }
+
+/* v25: runas do Futhark subindo (hero-runes.ts) no lugar da Yggdrasil em traço. */
+.bf-hero-runes { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* Véu atrás do texto: as runas nunca disputam com o título nem com a frase. */
+.bf-hero-scrim { position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background: radial-gradient(70% 120% at 28% 50%, rgba(var(--tk-070b16-rgb, 7, 11, 22), .62), rgba(var(--tk-070b16-rgb, 7, 11, 22), .18) 70%, transparent),
+    linear-gradient(90deg, rgba(var(--tk-070b16-rgb, 7, 11, 22), .35), transparent 60%); }
+/* Fimbulwinter: geada nas bordas da faixa por ~4 s (só opacidade anima). */
+.bf-hero-sky::after { content: ""; position: absolute; inset: 0; border-radius: inherit; opacity: 0; pointer-events: none;
+  box-shadow: inset 0 0 38px 10px rgba(226, 240, 255, .55), inset 0 0 6px 1px rgba(255, 255, 255, .7);
+  background: radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(214, 232, 255, .22)); }
+.bf-fimbulwinter .bf-hero-sky::after { animation: bf-frost 4s var(--m-ease) both; }
+@keyframes bf-frost { 0% { opacity: 0; } 15% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .bf-fimbulwinter .bf-hero-sky::after { animation: none; opacity: .8; } }

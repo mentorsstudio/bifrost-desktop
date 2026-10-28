@@ -12,7 +12,7 @@ export const OPEN_THICKNESS = 34;
 export type Look = "resting" | "toolbar" | "note" | "live" | "handsFree" | "message" | "voice";
 
 export const IDLE_STATE: PillState = {
-  phase: "idle", edge: "bottom", key: "right_ctrl", noteStartedAt: null, announcement: null, enabled: false, voice: null,
+  phase: "idle", edge: "bottom", key: "left_ctrl_super", noteStartedAt: null, announcement: null, enabled: false, voice: null,
 };
 
 const PHASE_LOOK: Partial<Record<PillState["phase"], Look>> = {

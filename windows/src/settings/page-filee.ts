@@ -3,7 +3,8 @@
 // opções aparecem na página Conversor (src/hub/pages/converter.ts).
 
 import { h } from "../views/dom";
-import { choice } from "../views/kit";
+import { gesturePicker } from "../filee/gesture-picker";
+import { gestureShort } from "../core/gesture-trigger";
 import { toggle } from "./store";
 import { Convert, type FileePrefs } from "../filee/api";
 import { ringStylePicker } from "../filee/preview";
@@ -24,10 +25,10 @@ export function fileeSection(): HTMLElement {
   const draw = () => {
     body.replaceChildren();
     void checkFilee();
-    const trig = choice([["ctrl-hold", "Ctrl + segurar o botão direito"], ["ctrl", "Ctrl + clique direito"], ["ctrl-alt", "Ctrl + Alt + clique direito"], ["alt-hold", "Alt + segurar o botão direito"]], prefs.trigger, (v) => { prefs.trigger = v as FileePrefs["trigger"]; void save(); });
+    const trig = gesturePicker(prefs.trigger, prefs.holdMs, (v) => { prefs.trigger = v; void save().then(draw); });
     body.append(
-      h("div", { class: "row" }, h("label", { text: "Ctrl + botão direito sobre um arquivo" }), toggle(prefs.gesture, (v) => { prefs.gesture = v; void save(); })),
-      h("div", { class: "hint", text: "No Explorador ou na área de trabalho, um anel de fatias abre em volta do cursor com as conversões do tipo do arquivo (como no Filee), mais comprimir, redimensionar, enviar para a IA e abrir no Conversor. Solte no meio para cancelar. Sem o Ctrl, o clique direito continua normal." }),
+      h("div", { class: "row" }, h("label", { text: `${gestureShort(prefs.trigger)} sobre um arquivo` }), toggle(prefs.gesture, (v) => { prefs.gesture = v; void save(); })),
+      h("div", { class: "hint", text: "No Explorador ou na área de trabalho, um anel de fatias abre em volta do cursor com as conversões do tipo do arquivo (como no Filee), mais comprimir, redimensionar, enviar para a IA e abrir no Conversor. Solte no meio para cancelar. Sem os modificadores do gatilho, o clique continua normal." }),
       h("div", { class: "row" }, h("label", { text: "Gatilho" }), trig),
       filee,
       h("div", { class: "row" }, h("label", { text: "Estilo do anel" })),

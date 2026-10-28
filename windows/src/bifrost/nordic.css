@@ -217,3 +217,26 @@ body.bf-sky, .bf-sky {
 
 /* Regra geral de texto que cabe (core/fit-text.ts): a letra diminui até caber com folga; reticências só abaixo do mínimo. */
 .bf-fit { min-width: 0; max-width: 100%; }
+
+/* v25: gravador de atalho ("aperte a combinação"): tecla + Padrão, com aviso abaixo. */
+.bf-rec-col { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 4px; min-width: 0; max-width: 100%; }
+.bf-rec { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; min-width: 0; }
+.bf-rec-cap, .bf-rec-reset {
+  min-height: 28px; padding: 4px 12px; border-radius: 8px; font: inherit; font-size: 12.5px; cursor: pointer;
+  border: 1px solid rgba(var(--tk-eef2ff-rgb, 238, 242, 255), .18); background: rgba(var(--tk-eef2ff-rgb, 238, 242, 255), .06); color: inherit;
+  white-space: nowrap; transition: background-color var(--m-fast) var(--m-ease), border-color var(--m-fast) var(--m-ease);
+}
+.bf-rec-cap { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-weight: 600; }
+.bf-rec-cap.on { border-color: var(--bf-aurora-1, #5ef2c9); background: rgba(94, 242, 201, .12); }
+.bf-rec-reset { opacity: .8; }
+.bf-rec-reset[hidden] { display: none; }
+.bf-rec-note { font-size: 11.5px; opacity: .75; max-width: 320px; text-align: right; }
+.bf-rec-note:empty { display: none; }
+
+/* v25: botão só de ícone — um círculo, o ícone no centro e o halo de foco (box-shadow,
+   que segue o raio) concêntrico; nenhum outline retangular por cima. Abas de grupos
+   com indicador ficam de fora: lá o anel é a cápsula do indicador. QA: icon-ring. */
+:where(button, [role="button"]):not(.tab):not([role="tab"]):not([role="radio"]):not(.m-ink-seg *):not(.hub-segmented *):has(> svg:only-child) {
+  border-radius: 50% !important; aspect-ratio: 1 / 1; display: inline-grid; place-items: center; outline: none;
+}
+:where(button, [role="button"]):not(.tab):not([role="tab"]):has(> svg:only-child) > svg { display: block; margin: 0; }

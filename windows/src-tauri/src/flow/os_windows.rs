@@ -32,8 +32,11 @@ const VK_V: u16 = 0x56;
 const VK_CONTROL: u16 = 0x11;
 const VK_SHIFT_KEY: u16 = 0x10;
 const VK_LSHIFT: u32 = 0xA0;
+#[allow(dead_code)]
 const VK_RSHIFT: u32 = 0xA1;
+#[allow(dead_code)]
 const VK_LCONTROL: u32 = 0xA2;
+#[allow(dead_code)]
 const VK_RCONTROL: u32 = 0xA3;
 const VK_LMENU: u32 = 0xA4;
 const VK_RMENU: u32 = 0xA5;
@@ -47,23 +50,26 @@ fn is_modifier(vk: u32) -> bool {
 }
 
 static SINK: Mutex<Option<Sender<(KeyEvent, Instant)>>> = Mutex::new(None);
-static KEY: AtomicU8 = AtomicU8::new(0);
-/// For Ctrl + Win: which of the two is down (bit 0 Ctrl, bit 1 Win).
-static COMBO: AtomicU8 = AtomicU8::new(0);
+/// The chord being watched (see `FlowKey`), and which physical keys are down.
+static CHORD: Mutex<[u16; 4]> = Mutex::new([0; 4]);
+static DOWN: Mutex<[bool; 256]> = Mutex::new([false; 256]);
 static HELD: AtomicU8 = AtomicU8::new(0);
-
-fn key_code(key: FlowKey) -> u8 {
-    match key {
-        FlowKey::RightCtrl => 0,
-        FlowKey::RightAlt => 1,
-        FlowKey::RightShift => 2,
-        FlowKey::LeftCtrlSuper => 3,
-    }
-}
 
 fn send(event: KeyEvent) {
     if let Some(tx) = SINK.lock().unwrap().as_ref() {
         let _ = tx.send((event, Instant::now()));
+    }
+}
+
+/// The physical codes a chord slot accepts: a generic modifier takes both sides.
+fn slot_matches(slot: u16, vk: u32) -> bool {
+    let vk = vk as u16;
+    match slot {
+        0x11 => matches!(vk, 0xA2 | 0xA3 | 0x11),
+        0x12 => matches!(vk, 0xA4 | 0xA5 | 0x12),
+        0x10 => matches!(vk, 0xA0 | 0xA1 | 0x10),
+        0x5B => matches!(vk, 0x5B | 0x5C),
+        s => s == vk,
     }
 }
 
@@ -80,33 +86,36 @@ unsafe extern "system" fn hook(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRE
     CallNextHookEx(None, code, wparam, lparam)
 }
 
-fn on_key(vk: u32, down: bool, up: bool) {
-    let key = KEY.load(Ordering::Relaxed);
-    let ours = match key {
-        0 => vk == VK_RCONTROL,
-        1 => vk == VK_RMENU,
-        2 => vk == VK_RSHIFT,
-        _ => false,
-    };
-    if key == 3 && matches!(vk, VK_LCONTROL | VK_LWIN) {
-        let bit = if vk == VK_LCONTROL { 1 } else { 2 };
-        let before = COMBO.load(Ordering::Relaxed);
-        let after = if down { before | bit } else if up { before & !bit } else { before };
-        COMBO.store(after, Ordering::Relaxed);
-        if before != 3 && after == 3 {
-            send(KeyEvent::Down);
-        } else if before == 3 && after != 3 {
-            send(KeyEvent::Up);
-        } else if after == 3 && down {
-            send(KeyEvent::Down); // repeat
+fn chord_held(chord: &[u16; 4], pressed: &[bool; 256]) -> bool {
+    let mut any = false;
+    for slot in chord.iter().copied().filter(|s| *s != 0) {
+        any = true;
+        if !(0..256u32).any(|vk| pressed[vk as usize] && slot_matches(slot, vk)) {
+            return false;
         }
-        return;
     }
-    if ours {
-        if down {
+    any
+}
+
+fn on_key(vk: u32, down: bool, up: bool) {
+    let chord = *CHORD.lock().unwrap();
+    let in_chord = chord.iter().any(|s| *s != 0 && slot_matches(*s, vk));
+    if in_chord {
+        let mut pressed = DOWN.lock().unwrap();
+        let before = chord_held(&chord, &pressed);
+        if (vk as usize) < 256 {
+            if down {
+                pressed[vk as usize] = true;
+            } else if up {
+                pressed[vk as usize] = false;
+            }
+        }
+        let after = chord_held(&chord, &pressed);
+        drop(pressed);
+        if after && down {
             HELD.store(1, Ordering::Relaxed);
-            send(KeyEvent::Down);
-        } else if up {
+            send(KeyEvent::Down); // first press, or key repeat
+        } else if before && !after {
             HELD.store(0, Ordering::Relaxed);
             send(KeyEvent::Up);
         }
@@ -141,8 +150,8 @@ impl Drop for KeyListener {
 }
 
 pub fn listen(key: FlowKey, tx: Sender<(KeyEvent, Instant)>) -> Result<KeyListener, String> {
-    KEY.store(key_code(key), Ordering::Relaxed);
-    COMBO.store(0, Ordering::Relaxed);
+    *CHORD.lock().unwrap() = key.keys;
+    *DOWN.lock().unwrap() = [false; 256];
     *SINK.lock().unwrap() = Some(tx);
     let (ready_tx, ready_rx) = std::sync::mpsc::channel::<Result<u32, String>>();
     let thread = std::thread::Builder::new()
@@ -175,16 +184,12 @@ pub fn listen(key: FlowKey, tx: Sender<(KeyEvent, Instant)>) -> Result<KeyListen
 /// Waits (up to a second) until the dictation key is up, so the paste is a
 /// plain Ctrl+V and not Ctrl+Alt+V or Ctrl+Shift+V.
 pub fn wait_key_released(key: FlowKey) {
-    let vk = match key {
-        FlowKey::RightCtrl => VK_RCONTROL,
-        FlowKey::RightAlt => VK_RMENU,
-        FlowKey::RightShift => VK_RSHIFT,
-        FlowKey::LeftCtrlSuper => VK_LWIN,
-    } as i32;
     let until = Instant::now() + Duration::from_secs(1);
     while Instant::now() < until {
-        let state = unsafe { GetAsyncKeyState(vk) } as u16;
-        if state & 0x8000 == 0 {
+        let any_down = (0u32..256).any(|vk| {
+            key.codes().any(|slot| slot_matches(slot, vk)) && vk != 0x11 && vk != 0x12 && vk != 0x10 && (unsafe { GetAsyncKeyState(vk as i32) } as u16) & 0x8000 != 0
+        });
+        if !any_down {
             return;
         }
         std::thread::sleep(Duration::from_millis(15));

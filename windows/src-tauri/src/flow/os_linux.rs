@@ -124,7 +124,8 @@ fn run(conn: RustConnection, keymap: Keymap, key: FlowKey, tx: Sender<(KeyEvent,
         FlowKey::RightCtrl => keymap.has(code, XK_CONTROL_R),
         FlowKey::RightAlt => keymap.has(code, XK_ALT_R) || keymap.has(code, XK_ISO_LEVEL3_SHIFT),
         FlowKey::RightShift => keymap.has(code, XK_SHIFT_R),
-        FlowKey::LeftCtrlSuper => false,
+        // Other chords are Windows virtual-key codes; on X11 only the named keys work.
+        _ => false,
     };
     let mut combo = 0u8;
     while !stop.load(Ordering::Relaxed) {

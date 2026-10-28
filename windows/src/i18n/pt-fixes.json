@@ -1,0 +1,27 @@
+{
+  "_about": "pt-BR corrections layered over strings.json (generated from the Mac catalog, never edited by hand). Applied in src/i18n/i18n.ts and src-tauri/src/i18n.rs after both tables. List of changes: docs/bifrost-engenharia-reversa.md, section 10.26.",
+  "strings": {
+    "Hold {0} anywhere, speak, let go: it's pasted.": "Segure {0} em qualquer lugar, fale e solte: o texto é colado.",
+    "Right {0}": "{0} direito",
+    "Tests": "Testes",
+    "Applies on next launch": "Vale a partir da próxima abertura",
+    "Close notch (if not pinned)": "Fechar a ilha (se não estiver fixada)",
+    "Auto-close · {seconds}s": "Fechar sozinho · {seconds} s",
+    "Approval requests appear in the notch. If Bifrost is not running, Hermes falls back to its own prompt.": "Os pedidos de aprovação aparecem na ilha. Se o Bifrost não estiver aberto, o Hermes usa o próprio prompt.",
+    "Talk to Bifrost": "Falar com o Bifrost",
+    "Bifrost responds aloud": "O Bifrost responde em voz alta",
+    "Bifrost answers in": "O Bifrost responde em",
+    "Claude is reading {name}…": "O Claude está lendo {name}…",
+    "Claude is searching…": "O Claude está pesquisando…",
+    "Claude Code is asking": "O Claude Code está perguntando",
+    "Claude Code finished": "O Claude Code terminou",
+    "presses this → island opens": "aperte isto → a ilha abre",
+    "writing…": "escrevendo…",
+    "Active pills": "Pílulas ativas",
+    "Try demo mode": "Experimentar o modo demo",
+    "Already active": "Já está ativo",
+    "Whatever you speak, it's pasted in {0}.": "Fale no idioma que quiser: o texto é colado em {0}.",
+    "Too many hits at once.": "Muitas requisições de uma vez.",
+    "You have {0}": "Você está na {0}"
+  }
+}

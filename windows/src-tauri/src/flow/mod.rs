@@ -477,11 +477,14 @@ pub fn flow_status(flow: State<Arc<Flow>>) -> FlowStatus {
 }
 
 #[tauri::command]
-pub fn flow_set_prefs(app: AppHandle, flow: State<Arc<Flow>>, prefs: Prefs) {
+pub fn flow_set_prefs(app: AppHandle, flow: State<Arc<Flow>>, mut prefs: Prefs) {
     let flow = flow.inner().clone();
     let before = {
         let mut store = flow.store.lock().unwrap();
         let before = store.prefs.clone();
+        if before.key != prefs.key {
+            prefs.key_chosen = true;
+        }
         store.prefs = prefs.clone();
         store.save_prefs();
         if before.keep_days != prefs.keep_days {

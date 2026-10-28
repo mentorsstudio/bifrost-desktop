@@ -20,13 +20,15 @@ async function callOrThrow<T>(cmd: string, args?: Record<string, unknown>): Prom
   return invoke<T>(cmd, args);
 }
 
-export type FlowKey = "right_ctrl" | "right_alt" | "right_shift" | "left_ctrl_super";
+/** "right_ctrl", "left_ctrl_super"… or "chord:a2+5b" (see core/hold-key.ts). */
+export type FlowKey = string;
 export type Edge = "bottom" | "left" | "right";
 export type Style = "verbatim" | "natural" | "polished";
 
 export interface FlowPrefs {
   enabled: boolean;
   key: FlowKey;
+  keyChosen?: boolean;
   edge: Edge;
   mic: string;
   keepDays: number;

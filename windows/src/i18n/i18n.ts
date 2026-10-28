@@ -17,6 +17,7 @@
 
 import MAC from "./strings.json";
 import EXTRA from "./extra.json";
+import PT_FIXES from "./pt-fixes.json";
 
 export const LANGUAGE_CODES = ["en", "zh-Hans", "hi", "es", "ar", "fr", "bn", "pt-BR", "ru", "id", "de", "tr"] as const;
 export type Language = (typeof LANGUAGE_CODES)[number];
@@ -47,6 +48,10 @@ const TABLE: Table = {
   ...((MAC as { strings: Table }).strings),
   ...((EXTRA as { strings: Table }).strings),
 };
+// pt-BR corrections over the Mac's catalog (pt-fixes.json, one string per key).
+for (const [key, pt] of Object.entries((PT_FIXES as { strings: Record<string, string> }).strings)) {
+  if (TABLE[key]) TABLE[key] = { ...TABLE[key], "pt-BR": pt };
+}
 
 let current: Language = "en";
 const listeners = new Set<(lang: Language) => void>();

@@ -1,3 +1,5 @@
+import { gesturePicker } from "../../filee/gesture-picker";
+import { gestureShort } from "../../core/gesture-trigger";
 // Conversor: o Filee dentro do Bifrost. Uma área de soltar com o Huginn, os
 // formatos possíveis para o que foi solto (só os que fazem sentido), opções,
 // a fila com progresso e "Abrir pasta", as ferramentas opcionais (FFmpeg,
@@ -246,8 +248,8 @@ export async function converterPage(page: HTMLElement, ctx: HubContext) {
       drawRun();
     };
     gestureBox.append(
-      row("Ctrl + botão direito sobre um arquivo", "No Explorador ou na área de trabalho, um anel de fatias abre em volta do cursor com as conversões do tipo do arquivo. Solte sobre uma fatia; solte no meio para cancelar.", toggle(p.gesture, (v) => void save((x) => { x.gesture = v; }))),
-      row("Como abrir", "Segurar evita conflito: um toque rápido continua abrindo o menu normal.", segmented<FileePrefs["trigger"]>([["ctrl-hold", "Ctrl + segurar"], ["ctrl", "Ctrl + clique"], ["ctrl-alt", "Ctrl + Alt + clique"], ["alt-hold", "Alt + segurar"]], p.trigger, (v) => void save((x) => { x.trigger = v; }))),
+      row(`${gestureShort(p.trigger)} sobre um arquivo`, "No Explorador ou na área de trabalho, um anel de fatias abre em volta do cursor com as conversões do tipo do arquivo. Solte sobre uma fatia; solte no meio para cancelar.", toggle(p.gesture, (v) => void save((x) => { x.gesture = v; }))),
+      row("Como abrir", "Clique e faça o gesto. Segurar evita conflito: um toque rápido continua abrindo o menu normal.", gesturePicker(p.trigger, p.holdMs, (v) => void save((x) => { x.trigger = v; }))),
       row("“Bifrost ›” no menu do Explorador", "Entrada clássica (em “Mostrar mais opções” no Windows 11). Só para o seu usuário, sem administrador.", toggle(p.contextMenu, (v) => void save((x) => { x.contextMenu = v; }))),
     );
     const warn = h("div", { class: "fl-hint" });

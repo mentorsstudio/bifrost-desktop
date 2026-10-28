@@ -16,6 +16,7 @@ pub const LANGUAGES: [&str; 12] = ["en", "zh-Hans", "hi", "es", "ar", "fr", "bn"
 
 static MAC: &str = include_str!("../../src/i18n/strings.json");
 static EXTRA: &str = include_str!("../../src/i18n/extra.json");
+static PT_FIXES: &str = include_str!("../../src/i18n/pt-fixes.json");
 
 type Table = HashMap<String, Map<String, Value>>;
 
@@ -30,6 +31,16 @@ fn table() -> &'static Table {
             for (key, entry) in strings {
                 if let Value::Object(langs) = entry {
                     out.insert(key.clone(), langs.clone());
+                }
+            }
+        }
+        // pt-BR corrections over the Mac's catalog (pt-fixes.json): one string per key.
+        if let Ok(Value::Object(root)) = serde_json::from_str::<Value>(PT_FIXES) {
+            if let Some(Value::Object(strings)) = root.get("strings") {
+                for (key, pt) in strings {
+                    if let Some(langs) = out.get_mut(key) {
+                        langs.insert("pt-BR".into(), pt.clone());
+                    }
                 }
             }
         }

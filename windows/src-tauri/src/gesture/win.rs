@@ -19,7 +19,7 @@ use windows::Win32::System::Threading::GetCurrentThreadId;
 use windows::Win32::System::Variant::VARIANT;
 use windows::Win32::UI::Accessibility::{CUIAutomation, IUIAutomation, IUIAutomationElement, UIA_DataItemControlTypeId, UIA_ListItemControlTypeId};
 use windows::Win32::UI::Input::KeyboardAndMouse::{
-    GetAsyncKeyState, SendInput, INPUT, INPUT_0, INPUT_MOUSE, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, MOUSEINPUT, MOUSE_EVENT_FLAGS,
+    GetAsyncKeyState, SendInput, INPUT, INPUT_0, INPUT_MOUSE, MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, MOUSEEVENTF_XDOWN, MOUSEEVENTF_XUP, MOUSEINPUT, MOUSE_EVENT_FLAGS,
 };
 use windows::Win32::UI::Shell::{
     IFolderView2, IShellBrowser, IShellItem, IShellWindows, IWebBrowser2, ShellWindows, SID_STopLevelBrowser,
@@ -28,16 +28,29 @@ use windows::Win32::UI::Shell::{
 use windows::Win32::UI::WindowsAndMessaging::{
     CallNextHookEx, DispatchMessageW, GetAncestor, GetClassNameW, GetMessageW, GetParent, PostThreadMessageW, SetWindowsHookExW,
     TranslateMessage, UnhookWindowsHookEx, WindowFromPoint, GA_ROOT, KBDLLHOOKSTRUCT, MSG, MSLLHOOKSTRUCT, WH_KEYBOARD_LL,
-    WH_MOUSE_LL, WM_KEYDOWN, WM_LBUTTONDOWN, WM_QUIT, WM_RBUTTONDOWN, WM_RBUTTONUP, WM_SYSKEYDOWN,
+    WH_MOUSE_LL, WM_KEYDOWN, WM_LBUTTONDOWN, WM_MBUTTONDOWN, WM_MBUTTONUP, WM_QUIT, WM_RBUTTONDOWN, WM_RBUTTONUP, WM_SYSKEYDOWN, WM_XBUTTONDOWN, WM_XBUTTONUP,
 };
 
-use super::logic::{Effect, Machine, Out, Trigger};
+use super::logic::{Effect, Machine, Out, Trigger, BTN_MIDDLE, BTN_RIGHT, BTN_X1, BTN_X2, MOD_ALT, MOD_CTRL, MOD_SHIFT, MOD_WIN};
 
 /// Marca os cliques que o próprio Bifrost re-envia (toque rápido).
 const MAGIC: usize = 0xB1F0_57;
 const VK_CONTROL: i32 = 0x11;
 const VK_MENU: i32 = 0x12;
 const VK_ESCAPE: u32 = 0x1B;
+const VK_SHIFT: i32 = 0x10;
+const VK_LWIN: i32 = 0x5B;
+const VK_RWIN: i32 = 0x5C;
+
+/// Os modificadores apertados agora (bits MOD_*).
+fn mods_now() -> u8 {
+    let mut m = 0;
+    if key_down(VK_CONTROL) { m |= MOD_CTRL; }
+    if key_down(VK_MENU) { m |= MOD_ALT; }
+    if key_down(VK_SHIFT) { m |= MOD_SHIFT; }
+    if key_down(VK_LWIN) || key_down(VK_RWIN) { m |= MOD_WIN; }
+    m
+}
 
 static MACHINE: Mutex<Option<Machine>> = Mutex::new(None);
 static WORK: Mutex<Option<Sender<Job>>> = Mutex::new(None);
@@ -99,17 +112,28 @@ unsafe extern "system" fn mouse_hook(code: i32, wparam: WPARAM, lparam: LPARAM) 
             let mut swallow = false;
             if let Ok(mut guard) = MACHINE.try_lock() {
                 if let Some(m) = guard.as_mut() {
-                    let (out, eff) = match msg {
-                        WM_RBUTTONDOWN => {
-                            // Só olha a janela quando o Ctrl está apertado: um
-                            // clique direito comum passa sem custo nenhum.
-                            let ctrl = key_down(VK_CONTROL);
-                            let el = (ctrl || m.menu_open()) && eligible(info.pt);
-                            m.right_down(ctrl, key_down(VK_MENU), el, x, y)
+                    let btn = m.trigger.button();
+                    let xb = ((info.mouseData >> 16) & 0xFFFF) as u16;
+                    let this = |down_msg: bool| -> bool {
+                        match btn {
+                            BTN_RIGHT => msg == if down_msg { WM_RBUTTONDOWN } else { WM_RBUTTONUP },
+                            BTN_MIDDLE => msg == if down_msg { WM_MBUTTONDOWN } else { WM_MBUTTONUP },
+                            BTN_X1 | BTN_X2 => msg == if down_msg { WM_XBUTTONDOWN } else { WM_XBUTTONUP } && xb == if btn == BTN_X1 { 1 } else { 2 },
+                            _ => false,
                         }
-                        WM_RBUTTONUP => m.right_up(x, y),
-                        WM_LBUTTONDOWN => (Out::Pass, m.left_down(x, y)),
-                        _ => (Out::Pass, Effect::None),
+                    };
+                    let (out, eff) = if this(true) {
+                        // Só olha a janela quando um modificador está apertado (ou o
+                        // botão não é o direito): um clique comum passa sem custo.
+                        let mods = mods_now();
+                        let el = (mods != 0 || btn != BTN_RIGHT || m.menu_open()) && eligible(info.pt);
+                        m.button_down(mods, el, x, y)
+                    } else if this(false) {
+                        m.right_up(x, y)
+                    } else if msg == WM_LBUTTONDOWN {
+                        (Out::Pass, m.left_down(x, y))
+                    } else {
+                        (Out::Pass, Effect::None)
                     };
                     swallow = out == Out::Swallow;
                     if eff != Effect::None {
@@ -140,12 +164,18 @@ unsafe extern "system" fn key_hook(code: i32, wparam: WPARAM, lparam: LPARAM) ->
     CallNextHookEx(None, code, wparam, lparam)
 }
 
-fn replay_right_click() {
-    let mk = |flags: MOUSE_EVENT_FLAGS| INPUT {
+/// Foi só um toque: devolve o clique do mesmo botão ao programa.
+fn replay_click(btn: u8) {
+    let mk = |flags: MOUSE_EVENT_FLAGS, data: u32| INPUT {
         r#type: INPUT_MOUSE,
-        Anonymous: INPUT_0 { mi: MOUSEINPUT { dx: 0, dy: 0, mouseData: 0, dwFlags: flags, time: 0, dwExtraInfo: MAGIC } },
+        Anonymous: INPUT_0 { mi: MOUSEINPUT { dx: 0, dy: 0, mouseData: data, dwFlags: flags, time: 0, dwExtraInfo: MAGIC } },
     };
-    let inputs = [mk(MOUSEEVENTF_RIGHTDOWN), mk(MOUSEEVENTF_RIGHTUP)];
+    let inputs = match btn {
+        BTN_MIDDLE => [mk(MOUSEEVENTF_MIDDLEDOWN, 0), mk(MOUSEEVENTF_MIDDLEUP, 0)],
+        BTN_X1 => [mk(MOUSEEVENTF_XDOWN, 1), mk(MOUSEEVENTF_XUP, 1)],
+        BTN_X2 => [mk(MOUSEEVENTF_XDOWN, 2), mk(MOUSEEVENTF_XUP, 2)],
+        _ => [mk(MOUSEEVENTF_RIGHTDOWN, 0), mk(MOUSEEVENTF_RIGHTUP, 0)],
+    };
     unsafe {
         SendInput(&inputs, std::mem::size_of::<INPUT>() as i32);
     }
@@ -166,7 +196,10 @@ fn worker(rx: std::sync::mpsc::Receiver<Job>) {
             }
             Job::Effect(Effect::Open { x, y }) => super::open_at(x, y, move || files_at(x, y)),
             Job::Effect(Effect::Release { x, y }) => super::release_at(x, y),
-            Job::Effect(Effect::Replay { .. }) => replay_right_click(),
+            Job::Effect(Effect::Replay { .. }) => {
+                let btn = MACHINE.lock().unwrap_or_else(|e| e.into_inner()).as_ref().map(|m| m.trigger.button()).unwrap_or(BTN_RIGHT);
+                replay_click(btn)
+            }
             Job::Effect(Effect::ClickWhileOpen { x, y }) => {
                 super::click_outside(x, y);
             }

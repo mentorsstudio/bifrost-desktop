@@ -7,7 +7,53 @@ import { t } from "../../i18n/i18n";
 import { onEvent } from "../../core/bridge";
 import { FlowBridge, type Edge, type FlowKey, type ModelsStatus } from "../../core/flow";
 import type { HubContext } from "../shell";
-import { button, card, divider, keyKeycap, keycap, label, number, row, segmented, select, toggle } from "../ui";
+import { button, card, divider, keyKeycap, keycap, keyLabel, label, number, row, segmented, select, toggle } from "../ui";
+import { DEFAULT_HOLD_KEY, holdKeyCodes, holdKeyId, holdKeyProblem, recordHoldKey } from "../../core/hold-key";
+import { Convert } from "../../filee/api";
+import { parseGesture } from "../../core/gesture-trigger";
+
+/** Ring gesture modifiers held alone would also start dictation: say so. */
+async function ringClash(key: FlowKey): Promise<string | null> {
+  const codes = holdKeyCodes(key);
+  const p = await Convert.prefs().catch(() => null);
+  const g = p?.gesture ? parseGesture(p.trigger) : null;
+  if (!g) return null;
+  const mod = (vk: number) => ([0x11, 0xa2, 0xa3].includes(vk) ? "ctrl" : [0x12, 0xa4, 0xa5].includes(vk) ? "alt" : [0x10, 0xa0, 0xa1].includes(vk) ? "shift" : [0x5b, 0x5c].includes(vk) ? "win" : "");
+  const mods = [...new Set(codes.map(mod))];
+  return mods.every(Boolean) && mods.length === g.mods.length && mods.every((m) => g.mods.includes(m))
+    ? t("The file ring uses the same keys with the mouse: dictation starts only when you hold them without clicking.")
+    : null;
+}
+
+/** "Press the combination" recorder for the hold-to-talk key, with reset. */
+function holdKeyRecorder(ctx: HubContext, key: FlowKey, platform: "windows" | "linux"): HTMLElement {
+  const wrap = h("span", { class: "bf-rec" });
+  const cap = h("button", { class: "bf-rec-cap", type: "button", title: t("Click, then hold the new keys together and let go. Esc cancels.") }) as HTMLButtonElement;
+  const reset = h("button", { class: "bf-rec-reset", type: "button", text: t("Default"), title: keyLabel(DEFAULT_HOLD_KEY, platform) }) as HTMLButtonElement;
+  cap.textContent = keyLabel(key, platform);
+  reset.hidden = key === DEFAULT_HOLD_KEY;
+  const note = h("div", { class: "bf-rec-note" });
+  void ringClash(key).then((w) => { if (w) note.textContent = w; });
+  const pick = (k: FlowKey) => void ctx.setPrefs((p) => { p.key = k; }).then(() => ctx.navigate("flowsettings"));
+  let stop: (() => void) | null = null;
+  cap.addEventListener("click", () => {
+    if (stop) return;
+    cap.textContent = t("Press keys…");
+    cap.classList.add("on");
+    cap.focus();
+    stop = recordHoldKey(document.body, (codes) => {
+      stop = null;
+      cap.classList.remove("on");
+      if (!codes) { cap.textContent = keyLabel(key, platform); return; }
+      const bad = holdKeyProblem(codes);
+      if (bad) { cap.textContent = keyLabel(key, platform); note.textContent = t("Hold Ctrl, Alt or the Windows key with it."); return; }
+      pick(holdKeyId(codes));
+    });
+  });
+  reset.addEventListener("click", () => pick(DEFAULT_HOLD_KEY));
+  wrap.append(cap, reset);
+  return h("span", { class: "bf-rec-col" }, wrap, note);
+}
 
 /** Download / progress / installed, for the voice model. Redraws itself. */
 export function modelsControl(ctx: HubContext, onReady?: () => void): HTMLElement {
@@ -61,12 +107,6 @@ export async function flowSettingsPage(page: HTMLElement, ctx: HubContext) {
   page.append(ctx.hero("flowsettings", t("Settings"), t("Dictation keys, microphone, transcription and privacy.")));
 
   // ── Keys ──
-  const keys: [FlowKey, string][] = [
-    ["right_ctrl", t("Right {0}", { 0: "Ctrl" })],
-    ["right_alt", t("Right {0}", { 0: "Alt" })],
-    ["right_shift", t("Right {0}", { 0: "Shift" })],
-    ["left_ctrl_super", status.platform === "windows" ? "Ctrl + Win" : "Ctrl + Super"],
-  ];
   const edges: [Edge, string][] = [["bottom", t("Bottom")], ["left", t("Left")], ["right", t("Right")]];
   page.append(label(t("Keys")));
   const keysCard = card(
@@ -75,7 +115,7 @@ export async function flowSettingsPage(page: HTMLElement, ctx: HubContext) {
     status.keys === "wayland"
       ? row(t("Hold to dictate"), null, keyKeycap("wayland", status.platform))
       : row(t("Hold to dictate"), prefs.key === "right_alt" ? t("On a keyboard with AltGr, the right Alt types characters: pick another key.") : null,
-        select(keys, prefs.key, (key) => void ctx.setPrefs((p) => (p.key = key)).then(() => ctx.navigate("flowsettings")))),
+        holdKeyRecorder(ctx, prefs.key, status.platform)),
     divider(),
     row(t("Where the pill is"), null, segmented(edges, prefs.edge, (edge) => void ctx.setPrefs((p) => (p.edge = edge)))),
     divider(),
